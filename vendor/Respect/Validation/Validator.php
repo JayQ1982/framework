@@ -11,6 +11,7 @@
 
 namespace framework\vendor\Respect\Validation;
 
+use Exception;
 use finfo;
 use ReflectionClass;
 use framework\vendor\Respect\Validation\Exceptions\AllOfException;
@@ -18,6 +19,7 @@ use framework\vendor\Respect\Validation\Exceptions\ComponentException;
 use framework\vendor\Respect\Validation\Exceptions\ValidationException;
 use framework\vendor\Respect\Validation\Rules\AllOf;
 use framework\vendor\Respect\Validation\Rules\Key;
+use stdClass;
 
 /**
  * @method static Validator age(int $minAge = null, int $maxAge = null)
@@ -228,7 +230,7 @@ class Validator extends AllOf
     {
         try {
             return static::getFactory()->rule($ruleSpec, $arguments);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             throw new ComponentException($exception->getMessage(), $exception->getCode(), $exception);
         }
     }
@@ -252,7 +254,7 @@ class Validator extends AllOf
     /**
      * Create instance validator.
      *
-     * @return Validator|\stdClass
+     * @return Validator|stdClass
      */
     public static function create()
     {

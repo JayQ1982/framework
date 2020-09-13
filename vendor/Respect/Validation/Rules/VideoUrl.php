@@ -33,11 +33,13 @@ class VideoUrl extends AbstractRule
         'vimeo' => '@^https?://(www\.)?(player\.)?(vimeo\.com/)((channels/[A-z]+/)|(groups/[A-z]+/videos/)|(video/))?([0-9]+)@i',
     ];
 
-    /**
-     * Create a new instance VideoUrl.
-     *
-     * @param string $service
-     */
+	/**
+	 * Create a new instance VideoUrl.
+	 *
+	 * @param null $service
+	 *
+	 * @throws ComponentException
+	 */
     public function __construct($service = null)
     {
         $serviceKey = strtolower($service);
@@ -50,7 +52,7 @@ class VideoUrl extends AbstractRule
     }
 
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function validate($input)
     {

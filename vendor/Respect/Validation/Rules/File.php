@@ -11,11 +11,13 @@
 
 namespace framework\vendor\Respect\Validation\Rules;
 
+use SplFileInfo;
+
 class File extends AbstractRule
 {
     public function validate($input)
     {
-        if ($input instanceof \SplFileInfo) {
+        if ($input instanceof SplFileInfo) {
             return $input->isFile();
         }
 

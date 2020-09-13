@@ -19,6 +19,8 @@
 
 namespace framework\vendor\PHPMailer;
 
+use Throwable;
+
 /**
  * PHPMailer POP-Before-SMTP Authentication Class.
  * Specifically for PHPMailer to use for RFC1939 POP-before-SMTP authentication.
@@ -311,7 +313,7 @@ class POP3
 		//So ignore errors here
 		try {
 			@fclose($this->pop_conn);
-		} catch (\Throwable $e) {
+		} catch (Throwable $e) {
 			//Do nothing
 		}
 	}

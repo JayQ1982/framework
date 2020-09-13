@@ -17,7 +17,7 @@ namespace framework\vendor\Respect\Validation\Rules;
 class ScalarVal extends AbstractRule
 {
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function validate($input)
     {

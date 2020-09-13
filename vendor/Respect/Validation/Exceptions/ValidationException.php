@@ -336,8 +336,7 @@ class ValidationException extends InvalidArgumentException implements ExceptionI
         $pieces = explode('\\', get_called_class());
         $exceptionClassShortName = end($pieces);
         $ruleClassShortName = str_replace('Exception', '', $exceptionClassShortName);
-        $ruleName = lcfirst($ruleClassShortName);
 
-        return $ruleName;
+	    return lcfirst($ruleClassShortName);
     }
 }

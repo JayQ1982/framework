@@ -11,12 +11,15 @@
 
 namespace framework\vendor\Respect\Validation\Rules;
 
+use stdClass;
+use Traversable;
+
 class IterableType extends AbstractRule
 {
     public function validate($input)
     {
         return is_array($input) ||
-            $input instanceof \stdClass ||
-            $input instanceof \Traversable;
+            $input instanceof stdClass ||
+            $input instanceof Traversable;
     }
 }

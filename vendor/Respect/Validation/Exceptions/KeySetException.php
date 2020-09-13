@@ -32,7 +32,7 @@ class KeySetException extends GroupedValidationException
     ];
 
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function chooseTemplate()
     {

@@ -31,10 +31,10 @@ class Mimetype extends AbstractRule
      */
     private $fileInfo;
 
-    /**
-     * @param string $mimetype
-     * @param finfo  $fileInfo
-     */
+	/**
+	 * @param string     $mimetype
+	 * @param finfo|null $fileInfo
+	 */
     public function __construct($mimetype, finfo $fileInfo = null)
     {
         $this->mimetype = $mimetype;
@@ -42,7 +42,7 @@ class Mimetype extends AbstractRule
     }
 
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function validate($input)
     {

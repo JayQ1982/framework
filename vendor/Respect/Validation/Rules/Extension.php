@@ -34,7 +34,7 @@ class Extension extends AbstractRule
     }
 
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function validate($input)
     {

@@ -268,7 +268,7 @@ class SMTP
 	 * Connect to an SMTP server.
 	 *
 	 * @param string $host    SMTP server IP or host name
-	 * @param int    $port    The port number to connect to
+	 * @param null   $port    The port number to connect to
 	 * @param int    $timeout How long to wait for the connection to open
 	 * @param array  $options An array of options for stream_context_create()
 	 *
@@ -401,13 +401,12 @@ class SMTP
 	 * Perform SMTP authentication.
 	 * Must be run after hello().
 	 *
-	 * @see    hello()
-	 *
 	 * @param string $username The user name
 	 * @param string $password The password
-	 * @param string $authtype The auth type (CRAM-MD5, PLAIN, LOGIN)
+	 * @param null   $authtype The auth type (CRAM-MD5, PLAIN, LOGIN)
 	 *
 	 * @return bool True if successfully authenticated
+	 * @see    hello()
 	 */
 	public function authenticate(
 		$username,

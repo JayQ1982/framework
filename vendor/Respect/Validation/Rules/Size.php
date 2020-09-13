@@ -41,10 +41,12 @@ class Size extends AbstractRule
      */
     public $maxValue;
 
-    /**
-     * @param string $minSize
-     * @param string $maxSize
-     */
+	/**
+	 * @param null $minSize
+	 * @param null $maxSize
+	 *
+	 * @throws ComponentException
+	 */
     public function __construct($minSize = null, $maxSize = null)
     {
         $this->minSize = $minSize;
@@ -98,7 +100,7 @@ class Size extends AbstractRule
     }
 
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function validate($input)
     {

@@ -27,7 +27,7 @@ class VideoUrlException extends ValidationException
     ];
 
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function chooseTemplate()
     {

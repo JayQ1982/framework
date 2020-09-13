@@ -21,7 +21,7 @@ namespace framework\vendor\Respect\Validation\Rules;
 class Bsn extends AbstractRule
 {
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function validate($input)
     {

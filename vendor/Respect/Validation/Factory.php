@@ -13,6 +13,7 @@ namespace framework\vendor\Respect\Validation;
 
 use ReflectionClass;
 use framework\vendor\Respect\Validation\Exceptions\ComponentException;
+use ReflectionException;
 
 class Factory
 {
@@ -47,7 +48,7 @@ class Factory
 	 *
 	 * @return object|Validatable
 	 * @throws ComponentException
-	 * @throws \ReflectionException
+	 * @throws ReflectionException
 	 */
     public function rule($ruleName, array $arguments = [])
     {

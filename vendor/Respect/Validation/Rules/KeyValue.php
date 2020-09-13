@@ -14,6 +14,7 @@ namespace framework\vendor\Respect\Validation\Rules;
 use framework\vendor\Respect\Validation\Exceptions\ComponentException;
 use framework\vendor\Respect\Validation\Exceptions\ValidationException;
 use framework\vendor\Respect\Validation\Validator;
+use Throwable;
 
 class KeyValue extends AbstractRule
 {
@@ -99,7 +100,7 @@ class KeyValue extends AbstractRule
     {
         try {
             $rule = $this->getRule($input);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return false;
         }
 

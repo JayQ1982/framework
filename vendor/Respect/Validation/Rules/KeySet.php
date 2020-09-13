@@ -37,7 +37,7 @@ class KeySet extends AllOf
     }
 
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function addRule($rule, $arguments = [])
     {
@@ -55,7 +55,7 @@ class KeySet extends AllOf
     }
 
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function addRules(array $rules)
     {
@@ -105,9 +105,7 @@ class KeySet extends AllOf
     {
         if (!$this->hasValidStructure($input)) {
             $params = ['keys' => $this->getKeys()];
-            $exception = $this->reportError($input, $params);
-
-            throw $exception;
+	        throw $this->reportError($input, $params);
         }
     }
 
@@ -132,7 +130,7 @@ class KeySet extends AllOf
     }
 
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function validate($input)
     {

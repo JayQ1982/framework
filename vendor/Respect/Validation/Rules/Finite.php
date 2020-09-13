@@ -17,7 +17,7 @@ namespace framework\vendor\Respect\Validation\Rules;
 class Finite extends AbstractRule
 {
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function validate($input)
     {

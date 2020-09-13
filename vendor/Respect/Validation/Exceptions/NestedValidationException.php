@@ -112,12 +112,11 @@ class NestedValidationException extends ValidationException implements IteratorA
     private function getRecursiveIterator()
     {
         $exceptionIterator = new RecursiveExceptionIterator($this);
-        $recursiveIteratorIterator = new RecursiveIteratorIterator(
-            $exceptionIterator,
-            RecursiveIteratorIterator::SELF_FIRST
-        );
 
-        return $recursiveIteratorIterator;
+	    return new RecursiveIteratorIterator(
+	        $exceptionIterator,
+	        RecursiveIteratorIterator::SELF_FIRST
+	    );
     }
 
     private function isSkippable(ValidationException $exception)

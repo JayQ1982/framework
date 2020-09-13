@@ -20,6 +20,8 @@
 
 namespace framework\vendor\PHPMailer;
 
+use Psr\Log\LoggerInterface;
+
 /**
  * PHPMailer - PHP email creation and transport class.
  *
@@ -408,21 +410,17 @@ class PHPMailer
 	 * * `error_log` Output to error log as configured in php.ini
 	 * By default PHPMailer will use `echo` if run from a `cli` or `cli-server` SAPI, `html` otherwise.
 	 * Alternatively, you can provide a callable expecting two params: a message string and the debug level:
-	 *
 	 * ```php
 	 * $mail->Debugoutput = function($str, $level) {echo "debug level $level; message: $str";};
 	 * ```
-	 *
 	 * Alternatively, you can pass in an instance of a PSR-3 compatible logger, though only `debug`
 	 * level output is used:
-	 *
 	 * ```php
 	 * $mail->Debugoutput = new myPsr3Logger;
 	 * ```
 	 *
 	 * @see SMTP::$Debugoutput
-	 *
-	 * @var string|callable|\Psr\Log\LoggerInterface
+	 * @var string|callable|LoggerInterface
 	 */
 	public $Debugoutput = 'echo';
 
@@ -805,7 +803,7 @@ class PHPMailer
 	/**
 	 * Constructor.
 	 *
-	 * @param bool $exceptions Should we throw external exceptions?
+	 * @param null $exceptions Should we throw external exceptions?
 	 */
 	public function __construct($exceptions = null)
 	{
@@ -872,7 +870,7 @@ class PHPMailer
 			return;
 		}
 		//Is this a PSR-3 logger?
-		if ($this->Debugoutput instanceof \Psr\Log\LoggerInterface) {
+		if ($this->Debugoutput instanceof LoggerInterface) {
 			$this->Debugoutput->debug($str);
 
 			return;
@@ -1195,7 +1193,7 @@ class PHPMailer
 						];
 					}
 				} else {
-					list($name, $email) = explode('<', $address);
+					[$name, $email] = explode('<', $address);
 					$email = trim(str_replace('>', '', $email));
 					if (static::validateAddress($email)) {
 						$addresses[] = [
@@ -1276,17 +1274,15 @@ class PHPMailer
 	 * * `html5` Use the pattern given by the HTML5 spec for 'email' type form input elements.
 	 * * `noregex` Don't use a regex: super fast, really dumb.
 	 * Alternatively you may pass in a callable to inject your own validator, for example:
-	 *
 	 * ```php
 	 * PHPMailer::validateAddress('user@example.com', function($address) {
 	 *     return (strpos($address, '@') !== false);
 	 * });
 	 * ```
-	 *
 	 * You can also set the PHPMailer::$validator static to a callable, allowing built-in methods to use your validator.
 	 *
-	 * @param string          $address       The email address to check
-	 * @param string|callable $patternselect Which pattern to use
+	 * @param string $address       The email address to check
+	 * @param null   $patternselect Which pattern to use
 	 *
 	 * @return bool
 	 */
@@ -1807,6 +1803,7 @@ class PHPMailer
 	/**
 	 * Provide an instance to use for SMTP operations.
 	 *
+	 * @param SMTP $smtp
 	 * @return SMTP
 	 */
 	public function setSMTPInstance(SMTP $smtp)
@@ -1908,13 +1905,12 @@ class PHPMailer
 	 * Initiate a connection to an SMTP server.
 	 * Returns false if the operation failed.
 	 *
-	 * @param array $options An array of options compatible with stream_context_create()
-	 *
-	 * @throws Exception
-	 *
-	 * @uses \PHPMailer\PHPMailer\SMTP
+	 * @param null $options An array of options compatible with stream_context_create()
 	 *
 	 * @return bool
+	 * @throws Exception
+	 * @uses \PHPMailer\PHPMailer\SMTP
+	 *
 	 */
 	public function smtpConnect($options = null)
 	{
@@ -2484,10 +2480,6 @@ class PHPMailer
 			} else {
 				$result .= $this->headerLine('Content-Transfer-Encoding', $this->Encoding);
 			}
-		}
-
-		if ('mail' !== $this->Mailer) {
-			//            $result .= static::$LE;
 		}
 
 		return $result;
@@ -3320,7 +3312,7 @@ class PHPMailer
 	 * @see http://www.php.net/manual/en/function.mb-encode-mimeheader.php#60283
 	 *
 	 * @param string $str       multi-byte text to wrap encode
-	 * @param string $linebreak string to use as linefeed/end-of-line
+	 * @param null   $linebreak string to use as linefeed/end-of-line
 	 *
 	 * @return string
 	 */
@@ -3341,7 +3333,6 @@ class PHPMailer
 		// Base64 has a 4:3 ratio
 		$avgLength = floor($length * $ratio * .75);
 
-		$offset = 0;
 		for ($i = 0; $i < $mb_length; $i += $offset) {
 			$lookBack = 0;
 			do {
@@ -4251,8 +4242,8 @@ class PHPMailer
 	 *
 	 * @see http://www.php.net/manual/en/function.pathinfo.php#107461
 	 *
-	 * @param string     $path    A filename or path, does not need to exist as a file
-	 * @param int|string $options Either a PATHINFO_* constant,
+	 * @param string $path        A filename or path, does not need to exist as a file
+	 * @param null   $options     Either a PATHINFO_* constant,
 	 *                            or a string name to return only the specified piece
 	 *
 	 * @return string|array
@@ -4337,7 +4328,7 @@ class PHPMailer
 	 * Defaults to CRLF (for message bodies) and preserves consecutive breaks.
 	 *
 	 * @param string $text
-	 * @param string $breaktype What kind of line break to use; defaults to static::$LE
+	 * @param null   $breaktype What kind of line break to use; defaults to static::$LE
 	 *
 	 * @return string
 	 */
@@ -4478,7 +4469,7 @@ class PHPMailer
 			if (strpos($line, ':') === false) {
 				continue;
 			}
-			list($heading, $value) = explode(':', $line, 2);
+			[$heading, $value] = explode(':', $line, 2);
 			//Lower-case header name
 			$heading = strtolower($heading);
 			//Collapse white space within the value, also convert WSP to space
@@ -4762,6 +4753,7 @@ class PHPMailer
 
 	/**
 	 * Set an OAuth instance.
+	 * @param OAuth $oauth
 	 */
 	public function setOAuth(OAuth $oauth)
 	{

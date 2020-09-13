@@ -11,10 +11,12 @@
 
 namespace framework\vendor\Respect\Validation\Rules;
 
+use ArrayAccess;
+
 class ArrayVal extends AbstractRule
 {
     public function validate($input)
     {
-        return is_array($input) || $input instanceof \ArrayAccess;
+        return is_array($input) || $input instanceof ArrayAccess;
     }
 }

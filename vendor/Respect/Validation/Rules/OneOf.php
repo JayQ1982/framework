@@ -11,6 +11,8 @@
 
 namespace framework\vendor\Respect\Validation\Rules;
 
+use Throwable;
+
 class OneOf extends AbstractComposite
 {
 	public function assert($input)
@@ -44,7 +46,7 @@ class OneOf extends AbstractComposite
 				if ($v->check($input)) {
 					return true;
 				}
-			} catch (\Throwable $e) {
+			} catch (Throwable $e) {
 				if (!isset($firstException)) {
 					$firstException = $e;
 				}

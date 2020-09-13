@@ -32,7 +32,7 @@ class MinimumAge extends AbstractRule
     public function validate($input)
     {
         if ($input instanceof DateTime) {
-            $birthday = new \DateTime('now - '.$this->age.' year');
+            $birthday = new DateTime('now - '.$this->age.' year');
 
             return $birthday > $input;
         }

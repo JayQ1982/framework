@@ -39,9 +39,11 @@ class CreditCard extends AbstractRule
         self::VISA => '/^4\d{12}(?:\d{3})?$/',
     ];
 
-    /**
-     * @param string $brand Optional credit card brand.
-     */
+	/**
+	 * @param null $brand Optional credit card brand.
+	 *
+	 * @throws ComponentException
+	 */
     public function __construct($brand = null)
     {
         if (null !== $brand && !isset($this->brands[$brand])) {
@@ -54,7 +56,7 @@ class CreditCard extends AbstractRule
     }
 
     /**
-     * {@inheritdoc}
+     * {}
      */
     public function validate($input)
     {
