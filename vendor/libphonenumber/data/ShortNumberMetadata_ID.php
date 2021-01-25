@@ -14,11 +14,12 @@
 return [
 	'generalDesc' =>
   [
-	  'NationalNumberPattern' => '[178]\\d\\d(?:\\d{2})?',
+	  'NationalNumberPattern' => '[178]\\d\\d(?:\\d{2,3})?',
 	  'PossibleLength' =>
     [
       0 => 3,
       1 => 5,
+      2 => 6,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -60,7 +61,7 @@ return [
   ],
 	'shortCode' =>
   [
-	  'NationalNumberPattern' => '1(?:1[02389]|40\\d\\d)|71400|89887',
+	  'NationalNumberPattern' => '1(?:1[02389]|40\\d\\d|50264)|71400|89887',
 	  'ExampleNumber' => '110',
 	  'PossibleLength' =>
     [

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\template;
@@ -10,7 +10,7 @@ use Exception;
 
 abstract class TemplateCacheStrategy
 {
-	protected bool $saveOnDestruct;
+	protected bool $saveOnDestruct = false;
 	protected string $cachePath;
 
 	public function __construct(string $cachePath)
@@ -24,18 +24,32 @@ abstract class TemplateCacheStrategy
 		$this->saveOnDestruct = true;
 	}
 
+	/**
+	 * @param string $tplFile
+	 *
+	 * @return TemplateCacheEntry|null
+	 */
 	public abstract function getCachedTplFile(string $tplFile): ?TemplateCacheEntry;
 
+	/**
+	 * @param string                  $tplFile
+	 * @param TemplateCacheEntry|null $currentCacheEntry
+	 * @param string                  $compiledTemplateContent
+	 *
+	 * @return TemplateCacheEntry Path to the cached template
+	 */
 	public abstract function addCachedTplFile(string $tplFile, ?TemplateCacheEntry $currentCacheEntry, string $compiledTemplateContent): TemplateCacheEntry;
 
-	public function getCachePath()
+	public function getCachePath(): string
 	{
 		return $this->cachePath;
 	}
 
-	public function setSaveOnDestruct(bool $saveOnDestruct)
+	/**
+	 * @param boolean $saveOnDestruct
+	 */
+	public function setSaveOnDestruct(bool $saveOnDestruct): void
 	{
 		$this->saveOnDestruct = $saveOnDestruct;
 	}
 }
-/* EOF */

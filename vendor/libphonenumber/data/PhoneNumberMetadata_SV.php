@@ -27,7 +27,7 @@ return [
   ],
 	'fixedLine' =>
   [
-	  'NationalNumberPattern' => '2[1-6]\\d{6}',
+	  'NationalNumberPattern' => '2(?:[1-6]\\d{3}|[79]90[034]|890[0245])\\d{3}',
 	  'ExampleNumber' => '21234567',
 	  'PossibleLength' =>
     [
@@ -39,7 +39,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '[67]\\d{7}',
+	  'NationalNumberPattern' => '66(?:[02-9]\\d\\d|1(?:[02-9]\\d|16))\\d{3}|(?:6[0-57-9]|7\\d)\\d{6}',
 	  'ExampleNumber' => '70123456',
 	  'PossibleLength' =>
     [

@@ -1,13 +1,14 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\common;
 
 use Exception;
 use stdClass;
+use Throwable;
 
 class JsonUtils
 {
@@ -17,9 +18,9 @@ class JsonUtils
 	 * @param      $string : The JSON string
 	 * @param bool $assoc  : Return associative array (or json object if false)
 	 *
-	 * @return array|stdClass|null : The nested array on success, "null" on failure/error
+	 * @return array|stdClass|null : null on failure/error
 	 */
-	public static function deJson($string, bool $assoc = true)
+	public static function deJson($string, bool $assoc = true): array|stdClass|null
 	{
 		return json_decode($string, $assoc, 512, JSON_BIGINT_AS_STRING);
 	}
@@ -29,17 +30,17 @@ class JsonUtils
 	 *
 	 * @param array $array : A nested array
 	 *
-	 * @return string|bool : The JSON string on success, "false" on failure/error
+	 * @return false|string : The JSON string on success, "false" on failure/error
 	 */
-	public static function enJson(array $array)
+	public static function enJson(array $array): false|string
 	{
-		return json_encode($array, (JSON_UNESCAPED_UNICODE | JSON_BIGINT_AS_STRING), 512);
+		return json_encode($array, (JSON_UNESCAPED_UNICODE | JSON_BIGINT_AS_STRING));
 	}
 
 	public static function decode(string $json, bool $toAssoc = false, bool $minified = true)
 	{
 		if ($minified === false && $json !== '{}') {
-			$json = self::minify($json);
+			$json = JsonUtils::minify($json);
 		}
 
 		$result = json_decode($json, $toAssoc);
@@ -68,6 +69,20 @@ class JsonUtils
 		}
 
 		return $result;
+	}
+
+	public static function decodeFile($filePath, $toAssoc = false, $minified = true)
+	{
+		if (file_exists($filePath) === false) {
+			throw new Exception('JSON-File does not exist: ' . $filePath);
+		}
+
+		try {
+			return JsonUtils::decode(file_get_contents($filePath), $toAssoc, $minified);
+		} catch (Throwable $e) {
+
+			throw new Exception($e->getMessage() . ', File: ' . $filePath);
+		}
 	}
 
 	public static function minify(string $json): string
@@ -128,4 +143,3 @@ class JsonUtils
 		return implode(null, $new_str);
 	}
 }
-/* EOF */

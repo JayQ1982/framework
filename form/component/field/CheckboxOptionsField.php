@@ -1,16 +1,18 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\component\field;
 
 use LogicException;
+use framework\form\FormOptions;
 use framework\form\renderer\CheckboxItemRenderer;
 use framework\form\renderer\DefinitionListRenderer;
 use framework\form\renderer\LegendAndListRenderer;
 use framework\form\rule\RequiredRule;
+use framework\html\HtmlText;
 
 class CheckboxOptionsField extends OptionsField
 {
@@ -19,26 +21,26 @@ class CheckboxOptionsField extends OptionsField
 	const LAYOUT_LEGENDANDLIST = 2;
 	const LAYOUT_CHECKBOXITEM = 3;
 
-	public function __construct(string $name, string $label, array $options, bool $optionsAreHTML, $value, ?string $requiredError = null, int $layout = self::LAYOUT_LEGENDANDLIST)
+	public function __construct(string $name, HtmlText $label, FormOptions $formOptions, array $initialValues, ?HtmlText $requiredError = null, int $layout = CheckboxOptionsField::LAYOUT_LEGENDANDLIST)
 	{
-		parent::__construct($name, $label, $options, $optionsAreHTML, $value);
+		parent::__construct($name, $label, $formOptions, $initialValues);
 		$this->acceptArrayAsValue();
 
 		if (!is_null($requiredError)) {
 			$this->addRule(new RequiredRule($requiredError));
 		}
 
-		if ($layout !== self::LAYOUT_NONE) {
+		if ($layout !== CheckboxOptionsField::LAYOUT_NONE) {
 			switch ($layout) {
-				case self::LAYOUT_DEFINITIONLIST:
+				case CheckboxOptionsField::LAYOUT_DEFINITIONLIST:
 					$this->setRenderer(new DefinitionListRenderer($this));
 					break;
 
-				case self::LAYOUT_LEGENDANDLIST:
+				case CheckboxOptionsField::LAYOUT_LEGENDANDLIST:
 					$this->setRenderer(new LegendAndListRenderer($this));
 					break;
 
-				case self::LAYOUT_CHECKBOXITEM:
+				case CheckboxOptionsField::LAYOUT_CHECKBOXITEM:
 					$this->setRenderer(new CheckboxItemRenderer($this));
 					break;
 
@@ -53,4 +55,3 @@ class CheckboxOptionsField extends OptionsField
 		return 'checkbox';
 	}
 }
-/* EOF */

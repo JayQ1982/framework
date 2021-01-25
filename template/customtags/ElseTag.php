@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
@@ -15,22 +15,22 @@ use framework\template\template\TemplateTag;
 
 class ElseTag extends TemplateTag implements TagNode
 {
-	public static function getName()
+	public static function getName(): string
 	{
 		return 'else';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return false;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return false;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $tagNode)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
 		$lastTplTag = $tplEngine->getLastTplTag();
 
@@ -39,15 +39,14 @@ class ElseTag extends TemplateTag implements TagNode
 		}
 
 		$phpCode = '<?php } else { ?>';
-		$phpCode .= $tagNode->getInnerHtml();
+		$phpCode .= $elementNode->getInnerHtml();
 		$phpCode .= '<?php } ?>';
 
 		$textNode = new TextNode($tplEngine->getDomReader());
 		$textNode->content = $phpCode;
 
-		$tagNode->parentNode->replaceNode($tagNode, $textNode);
+		$elementNode->parentNode->replaceNode($elementNode, $textNode);
 
-		$tagNode->parentNode->removeNode($tagNode);
+		$elementNode->parentNode->removeNode($elementNode);
 	}
 }
-/* EOF */

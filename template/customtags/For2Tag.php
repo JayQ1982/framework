@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
@@ -15,36 +15,36 @@ use framework\template\template\TemplateTag;
 
 class For2Tag extends TemplateTag implements TagNode
 {
-	public static function getName()
+	public static function getName(): string
 	{
 		return 'for2';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return true;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return false;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $node)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$tplEngine->checkRequiredAttributes($node, ['var', 'as']);
+		$tplEngine->checkRequiredAttributes($elementNode, ['var', 'as']);
 
-		$dataKeyAttr = $node->getAttribute('var')->value;
-		$asVarAttr = $node->getAttribute('as')->value;
+		$dataKeyAttr = $elementNode->getAttribute('var')->getValue();
+		$asVarAttr = $elementNode->getAttribute('as')->getValue();
 
-		$keyVarAttr = $node->getAttribute('key')->value;
-		$counterAttr = $node->getAttribute('counter')->value;
+		$keyVarAttr = $elementNode->getAttribute('key')->getValue();
+		$counterAttr = $elementNode->getAttribute('counter')->getValue();
 
-		$oddEvenAttr = $node->getAttribute('odd-even')->value;
-		$firstLastAttr = $node->getAttribute('first-last')->value;
+		$oddEvenAttr = $elementNode->getAttribute('odd-even')->getValue();
+		$firstLastAttr = $elementNode->getAttribute('first-last')->getValue();
 
-		$stepIncrement = $node->getAttribute('step')->value;
-		$grabCount = $node->getAttribute('grab')->value;
+		$stepIncrement = $elementNode->getAttribute('step')->getValue();
+		$grabCount = $elementNode->getAttribute('grab')->getValue();
 
 		if ($stepIncrement === null && $grabCount !== null) {
 			$stepIncrement = $grabCount;
@@ -69,7 +69,7 @@ class For2Tag extends TemplateTag implements TagNode
 			
 			';
 
-		if ($tplEngine->isFollowedBy($node, ['else']) === true) {
+		if ($tplEngine->isFollowedBy($elementNode, ['else']) === true) {
 			$phpCode .= 'if(' . $for_data_count . ' > 0):
 			';
 		}
@@ -98,13 +98,12 @@ class For2Tag extends TemplateTag implements TagNode
 		$phpCode .= (($oddEvenAttr !== null) ? '$this->addData(\'' . $oddEvenAttr . '\', (((' . $for_i . '/' . $stepIncrement . ')%2 === 0)?\'odd\':\'even\'), true);' : null) . '	
 			' . (($firstLastAttr !== null) ? '$this->addData(\'' . $firstLastAttr . '\', ((' . $for_i . ' === 0)?\'first\':(((' . $for_i . '/' . $stepIncrement . ') === ' . $for_data_count . '-1)?\'last\':null)), true);' : null) . '	
 		?>
-		' . $node->getInnerHtml() . '
+		' . $elementNode->getInnerHtml() . '
 		<?php endfor; ?>';
 
 		$newNode = new TextNode($tplEngine->getDomReader());
 		$newNode->content = $phpCode;
 
-		$node->parentNode->replaceNode($node, $newNode);
+		$elementNode->parentNode->replaceNode($elementNode, $newNode);
 	}
 }
-/* EOF */

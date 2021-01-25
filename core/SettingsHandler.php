@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
@@ -29,6 +29,7 @@ class SettingsHandler
 			'${siteRoot}' => $coreProperties->getSiteRoot(),
 			'${host}'     => $host,
 		];
+
 		$this->loadSettingsFromCache();
 	}
 
@@ -62,7 +63,7 @@ class SettingsHandler
 			throw new Exception('File "' . $filePath . '" does not exist!');
 		}
 
-		/* Property not exist OR cache file is older than the json file here */
+		/* Property does not exist OR cache file is older than the json file here */
 		if (!isset($this->settingsData->{$property}) || filemtime($filePath) > $this->cachedFileTime) {
 			$this->settingsData->{$property} = $this->loadSettingsFromFile($property . '.json');
 			$this->cacheChanged = true;
@@ -143,4 +144,3 @@ class SettingsHandler
 		]));
 	}
 }
-/* EOF */

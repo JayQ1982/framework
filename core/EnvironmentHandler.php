@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
@@ -18,8 +18,6 @@ class EnvironmentHandler
 	private ?string $sessionSavePath;
 	private ?string $sessionName;
 	private ?int $sessionMaxLifeTime;
-	private string $defaultPageAfterLogin;
-	private string $defaultAccessDeniedPage;
 	private int $copyrightYear;
 	private string $robots;
 	private stdClass $cspPolicySettings;
@@ -43,8 +41,6 @@ class EnvironmentHandler
 		$this->sessionSavePath = $envSettings->sessionSavePath ?? $coreSettings->sessionSavePath ?? null;
 		$this->sessionName = $envSettings->sessionName ?? $coreSettings->sessionName ?? null;
 		$this->sessionMaxLifeTime = $envSettings->sessionMaxLifeTime ?? $coreSettings->sessionMaxLifeTime ?? null;
-		$this->defaultPageAfterLogin = $coreSettings->defaultPageAfterLogin ?? '/';
-		$this->defaultAccessDeniedPage = $coreSettings->defaultAccessDeniedPage ?? '/';
 		$this->copyrightYear = $coreSettings->copyrightYear ?? date('Y');
 		$this->robots = $envSettings->robots ?? $coreSettings->robots;
 		$this->cspPolicySettings = $envSettings->csp ?? $coreSettings->csp;
@@ -96,21 +92,6 @@ class EnvironmentHandler
 		return $this->sessionMaxLifeTime;
 	}
 
-	public function getDefaultPageAfterLogin(): string
-	{
-		return $this->defaultPageAfterLogin;
-	}
-
-	public function getDefaultAccessDeniedPage(): string
-	{
-		return $this->defaultAccessDeniedPage;
-	}
-
-	public function setDefaultAccessDeniedPage(string $defaultAccessDeniedPage): void
-	{
-		$this->defaultAccessDeniedPage = $defaultAccessDeniedPage;
-	}
-
 	public function getCopyrightYear(): int
 	{
 		return $this->copyrightYear;
@@ -156,4 +137,3 @@ class EnvironmentHandler
 		return $this->defaultReplyToName;
 	}
 }
-/* EOF */

@@ -1,48 +1,47 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
 
+use framework\html\HtmlTagAttribute;
 use framework\template\template\TagNode;
 use framework\template\template\TemplateEngine;
 use framework\template\htmlparser\ElementNode;
-use framework\template\htmlparser\HtmlAttribute;
 use framework\template\template\TemplateTag;
 
 class RadioTag extends TemplateTag implements TagNode
 {
-	public static function getName()
+	public static function getName(): string
 	{
 		return 'radio';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return false;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return true;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $node)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$sels = $node->getAttribute('selection')->value;
+		$sels = $elementNode->getAttribute('selection')->getValue();
 		$selsStr = '$this->getDataFromSelector(\'' . $sels . '\')';
-		$value = $node->getAttribute('value')->value;
-		$node->removeAttribute('selection');
+		$value = $elementNode->getAttribute('value')->getValue();
+		$elementNode->removeAttribute('selection');
 
-		$node->namespace = null;
-		$node->tagName = 'input';
+		$elementNode->namespace = null;
+		$elementNode->tagName = 'input';
 		if ($sels !== null) {
-			$node->tagExtension = " <?php echo ((is_array({$selsStr}) && in_array({$value}, {$selsStr})) || ({$selsStr} == '{$value}'))?' checked':null; ?>";
+			$elementNode->tagExtension = " <?php echo ((is_array({$selsStr}) && in_array({$value}, {$selsStr})) || ({$selsStr} == '{$value}'))?' checked':null; ?>";
 		}
 
-		$node->addAttribute(new HtmlAttribute('type', 'radio'));
+		$elementNode->addAttribute(new HtmlTagAttribute('type', 'radio', true));
 	}
 }
-/* EOF */

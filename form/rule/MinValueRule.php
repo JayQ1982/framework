@@ -1,24 +1,21 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\rule;
 
 use framework\form\component\FormField;
 use framework\form\FormRule;
+use framework\html\HtmlText;
 use UnexpectedValueException;
 
 class MinValueRule extends FormRule
 {
-	protected $minValue;
+	protected int|float $minValue;
 
-	/**
-	 * @param mixed  $minValue
-	 * @param string $errorMessage
-	 */
-	function __construct($minValue, string $errorMessage)
+	function __construct(int|float $minValue, HtmlText $errorMessage)
 	{
 		parent::__construct($errorMessage);
 
@@ -33,11 +30,10 @@ class MinValueRule extends FormRule
 
 		$fieldValue = $formField->getRawValue();
 
-		if (is_scalar($fieldValue) === true) {
+		if (is_int($fieldValue) || is_float($fieldValue)) {
 			return ($fieldValue >= $this->minValue);
 		}
 
 		throw new UnexpectedValueException('Could not handle field value for rule ' . __CLASS__);
 	}
 }
-/* EOF */

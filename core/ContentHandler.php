@@ -1,44 +1,49 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
 
 use Exception;
-use framework\security\CspNonce;
-use framework\security\CsrfToken;
+use framework\exception\NotFoundException;
+use framework\html\HtmlDocument;
 
 class ContentHandler
 {
 	private Core $core;
-	private string $htmlFileName;
-	private string $contentType = HttpResponse::TYPE_HTML;
-	private array $placeholders = [];
-	private array $navigationLevels = [];
-	private ?string $template = 'default';
-	private string $content = '';
 	private int $httpStatusCode = HttpStatusCodes::HTTP_OK;
-	private bool $suppressCSPheader = false;
+	private string $content = '';
+	private string $contentType = HttpResponse::TYPE_HTML;
+	private bool $suppressCspHeader = false;
+	private ?HtmlDocument $htmlDocument;
 
 	public function __construct(Core $core)
 	{
 		$this->core = $core;
 		$requestHandler = $core->getRequestHandler();
-		$this->htmlFileName = trim($requestHandler->getFileTitle());
+		$localeHandler = $core->getLocaleHandler();
+		$environmentHandler = $core->getEnvironmentHandler();
+
 		$defaultContentType = trim($requestHandler->getContentType());
 		if ($defaultContentType !== '') {
 			$this->contentType = $defaultContentType;
 		}
+		$this->htmlDocument = ($this->contentType === HttpResponse::TYPE_HTML) ? new HtmlDocument($requestHandler, $localeHandler, $environmentHandler) : null;
 	}
 
 	public function setContentType(string $contentType): void
 	{
-		if (!in_array($contentType, HttpResponse::CONTENT_TYPES_WITH_CHARSET + ['pdf', 'png'])) {
+		if (!in_array($contentType, HttpResponse::CONTENT_TYPES_WITH_CHARSET)) {
 			throw new Exception('Unknown contentType: ' . $contentType);
 		}
 		$this->contentType = $contentType;
+	}
+
+	public function getContentType(): string
+	{
+		return $this->contentType;
 	}
 
 	public function setContent(): void
@@ -46,33 +51,51 @@ class ContentHandler
 		$core = $this->core;
 		$requestHandler = $core->getRequestHandler();
 		$localeHandler = $core->getLocaleHandler();
-		$environmentHandler = $core->getEnvironmentHandler();
-		$httpRequest = $core->getHttpRequest();
-		$errorHandler = $core->getErrorHandler();
+		$coreProperties = $core->getCoreProperties();
 
 		ob_start();
-		ob_implicit_flush(0);
+		ob_implicit_flush(false);
 
 		$this->loadLocalizedText($requestHandler, $localeHandler);
-		$this->setCoreReplacements($requestHandler, $environmentHandler, $httpRequest);
-		$this->setStatePlaceholder($httpRequest, $localeHandler);
 		$this->executePHP($core);
-
-		if ($this->contentType === HttpResponse::TYPE_HTML) {
-			// Load HTML file and replace placeholders, set by the php file(s)
-			$this->loadHTML($core);
+		if (!is_null($this->htmlDocument)) {
+			// After php execution because php script can modify the htmlDocument properties
+			$this->addContent($this->htmlDocument->render($requestHandler, $coreProperties));
 		}
 
 		$this->addContent(ob_get_clean());
 
-		if (!$this->hasContent()) {
-			$errorHandler->display_error(HttpStatusCodes::HTTP_NOT_FOUND, 'Die gewünschte Seite wurde nicht gefunden.', true);
+		$this->checkContent();
+	}
+
+	public function addContent(?string $content): void
+	{
+		$content = trim($content);
+		if ($content === '') {
+			return;
 		}
+
+		$this->content .= $content;
+	}
+
+	public function setHttpStatusCode(int $httpStatusCode)
+	{
+		$this->httpStatusCode = $httpStatusCode;
+	}
+
+	public function getHttpStatusCode(): int
+	{
+		return $this->httpStatusCode;
+	}
+
+	public function getContent(): string
+	{
+		return $this->content;
 	}
 
 	private function loadLocalizedText(RequestHandler $requestHandler, LocaleHandler $localeHandler): void
 	{
-		$dir = $requestHandler->getAreaDir() . 'language' . DIRECTORY_SEPARATOR . $requestHandler->getLanguage() . DIRECTORY_SEPARATOR;
+		$dir = $requestHandler->getAreaDir() . 'language/' . $requestHandler->getLanguage() . '/';
 		if (!is_dir($dir)) {
 			return;
 		}
@@ -89,33 +112,6 @@ class ContentHandler
 		}
 	}
 
-	private function setCoreReplacements(RequestHandler $requestHandler, EnvironmentHandler $environmentHandler, HttpRequest $httpRequest): void
-	{
-		$copyrightYear = $environmentHandler->getCopyrightYear();
-
-		$this->placeholders['bodyid'] = 'body_' . $requestHandler->getFileTitle();
-		$this->placeholders['language'] = $requestHandler->getLanguage();
-		$this->placeholders['charset'] = 'UTF-8';
-		$this->placeholders['copyright'] = ($copyrightYear < date('Y')) ? $copyrightYear . '-' . date('Y') : $copyrightYear;
-		$this->placeholders['protocol'] = $httpRequest->getProtocol();
-		$this->placeholders['robots'] = $environmentHandler->getRobots();
-		$this->placeholders['scripts'] = '';
-		$this->placeholders['result'] = '';
-		$this->placeholders['cspNonce'] = CspNonce::get();
-		$this->placeholders['csrfField'] = CsrfToken::renderAsHiddenPostField();
-	}
-
-	private function setStatePlaceholder(HttpRequest $httpRequest, LocaleHandler $localeHandler): void
-	{
-		$ac = $httpRequest->getInputString('ac');
-
-		if (is_null($ac)) {
-			return;
-		}
-
-		$this->placeholders['result'] = '<p class="' . $ac . '">' . $localeHandler->getText($ac) . '</p>';
-	}
-
 	private function executePHP(Core $core): void
 	{
 		$requestHandler = $core->getRequestHandler();
@@ -128,98 +124,42 @@ class ContentHandler
 			return;
 		}
 
-		$errorHandler = $core->getErrorHandler();
 		if (!is_subclass_of($phpClassName, 'framework\core\baseView')) {
-			$errorHandler->display_error(HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR, 'The class ' . $phpClassName . ' must extend framework\core\baseView.');
+			throw new Exception('The class ' . $phpClassName . ' must extend framework\core\baseView.');
 		}
 
-		/** @var baseView $viewClass */
-		$viewClass = new $phpClassName($core);
-		if (!$viewClass->hasContent()) {
-			$viewClass->execute();
+		/** @var baseView $baseView */
+		$baseView = new $phpClassName($this->core);
+		if (!$baseView->hasContent()) {
+			$baseView->execute();
 		}
-		$individualHtmlFileName = $viewClass->getIndividualHtmlFileName();
-		if (!is_null($individualHtmlFileName)) {
-			$this->htmlFileName = $individualHtmlFileName;
-		}
-		$this->addContent($viewClass->getContent());
-		$this->addPlaceholders($viewClass->getPlaceholders());
-		$this->addNavigationLevels($viewClass->getNavigationLevels());
+		$this->addContent($baseView->getContent());
 	}
 
-	public function getPlaceholders(): array
+	public function getHtmlDocument(): HtmlDocument
 	{
-		return $this->placeholders;
-	}
-
-	public function getNavigationLevels(): array
-	{
-		return $this->navigationLevels;
-	}
-
-	public function setTemplate(string $templateName): void
-	{
-		$this->template = $templateName;
-	}
-
-	public function addContent(?string $content): void
-	{
-		$content = trim($content);
-		if ($content === '') {
-			return;
-		}
-
-		$this->content .= $content;
-	}
-
-	private function addPlaceholders(array $placeholders): void
-	{
-		foreach ($placeholders as $key => $val) {
-			$this->placeholders[$key] = $val;
-		}
-	}
-
-	private function addNavigationLevels(array $navigationLevels): void
-	{
-		foreach ($navigationLevels as $key => $val) {
-			$this->navigationLevels[$key] = $val;
-		}
-	}
-
-	private function loadHTML(Core $core): void
-	{
-		$pageHandler = new PageHandler($core, $this->htmlFileName, $this->template, $this->placeholders, $this->navigationLevels);
-		$this->addContent($pageHandler->getContent());
+		return $this->htmlDocument;
 	}
 
 	public function hasContent(): bool
 	{
-		return (trim($this->content) !== '');
+		return trim($this->content) !== '';
 	}
 
-	public function getContentType(): string
+	private function checkContent()
 	{
-		return $this->contentType;
+		if (!$this->hasContent()) {
+			throw new NotFoundException($this->core, false);
+		}
 	}
 
-	public function getContent(): string
+	public function suppressCspHeader(): void
 	{
-		return $this->content;
+		$this->suppressCspHeader = true;
 	}
 
-	public function getHttpStatusCode(): int
+	public function isSuppressCspHeader(): bool
 	{
-		return $this->httpStatusCode;
-	}
-
-	public function suppressCSPheader(): void
-	{
-		$this->suppressCSPheader = true;
-	}
-
-	public function isSuppressCSPheader(): bool
-	{
-		return $this->suppressCSPheader;
+		return $this->suppressCspHeader;
 	}
 }
-/* EOF */

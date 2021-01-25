@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\rule;
@@ -9,13 +9,14 @@ namespace framework\form\rule;
 use ArrayObject;
 use framework\form\component\FormField;
 use framework\form\FormRule;
+use framework\html\HtmlText;
 use UnexpectedValueException;
 
 class RegexRule extends FormRule
 {
 	protected string $pattern;
 
-	public function __construct(string $pattern, string $errorMessage)
+	public function __construct(string $pattern, HtmlText $errorMessage)
 	{
 		parent::__construct($errorMessage);
 
@@ -30,11 +31,11 @@ class RegexRule extends FormRule
 
 		$fieldValue = $formField->getRawValue();
 
-		if (is_scalar($fieldValue) === true) {
+		if (is_scalar($fieldValue)) {
 			return $this->checkAgainstPattern($fieldValue);
-		} else if (is_array($fieldValue) === true || $fieldValue instanceof ArrayObject) {
+		} else if (is_array($fieldValue) || $fieldValue instanceof ArrayObject) {
 			foreach ($fieldValue as $value) {
-				if ($this->checkAgainstPattern($value) === false) {
+				if (!$this->checkAgainstPattern($value)) {
 					return false;
 				}
 			}
@@ -45,9 +46,8 @@ class RegexRule extends FormRule
 		}
 	}
 
-	protected function checkAgainstPattern($value)
+	protected function checkAgainstPattern($value): bool
 	{
 		return (preg_match($this->pattern, $value) === 1);
 	}
 }
-/* EOF */

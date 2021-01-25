@@ -1,36 +1,34 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\security;
 
 class CspNonce
 {
+	private const SESSION_INDICATOR = 'security_cspNonce';
 	private static ?string $cspNonce = null;
 
 	public static function get(): string
 	{
-		/* Hint: This method MIGHT (seldom) be called BEFORE
-		 * $_SESSION has been initialized (for example: error-pages).
-		 * Trying to use same nonce within a user-session, if possible.
-		 */
 		if (!isset($_SESSION)) {
-			if (is_null(self::$cspNonce)) {
-				self::$cspNonce = self::generate();
+			// This method might be called before $_SESSION has been initialized (e.g. error-pages)
+			if (is_null(CspNonce::$cspNonce)) {
+				CspNonce::$cspNonce = CspNonce::generate();
 			}
 
-			return self::$cspNonce;
+			return CspNonce::$cspNonce;
 		}
-		if (!isset($_SESSION['security_cspNonce'])) {
-			if (is_null(self::$cspNonce)) {
-				self::$cspNonce = self::generate();
+		if (!isset($_SESSION[CspNonce::SESSION_INDICATOR])) {
+			if (is_null(CspNonce::$cspNonce)) {
+				CspNonce::$cspNonce = CspNonce::generate();
 			}
-			$_SESSION['security_cspNonce'] = self::$cspNonce;
+			$_SESSION[CspNonce::SESSION_INDICATOR] = CspNonce::$cspNonce;
 		}
 
-		return $_SESSION['security_cspNonce'];
+		return $_SESSION[CspNonce::SESSION_INDICATOR];
 	}
 
 	private static function generate(): string
@@ -38,5 +36,3 @@ class CspNonce
 		return base64_encode(openssl_random_pseudo_bytes(16));
 	}
 }
-
-/* EOF */

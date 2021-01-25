@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\table\column;
@@ -11,13 +11,7 @@ use DateTime;
 
 class DateColumn extends AbstractTableColumn
 {
-	private string $format;
-
-	public function __construct(string $identifier, string $label, bool $isSortable, bool $sortAscendingByDefault = true, string $format = 'd.m.Y H:i:s', bool $columnScope = true)
-	{
-		$this->format = $format;
-		parent::__construct($identifier, $label, $isSortable, $sortAscendingByDefault, $columnScope);
-	}
+	private string $format = 'd.m.Y H:i:s';
 
 	public function setFormat(string $format): void
 	{
@@ -31,4 +25,3 @@ class DateColumn extends AbstractTableColumn
 		return empty($value) ? '' : (new DateTime($value))->format($this->format);
 	}
 }
-/* EOF */

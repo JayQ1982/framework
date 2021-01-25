@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\rule;
@@ -20,4 +20,3 @@ class NumericValueRule extends FormRule
 		return is_numeric($formField->getRawValue());
 	}
 }
-/* EOF */

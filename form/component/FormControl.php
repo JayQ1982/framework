@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\component;
@@ -9,23 +9,24 @@ namespace framework\form\component;
 use framework\form\FormComponent;
 use framework\form\FormRenderer;
 use framework\form\renderer\FormControlRenderer;
+use framework\html\HtmlText;
 
 class FormControl extends FormComponent
 {
-	private string $submitLabel;
+	private HtmlText $submitLabel;
 	private ?string $cancelLink;
-	private string $cancelLabel;
+	private HtmlText $cancelLabel;
 
-	public function __construct(string $name, string $submitLabel, ?string $cancelLink = null, string $cancelLabel = 'Abbrechen')
+	public function __construct(string $name, HtmlText $submitLabel, ?string $cancelLink = null, ?HtmlText $cancelLabel = null)
 	{
 		$this->submitLabel = $submitLabel;
 		$this->cancelLink = $cancelLink;
-		$this->cancelLabel = $cancelLabel;
+		$this->cancelLabel = is_null($cancelLabel) ? new HtmlText('Abbrechen', true) : $cancelLabel;
 
 		parent::__construct($name);
 	}
 
-	public function getSubmitLabel(): string
+	public function getSubmitLabel(): HtmlText
 	{
 		return $this->submitLabel;
 	}
@@ -35,7 +36,7 @@ class FormControl extends FormComponent
 		return $this->cancelLink;
 	}
 
-	public function getCancelLabel(): string
+	public function getCancelLabel(): HtmlText
 	{
 		return $this->cancelLabel;
 	}
@@ -45,4 +46,3 @@ class FormControl extends FormComponent
 		return new FormControlRenderer($this);
 	}
 }
-/* EOF */

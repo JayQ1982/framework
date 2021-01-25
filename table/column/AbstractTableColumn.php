@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\table\column;
@@ -37,6 +37,11 @@ abstract class AbstractTableColumn
 		return $this->identifier;
 	}
 
+	public function getLabel(): string
+	{
+		return $this->label;
+	}
+
 	public function isSortAscendingByDefault(): bool
 	{
 		return $this->sortAscendingByDefault;
@@ -45,6 +50,11 @@ abstract class AbstractTableColumn
 	public function setTableIdentifier(string $tableIdentifier): void
 	{
 		$this->tableIdentifier = $tableIdentifier;
+	}
+
+	public function getTableIdentifier(): ?string
+	{
+		return $this->tableIdentifier;
 	}
 
 	public function addColumnCssClass(string $className): void
@@ -61,37 +71,6 @@ abstract class AbstractTableColumn
 			return;
 		}
 		$this->cellCssClasses[] = $className;
-	}
-
-	public function renderHead(string $sortLinkDirection): string
-	{
-		$attributesArr = ['th'];
-		if ($this->columnScope) {
-			$attributesArr[] = 'scope="col"';
-		}
-		if (!empty($this->columnCssClasses)) {
-			$attributesArr[] = 'class="' . implode(' ', $this->columnCssClasses) . '"';
-		}
-
-		$htmlArr = ['<' . implode(' ', $attributesArr) . '>'];
-
-		if ($this->isSortable) {
-			$htmlArr[] = implode('', [
-				'<a href="?sort=' . implode('|', [
-					$this->tableIdentifier,
-					$this->identifier,
-					$sortLinkDirection,
-				]) . '">',
-				$this->label,
-				'</a>',
-			]);
-		} else {
-			$htmlArr[] = $this->label;
-		}
-
-		$htmlArr[] = '</th>';
-
-		return implode('', $htmlArr);
 	}
 
 	public function renderCell(TableItemModel $tableItemModel): string
@@ -115,4 +94,3 @@ abstract class AbstractTableColumn
 		return $this->isSortable;
 	}
 }
-/* EOF */

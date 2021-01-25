@@ -28,7 +28,7 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '000|1(?:0[0-35-7]|1[0245]|2[15]|9)|911',
+	  'NationalNumberPattern' => '000|1(?:0[0-35-7]|1[0245]|2[015]|3[47]|4[478]|9)|911',
 	  'ExampleNumber' => '19',
 	  'PossibleLength' =>
     [
@@ -63,7 +63,7 @@ return [
   ],
 	'shortCode' =>
   [
-	  'NationalNumberPattern' => '000|1(?:0[0-35-7]|1[02-5]|2[15]|9)|3372|89338|911',
+	  'NationalNumberPattern' => '000|1(?:0[0-35-7]|1[02-5]|2[015]|3[47]|4[478]|9)|3372|89338|911',
 	  'ExampleNumber' => '19',
 	  'PossibleLength' =>
     [

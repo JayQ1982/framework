@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\common;
@@ -95,7 +95,7 @@ class CSVFile
 	 *
 	 * @return array|false|null
 	 */
-	private function my_str_getcsv($input, string $delimiter = ',', string $enclosure = '"')
+	private function my_str_getcsv($input, string $delimiter = ',', string $enclosure = '"'): bool|array|null
 	{
 		$temp = fopen("php://memory", "rw");
 		fwrite($temp, $input);
@@ -109,4 +109,3 @@ class CSVFile
 		return $r;
 	}
 }
-/* EOF */ 

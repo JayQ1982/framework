@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\api;
@@ -29,7 +29,7 @@ abstract class curlHelper
 	 *
 	 * @return curlRequest
 	 */
-	protected function prepareRequest(string $url, $postData = null)
+	protected function prepareRequest(string $url, $postData = null): curlRequest
 	{
 		if (is_null($postData)) {
 			return $this->prepareGetRequest($url);
@@ -46,23 +46,12 @@ abstract class curlHelper
 		return $this->preparePostRequestFromString($url, $postData, true);
 	}
 
-	/**
-	 * @param string $url
-	 *
-	 * @return curlRequest
-	 */
-	protected function prepareGetRequest(string $url)
+	protected function prepareGetRequest(string $url): curlRequest
 	{
 		return new curlRequest($url);
 	}
 
-	/**
-	 * @param string $url
-	 * @param array  $postData
-	 *
-	 * @return curlRequest
-	 */
-	protected function preparePostRequestFromArray(string $url, array $postData)
+	protected function preparePostRequestFromArray(string $url, array $postData): curlRequest
 	{
 		$curlRequest = new curlRequest($url);
 		$curlRequest->setPostDataFromArray($postData);
@@ -70,13 +59,7 @@ abstract class curlHelper
 		return $curlRequest;
 	}
 
-	/**
-	 * @param string   $url
-	 * @param stdClass $object
-	 *
-	 * @return curlRequest
-	 */
-	protected function preparePostRequestFromObject(string $url, stdClass $object)
+	protected function preparePostRequestFromObject(string $url, stdClass $object): curlRequest
 	{
 		$curlRequest = new curlRequest($url);
 		$curlRequest->setPostDataFromObject($object);
@@ -84,42 +67,7 @@ abstract class curlHelper
 		return $curlRequest;
 	}
 
-	/**
-	 * @param string $url
-	 * @param string $xmlString
-	 *
-	 * @return curlRequest
-	 */
-	protected function preparePostRequestFromXml(string $url, string $xmlString)
-	{
-		$curlRequest = new curlRequest($url);
-		$curlRequest->setPostDataFromXML($xmlString);
-
-		return $curlRequest;
-	}
-
-	/**
-	 * @param string $url
-	 * @param string $jsonString
-	 *
-	 * @return curlRequest
-	 */
-	protected function preparePostRequestFromJson(string $url, string $jsonString)
-	{
-		$curlRequest = new curlRequest($url);
-		$curlRequest->setPostDataFromJson($jsonString);
-
-		return $curlRequest;
-	}
-
-	/**
-	 * @param string $url
-	 * @param string $dataString
-	 * @param bool   $detectContentType
-	 *
-	 * @return curlRequest
-	 */
-	protected function preparePostRequestFromString(string $url, string $dataString, bool $detectContentType = false)
+	protected function preparePostRequestFromString(string $url, string $dataString, bool $detectContentType = false): curlRequest
 	{
 		$curlRequest = new curlRequest($url);
 		$curlRequest->setPostDataFromString($dataString, $detectContentType);
@@ -127,4 +75,3 @@ abstract class curlHelper
 		return $curlRequest;
 	}
 }
-/* EOF */

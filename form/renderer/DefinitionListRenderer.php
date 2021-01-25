@@ -1,20 +1,20 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\renderer;
 
 use framework\form\component\FormField;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
-use framework\form\FormText;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
+use framework\html\HtmlText;
 
 class DefinitionListRenderer extends FormRenderer
 {
-	protected FormField $formField;
+	private FormField $formField;
 
 	public function __construct(FormField $formField)
 	{
@@ -25,57 +25,56 @@ class DefinitionListRenderer extends FormRenderer
 	{
 		$formField = $this->formField;
 
-		$labelInfoText = trim($this->formField->getLabelInfoText());
-		$labelText = $formField->getLabel();
-
-		$labelAttributes = [new FormTagAttribute('for', $formField->getName())];
+		$labelAttributes = [new HtmlTagAttribute('for', $formField->getName(), true)];
 		if (!$this->formField->isRenderLabel()) {
-			$labelAttributes[] = new FormTagAttribute('class', 'visuallyhidden');
+			$labelAttributes[] = new HtmlTagAttribute('class', 'visuallyhidden', true);
 		}
 
-		$labelTag = new FormTag('label', false, $labelAttributes);
-		$labelTag->addText(new FormText($labelText));
+		$labelTag = new HtmlTag('label', false, $labelAttributes);
+		$labelTag->addText($formField->getLabel());
 
 		if ($formField->isRequired() && $formField->isRenderRequiredAbbr()) {
-			$abbrTag = new FormTag('abbr', false, [
-				new FormTagAttribute('title', 'Erforderliche Eingabe'),
-				new FormTagAttribute('class', 'required'),
+			$abbrTag = new HtmlTag('abbr', false, [
+				new HtmlTagAttribute('title', 'Erforderliche Eingabe', true),
+				new HtmlTagAttribute('class', 'required', true),
 			]);
-			$abbrTag->addText(new FormText('*'));
+			$abbrTag->addText(new HtmlText('*', true));
 			$labelTag->addTag($abbrTag);
 		}
 
-		if ($labelInfoText !== '') {
-			$labelInfoTag = new FormTag('i', false, [
-				new FormTagAttribute('class', 'label-info'),
+		$labelInfoText = $formField->getLabelInfoText();
+		if (!is_null($labelInfoText)) {
+			$labelInfoTag = new HtmlTag('i', false, [
+				new HtmlTagAttribute('class', 'label-info', true),
 			]);
-			$labelInfoTag->addText(new FormText($labelInfoText, true));
+			$labelInfoTag->addText($labelInfoText);
 			$labelTag->addTag($labelInfoTag);
 		}
 
 		if (!$this->formField->isRenderLabel()) {
 			// A <div> (instead of <dd>) will be created to contain the child with the "visualInvisible" <label>
-			$divTag = new FormTag('div', false);
+			$divTag = new HtmlTag('div', false);
 			$divTag->addTag($labelTag);
 			if ($formField->hasErrors()) {
-				$divTag->addFormTagAttribute(new FormTagAttribute('class', 'form-toggle-content-item has-error'));
+				$divTag->addHtmlTagAttribute(new HtmlTagAttribute('class', 'form-toggle-content-item has-error', true));
 			} else {
-				$divTag->addFormTagAttribute(new FormTagAttribute('class', 'form-toggle-content-item'));
+				$divTag->addHtmlTagAttribute(new HtmlTagAttribute('class', 'form-toggle-content-item', true));
 			}
 			$defaultFormFieldRenderer = $formField->getDefaultRenderer();
 			$defaultFormFieldRenderer->prepare();
-			$divTag->addTag($defaultFormFieldRenderer->getFormTag());
-			$divTag = $this->prepareErrorDisplay($divTag);
-			if (!is_null($formField->getFieldInfoAsHTML())) {
-				$divTag = $formField->addFieldInfo($divTag);
+			$divTag->addTag($defaultFormFieldRenderer->getHtmlTag());
+
+			FormRenderer::addErrorsToParentHtmlTag($formField, $divTag);
+			if (!is_null($formField->getFieldInfo())) {
+				FormRenderer::addFieldInfoToParentHtmlTag($formField, $divTag);
 			}
-			$this->setFormTag($divTag);
+			$this->setHtmlTag($divTag);
 
 			return;
 		}
 
 		// Show WITH label, therefore <dl><dt><dd>-Frame is required:
-		$dtTag = new FormTag('dt', false);
+		$dtTag = new HtmlTag('dt', false);
 
 		$dtTag->addTag($labelTag);
 
@@ -83,63 +82,38 @@ class DefinitionListRenderer extends FormRenderer
 
 		$ddAttributes = [];
 		if (!is_null($additionalColumnContent)) {
-			$ddAttributes[] = new FormTagAttribute('class', 'form-cols');
+			$ddAttributes[] = new HtmlTagAttribute('class', 'form-cols', true);
 		}
 
-		$ddTag = new FormTag('dd', false, $ddAttributes);
+		$ddTag = new HtmlTag('dd', false, $ddAttributes);
 		if ($formField->hasErrors()) {
-			$ddTag->addFormTagAttribute(new FormTagAttribute('class', 'has-error'));
+			$ddTag->addHtmlTagAttribute(new HtmlTagAttribute('class', 'has-error', true));
 		}
 
 		$defaultFormFieldRenderer = $formField->getDefaultRenderer();
 		$defaultFormFieldRenderer->prepare();
 
 		if (!is_null($additionalColumnContent)) {
-			$column1 = new FormTag('div', false, [new FormTagAttribute('class', 'form-col-1')]);
-			$column1->addTag($defaultFormFieldRenderer->getFormTag());
+			$column1 = new HtmlTag('div', false, [new HtmlTagAttribute('class', 'form-col-1', true)]);
+			$column1->addTag($defaultFormFieldRenderer->getHtmlTag());
 			$ddTag->addTag($column1);
 
-			$column2 = new FormTag('div', false, [new FormTagAttribute('class', 'form-col-2')]);
-			$column2->addText(new FormText($additionalColumnContent));
+			$column2 = new HtmlTag('div', false, [new HtmlTagAttribute('class', 'form-col-2', true)]);
+			$column2->addText($additionalColumnContent);
 			$ddTag->addTag($column2);
 		} else {
-			$ddTag->addTag($defaultFormFieldRenderer->getFormTag());
+			$ddTag->addTag($defaultFormFieldRenderer->getHtmlTag());
 		}
 
-		$ddTag = $this->prepareErrorDisplay($ddTag);
+		FormRenderer::addErrorsToParentHtmlTag($formField, $ddTag);
 
-		if (!is_null($formField->getFieldInfoAsHTML())) {
-			$ddTag = $formField->addFieldInfo($ddTag);
+		if (!is_null($formField->getFieldInfo())) {
+			FormRenderer::addFieldInfoToParentHtmlTag($formField, $ddTag);
 		}
 
-		$dlTag = new FormTag('dl', false, [new FormTagAttribute('class', 'clearfix')]);
+		$dlTag = new HtmlTag('dl', false, [new HtmlTagAttribute('class', 'clearfix', true)]);
 		$dlTag->addTag($dtTag);
 		$dlTag->addTag($ddTag);
-		$this->setFormTag($dlTag);
-	}
-
-	protected function prepareErrorDisplay(FormTag $formTag): FormTag
-	{
-		$formField = $this->formField;
-		if (!$formField->hasErrors()) {
-			return $formTag;
-		}
-
-		$bTag = new FormTag('b', false);
-		$errorsHTML = [];
-		foreach ($formField->getErrors() as $msg) {
-			$errorsHTML[] = FormRenderer::htmlEncode($msg);
-		}
-		$bTag->addText(new FormText(implode('<br>', $errorsHTML), true));
-
-		$divTag = new FormTag('div', false, [
-			new FormTagAttribute('class', 'form-input-error'),
-			new FormTagAttribute('id', $formField->getName() . '-error'),
-		]);
-		$divTag->addTag($bTag);
-		$formTag->addTag($divTag);
-
-		return $formTag;
+		$this->setHtmlTag($dlTag);
 	}
 }
-/* EOF */

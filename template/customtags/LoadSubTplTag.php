@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
@@ -15,37 +15,34 @@ use framework\template\template\TemplateTag;
 
 class LoadSubTplTag extends TemplateTag implements TagNode
 {
-	public static function getName()
+	public static function getName(): string
 	{
 		return 'loadSubTpl';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return false;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return true;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $node)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$dataKey = $node->getAttribute('tplfile')->value;
-
-		$tplFile = null;
-
+		$dataKey = $elementNode->getAttribute('tplfile')->getValue();
 		$tplFile = (preg_match('/^{(.+)}$/', $dataKey, $res) === 1) ? '$this->getData(\'' . $res[1] . '\')' : '\'' . $dataKey . '\'';
 
 		/** @var TextNode */
 		$newNode = new TextNode($tplEngine->getDomReader());
-		$newNode->content = '<?php ' . __NAMESPACE__ . '\\LoadSubTplTag::requireFile(' . $tplFile . ', $this); ?>'; //$newTpl->getResultAsHtml();
+		$newNode->content = '<?php ' . __NAMESPACE__ . '\\LoadSubTplTag::requireFile(' . $tplFile . ', $this); ?>';
 
-		$node->parentNode->replaceNode($node, $newNode);
+		$elementNode->parentNode->replaceNode($elementNode, $newNode);
 	}
 
-	public function replaceInline(): void
+	public function replaceInline()
 	{
 		throw new Exception('Don\'t use this tag (LoadSubTpl) inline!');
 	}
@@ -58,9 +55,8 @@ class LoadSubTplTag extends TemplateTag implements TagNode
 	 * @param string         $file The full filepath to include (OR magic {this})
 	 * @param TemplateEngine $tplEngine
 	 */
-	public static function requireFile(string $file, TemplateEngine $tplEngine)
+	public static function requireFile(string $file, TemplateEngine $tplEngine): void
 	{
 		echo $tplEngine->getResultAsHtml($file, (array)$tplEngine->getAllData());
 	}
 }
-/* EOF */

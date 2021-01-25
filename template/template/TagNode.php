@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\template;
@@ -14,23 +14,13 @@ interface TagNode
 	 * Replaces the custom tag as node
 	 *
 	 * @param TemplateEngine $tplEngine
-	 * @param ElementNode    $tagNode
+	 * @param ElementNode    $elementNode
 	 */
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $tagNode);
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void;
 
-	/**
-	 * @return string
-	 */
-	public static function getName();
+	public static function getName(): string;
 
-	/**
-	 * @return bool
-	 */
-	public static function isElseCompatible();
+	public static function isElseCompatible(): bool;
 
-	/**
-	 * @return bool
-	 */
-	public static function isSelfClosing();
+	public static function isSelfClosing(): bool;
 }
-/* EOF */

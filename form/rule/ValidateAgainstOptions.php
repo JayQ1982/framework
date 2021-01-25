@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\formHandler\rule;
@@ -9,16 +9,18 @@ namespace framework\formHandler\rule;
 namespace framework\form\rule;
 
 use framework\form\component\FormField;
+use framework\form\FormOptions;
 use framework\form\FormRule;
+use framework\html\HtmlText;
 use UnexpectedValueException;
 
 class ValidateAgainstOptions extends FormRule
 {
-	private array $validOptions;
+	private FormOptions $validFormOptions;
 
-	function __construct($errorMessage, array $validOptions)
+	function __construct(HtmlText $errorMessage, FormOptions $validFormOptions)
 	{
-		$this->validOptions = $validOptions;
+		$this->validFormOptions = $validFormOptions;
 
 		parent::__construct($errorMessage);
 	}
@@ -32,7 +34,7 @@ class ValidateAgainstOptions extends FormRule
 		$fieldValue = $formField->getRawValue();
 
 		if (is_scalar($fieldValue)) {
-			return array_key_exists($fieldValue, $this->validOptions);
+			return $this->validFormOptions->exists($fieldValue);
 		}
 
 		if (is_array($fieldValue)) {
@@ -41,7 +43,7 @@ class ValidateAgainstOptions extends FormRule
 					return false;
 				}
 
-				if (!array_key_exists($elementValue, $this->validOptions)) {
+				if (!$this->validFormOptions->exists($elementValue)) {
 					return false;
 				}
 			}
@@ -52,4 +54,3 @@ class ValidateAgainstOptions extends FormRule
 		throw new UnexpectedValueException('The field value is neither a scalar data type nor an array');
 	}
 }
-/* EOF */

@@ -1,16 +1,15 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\renderer;
 
 use framework\form\component\FormInfo;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
-use framework\form\FormText;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
 
 class FormInfoRenderer extends FormRenderer
 {
@@ -25,16 +24,16 @@ class FormInfoRenderer extends FormRenderer
 	{
 		$formInfo = $this->formInfo;
 
-		$dtTag = new FormTag('dt', false);
-		$dtTag->addText(new FormText($formInfo->getTitle()));
+		$dtTag = new HtmlTag('dt', false);
+		$dtTag->addText($formInfo->getTitle());
 		if ($formInfo->getDtClass() != '') {
-			$dtTag->addFormTagAttribute(new FormTagAttribute('class', $formInfo->getDtClass()));
+			$dtTag->addHtmlTagAttribute(new HtmlTagAttribute('class', $formInfo->getDtClass(), true));
 		}
 
-		$ddTag = new FormTag('dd', false);
-		$ddTag->addText(new FormText($formInfo->getContent(), $formInfo->isContentHTML()));
+		$ddTag = new HtmlTag('dd', false);
+		$ddTag->addText($formInfo->getContent());
 		if ($formInfo->getDdClass() != '') {
-			$ddTag->addFormTagAttribute(new FormTagAttribute('class', $formInfo->getDdClass()));
+			$ddTag->addHtmlTagAttribute(new HtmlTagAttribute('class', $formInfo->getDdClass(), true));
 		}
 
 		if ($formInfo->getFormInfoClass()) {
@@ -42,11 +41,10 @@ class FormInfoRenderer extends FormRenderer
 		} else {
 			$dlClasses = ['clearfix'];
 		}
-		$dlTag = new FormTag('dl', false, [new FormTagAttribute('class', implode(' ', $dlClasses))]);
+		$dlTag = new HtmlTag('dl', false, [new HtmlTagAttribute('class', implode(' ', $dlClasses), true)]);
 		$dlTag->addTag($dtTag);
 		$dlTag->addTag($ddTag);
 
-		$this->setFormTag($dlTag);
+		$this->setHtmlTag($dlTag);
 	}
 }
-/* EOF */

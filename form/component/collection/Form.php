@@ -1,48 +1,55 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\component\collection;
 
 use Exception;
 use LogicException;
-use framework\form\component\CSRFtoken;
-use framework\form\component\field\CSRFtokenField;
+use framework\form\component\field\CsrfTokenField;
 use framework\form\component\FormField;
 use framework\form\FormCollection;
 use framework\form\FormComponent;
 use framework\form\FormRenderer;
 use framework\form\renderer\DefaultFormRenderer;
-use framework\form\rule\ValidCSRFtokenValue;
+use framework\form\rule\ValidCsrfTokenValue;
+use framework\html\HtmlText;
+use framework\security\CsrfToken;
 
 class Form extends FormCollection
 {
+	private static array $formNameList = [];
 	private bool $acceptUpload;
-	private ?string $globalErrorMessageHTML;
+	private ?HtmlText $globalErrorMessage;
 	private bool $methodPost;
-	private string $sentVar;
+	private string $sentIndicator;
 	private array $cssClasses = [];
 	private bool $renderRequiredAbbr = true;
 	private string $defaultFormFieldRenderer = '\framework\form\renderer\DefinitionListRenderer';
 
-	public function __construct(string $name, bool $acceptUpload = false, ?string $globalErrorMessageHTML = null, bool $methodPost = true, string $sentVar = 'send')
+	public function __construct(string $name, bool $acceptUpload = false, ?HtmlText $globalErrorMessage = null, bool $methodPost = true, ?string $individualSentIndicator = null)
 	{
+		if (in_array($name, Form::$formNameList)) {
+			throw new LogicException('A Form with the name "' . $name . '" has already been defined.');
+		}
+		Form::$formNameList[] = $name;
+
 		$this->acceptUpload = $acceptUpload;
-		$this->globalErrorMessageHTML = $globalErrorMessageHTML;
+		$this->globalErrorMessage = $globalErrorMessage;
 		$this->methodPost = $methodPost;
-		$this->sentVar = $sentVar;
+		$this->sentIndicator = is_null($individualSentIndicator) ? $name : $individualSentIndicator;
 
 		parent::__construct($name);
 
-		$this->addField(new CSRFtokenField());
+		$this->addField(new CsrfTokenField());
 	}
 
 	public function removeCsrfProtection(): void
 	{
-		if ($this->hasChildComponent(CSRFtoken::getFieldName())) {
-			$this->removeChildComponent(CSRFtoken::getFieldName());
+		if ($this->hasChildComponent(CsrfToken::getFieldName())) {
+			$this->removeChildComponent(CsrfToken::getFieldName());
 		}
 	}
 
@@ -111,18 +118,15 @@ class Form extends FormCollection
 		return ($component instanceof FormField);
 	}
 
-	/**
-	 * @param string $name
-	 *
-	 * @return FormField|FormComponent
-	 */
 	public function getField(string $name): FormField
 	{
-		if (!$this->hasField($name)) {
+		$childComponent = $this->getChildComponent($name);
+
+		if (!($childComponent instanceof FormField)) {
 			throw new Exception('The requested component ' . $name . ' is not an instance of FormField');
 		}
 
-		return $this->getChildComponent($name);
+		return $childComponent;
 	}
 
 	public function removeField(string $name): void
@@ -135,7 +139,7 @@ class Form extends FormCollection
 
 	public function isSent(): bool
 	{
-		return array_key_exists($this->sentVar, $_REQUEST);
+		return array_key_exists($this->sentIndicator, $_GET);
 	}
 
 	public function validate(): bool
@@ -156,31 +160,31 @@ class Form extends FormCollection
 		}
 
 		if (!$this->hasErrors()) {
-			$this->validateCSRF($inputData);
+			$this->validateCsrf($inputData);
 		}
 
-		if ($this->hasErrors() && empty($this->getErrors($this->hasHTMLencodedErrors())) && !is_null($this->globalErrorMessageHTML)) {
-			$this->addError($this->globalErrorMessageHTML, true);
+		if ($this->hasErrors() && (count($this->getErrorsAsHtmlTextObjects()) === 0) && !is_null($this->globalErrorMessage)) {
+			$this->addErrorAsHtmlTextObject($this->globalErrorMessage);
 		}
 
 		return !$this->hasErrors();
 	}
 
-	private function validateCSRF(array $inputData): void
+	private function validateCsrf(array $inputData): void
 	{
-		if (!$this->hasChildComponent(CSRFtoken::getFieldName())) {
-			// The CSRF protection has been disabled
+		if (!$this->hasChildComponent(CsrfToken::getFieldName())) {
+			// The Csrf protection has been disabled
 			return;
 		}
 
-		/** @var CSRFtokenField $csrfTokenField */
-		$csrfTokenField = $this->getField(CSRFtoken::getFieldName());
+		/** @var CsrfTokenField $csrfTokenField */
+		$csrfTokenField = $this->getField(CsrfToken::getFieldName());
 
-		$validCSRFtokenValue = new ValidCSRFtokenValue();
-		$csrfTokenField->addRule($validCSRFtokenValue);
+		$validCsrfTokenValue = new ValidCsrfTokenValue();
+		$csrfTokenField->addRule($validCsrfTokenValue);
 
 		if (!$csrfTokenField->validate($inputData)) {
-			$this->addError($validCSRFtokenValue->getErrorMessage());
+			$this->addErrorAsHtmlTextObject($validCsrfTokenValue->getErrorMessage());
 		}
 	}
 
@@ -211,9 +215,9 @@ class Form extends FormCollection
 		return $this->methodPost;
 	}
 
-	public function getSentVar(): string
+	public function getSentIndicator(): string
 	{
-		return $this->sentVar;
+		return $this->sentIndicator;
 	}
 
 	public function getCssClasses(): array
@@ -230,22 +234,4 @@ class Form extends FormCollection
 	{
 		return new DefaultFormRenderer($this);
 	}
-
-	public function renderErrors(): string
-	{
-		if (!$this->hasErrors()) {
-			return '';
-		}
-
-		$errors = $this->getErrors();
-		foreach ($this->getAllFields() as $thisField) {
-			foreach ($thisField->getErrors() as $error) {
-				$errors[] = $error;
-			}
-		}
-
-		return implode('<br>', $errors);
-	}
-
 }
-/* EOF */

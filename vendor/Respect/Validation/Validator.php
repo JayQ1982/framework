@@ -5,261 +5,846 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the "LICENSE.md"
- * file that was distributed with this source code.
+ * For the full copyright and license information, please view the LICENSE file
+ * that was distributed with this source code.
  */
+
+declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation;
 
-use Exception;
 use finfo;
-use ReflectionClass;
-use framework\vendor\Respect\Validation\Exceptions\AllOfException;
 use framework\vendor\Respect\Validation\Exceptions\ComponentException;
 use framework\vendor\Respect\Validation\Exceptions\ValidationException;
 use framework\vendor\Respect\Validation\Rules\AllOf;
+
 use framework\vendor\Respect\Validation\Rules\Key;
-use stdClass;
+use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\Validator\ValidatorInterface as SymfonyValidator;
+use function count;
 
 /**
- * @method static Validator age(int $minAge = null, int $maxAge = null)
- * @method static Validator allOf(Validatable ...$rule)
- * @method static Validator alnum(string $additionalChars = null)
- * @method static Validator alpha(string $additionalChars = null)
- * @method static Validator alwaysInvalid()
- * @method static Validator alwaysValid()
- * @method static Validator arrayVal()
- * @method static Validator arrayType()
- * @method static Validator attribute(string $reference, Validatable $validator = null, bool $mandatory = true)
- * @method static Validator bank(string $countryCode)
- * @method static Validator bankAccount(string $countryCode)
- * @method static Validator base()
- * @method static Validator between($min = null, $max = null, bool $inclusive = true)
- * @method static Validator bic(string $countryCode)
- * @method static Validator boolType()
- * @method static Validator boolVal()
- * @method static Validator bsn()
- * @method static Validator call()
- * @method static Validator callableType()
- * @method static Validator callback(callable $callback)
- * @method static Validator charset($charset)
- * @method static Validator cnh()
- * @method static Validator cnpj()
- * @method static Validator consonant(string $additionalChars = null)
- * @method static Validator contains($containsValue, bool $identical = false)
- * @method static Validator countable()
- * @method static Validator countryCode()
- * @method static Validator currencyCode()
- * @method static Validator cpf()
- * @method static Validator creditCard(string $brand = null)
- * @method static Validator date(string $format = null)
- * @method static Validator digit(string $additionalChars = null)
- * @method static Validator directory()
- * @method static Validator domain(bool $tldCheck = true)
- * @method static Validator each(Validatable $itemValidator = null, Validatable $keyValidator = null)
- * @method static Validator email()
- * @method static Validator endsWith($endValue, bool $identical = false)
- * @method static Validator equals($compareTo)
- * @method static Validator even()
- * @method static Validator executable()
- * @method static Validator exists()
- * @method static Validator extension(string $extension)
- * @method static Validator factor(int $dividend)
- * @method static Validator falseVal()
- * @method static Validator fibonacci()
- * @method static Validator file()
- * @method static Validator filterVar(int $filter, $options = null)
- * @method static Validator finite()
- * @method static Validator floatVal()
- * @method static Validator floatType()
- * @method static Validator graph(string $additionalChars = null)
- * @method static Validator hexRgbColor()
- * @method static Validator identical($value)
- * @method static Validator identityCard(string $countryCode)
- * @method static Validator image(finfo $fileInfo = null)
- * @method static Validator imei()
- * @method static Validator in($haystack, bool $compareIdentical = false)
- * @method static Validator infinite()
- * @method static Validator instance(string $instanceName)
- * @method static Validator intVal()
- * @method static Validator intType()
- * @method static Validator ip($ipOptions = null)
- * @method static Validator iterableType()
- * @method static Validator json()
- * @method static Validator key(string $reference, Validatable $referenceValidator = null, bool $mandatory = true)
- * @method static Validator keyNested(string $reference, Validatable $referenceValidator = null, bool $mandatory = true)
- * @method static Validator keySet(Key ...$rule)
- * @method static Validator keyValue(string $comparedKey, string $ruleName, string $baseKey)
- * @method static Validator languageCode(string $set)
- * @method static Validator leapDate(string $format)
- * @method static Validator leapYear()
- * @method static Validator length(int $min = null, int $max = null, bool $inclusive = true)
- * @method static Validator lowercase()
- * @method static Validator macAddress()
- * @method static Validator max($maxValue, bool $inclusive = true)
- * @method static Validator mimetype(string $mimetype)
- * @method static Validator min($minValue, bool $inclusive = true)
- * @method static Validator minimumAge(int $age)
- * @method static Validator multiple(int $multipleOf)
- * @method static Validator negative()
- * @method static Validator no($useLocale = false)
- * @method static Validator noneOf(Validatable ...$rule)
- * @method static Validator not(Validatable $rule)
- * @method static Validator notBlank()
- * @method static Validator notEmpty()
- * @method static Validator notOptional()
- * @method static Validator noWhitespace()
- * @method static Validator nullType()
- * @method static Validator numeric()
- * @method static Validator objectType()
- * @method static Validator odd()
- * @method static Validator oneOf(Validatable ...$rule)
- * @method static Validator optional(Validatable $rule)
- * @method static Validator perfectSquare()
- * @method static Validator pesel()
- * @method static Validator phone()
- * @method static Validator phpLabel()
- * @method static Validator positive()
- * @method static Validator postalCode(string $countryCode)
- * @method static Validator primeNumber()
- * @method static Validator prnt(string $additionalChars = null)
- * @method static Validator punct(string $additionalChars = null)
- * @method static Validator readable()
- * @method static Validator regex(string $regex)
- * @method static Validator resourceType()
- * @method static Validator roman()
- * @method static Validator scalarVal()
- * @method static Validator sf(string $name, array $params = null)
- * @method static Validator size(string $minSize = null, string $maxSize = null)
- * @method static Validator slug()
- * @method static Validator space(string $additionalChars = null)
- * @method static Validator startsWith($startValue, bool $identical = false)
- * @method static Validator stringType()
- * @method static Validator subdivisionCode(string $countryCode)
- * @method static Validator symbolicLink()
- * @method static Validator tld()
- * @method static Validator trueVal()
- * @method static Validator type(string $type)
- * @method static Validator uploaded()
- * @method static Validator uppercase()
- * @method static Validator url()
- * @method static Validator version()
- * @method static Validator videoUrl(string $service = null)
- * @method static Validator vowel()
- * @method static Validator when(Validatable $if, Validatable $then, Validatable $when = null)
- * @method static Validator writable()
- * @method static Validator xdigit(string $additionalChars = null)
- * @method static Validator yes($useLocale = false)
- * @method static Validator zend($validator, array $params = null)
+ * @mixin StaticValidator
+ * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
+ * @author Henrique Moody <henriquemoody@gmail.com>
  */
-class Validator extends AllOf
+final class Validator extends AllOf
 {
-    protected static $factory;
+	/**
+	 * Create instance validator.
+	 */
+	public static function create(): self
+	{
+		return new self();
+	}
 
-    /**
-     * @return Factory
-     */
-    protected static function getFactory()
-    {
-        if (!static::$factory instanceof Factory) {
-            static::$factory = new Factory();
-        }
+	/**
+	 * {@inheritDoc}
+	 */
+	public function check($input): void
+	{
+		try {
+			parent::check($input);
+		} catch (ValidationException $exception) {
+			if (count($this->getRules()) == 1 && $this->template) {
+				$exception->updateTemplate($this->template);
+			}
 
-        return static::$factory;
-    }
+			throw $exception;
+		}
+	}
 
-    /**
-     * @param Factory $factory
-     */
-    public static function setFactory($factory)
-    {
-        static::$factory = $factory;
-    }
+	/**
+	 * Creates a new Validator instance with a rule that was called on the static method.
+	 *
+	 * @param string  $ruleName
+	 * @param mixed[] $arguments
+	 *
+	 * @return Validator
+	 * @return Validator
+	 * @return Validator
+	 * @throws ComponentException
+	 */
+	public static function __callStatic(string $ruleName, array $arguments): self
+	{
+		return self::create()->__call($ruleName, $arguments);
+	}
 
-    /**
-     * @param string $rulePrefix
-     * @param bool   $prepend
-     */
-    public static function with($rulePrefix, $prepend = false)
-    {
-        if (false === $prepend) {
-            self::getFactory()->appendRulePrefix($rulePrefix);
-        } else {
-            self::getFactory()->prependRulePrefix($rulePrefix);
-        }
-    }
+	/**
+	 * Create a new rule by the name of the method and adds the rule to the chain.
+	 *
+	 * @param string  $ruleName
+	 * @param mixed[] $arguments
+	 *
+	 * @return Validator
+	 * @return Validator
+	 * @return Validator
+	 * @throws ComponentException
+	 */
+	public function __call(string $ruleName, array $arguments): self
+	{
+		$this->addRule(Factory::getDefaultInstance()->rule($ruleName, $arguments));
 
-    public function check($input)
-    {
-        try {
-            return parent::check($input);
-        } catch (ValidationException $exception) {
-            if (count($this->getRules()) == 1 && $this->template) {
-                $exception->setTemplate($this->template);
-            }
+		return $this;
+	}
 
-            throw $exception;
-        }
-    }
+	public static function allOf(Validatable ...$rule): ChainedValidator
+	{
+		// TODO: Implement allOf() method.
+	}
 
-    /**
-     * @param string $ruleName
-     * @param array  $arguments
-     *
-     * @return Validator|Validatable
-     * @throws ComponentException
-     */
-    public static function __callStatic($ruleName, $arguments)
-    {
-        if ('allOf' === $ruleName) {
-            return static::buildRule($ruleName, $arguments);
-        }
+	public static function alnum(string ...$additionalChars): ChainedValidator
+	{
+		// TODO: Implement alnum() method.
+	}
 
-        $validator = new static();
+	public static function alpha(string ...$additionalChars): ChainedValidator
+	{
+		// TODO: Implement alpha() method.
+	}
 
-        return $validator->__call($ruleName, $arguments);
-    }
+	public static function alwaysInvalid(): ChainedValidator
+	{
+		// TODO: Implement alwaysInvalid() method.
+	}
 
-    /**
-     * @param mixed $ruleSpec
-     * @param array $arguments
-     *
-     * @return Validatable
-     */
-    public static function buildRule($ruleSpec, $arguments = [])
-    {
-        try {
-            return static::getFactory()->rule($ruleSpec, $arguments);
-        } catch (Exception $exception) {
-            throw new ComponentException($exception->getMessage(), $exception->getCode(), $exception);
-        }
-    }
+	public static function alwaysValid(): ChainedValidator
+	{
+		// TODO: Implement alwaysValid() method.
+	}
 
-    /**
-     * @param string $method
-     * @param array  $arguments
-     *
-     * @return self
-     */
-    public function __call($method, $arguments)
-    {
-        return $this->addRule(static::buildRule($method, $arguments));
-    }
+	public static function anyOf(Validatable ...$rule): ChainedValidator
+	{
+		// TODO: Implement anyOf() method.
+	}
 
-    protected function createException()
-    {
-        return new AllOfException();
-    }
+	public static function arrayType(): ChainedValidator
+	{
+		// TODO: Implement arrayType() method.
+	}
 
-    /**
-     * Create instance validator.
-     *
-     * @return Validator|stdClass
-     */
-    public static function create()
-    {
-        $ref = new ReflectionClass(__CLASS__);
+	public static function arrayVal(): ChainedValidator
+	{
+		// TODO: Implement arrayVal() method.
+	}
 
-        return $ref->newInstanceArgs(func_get_args());
-    }
+	public static function attribute(string $reference, ?Validatable $validator = null, bool $mandatory = true): ChainedValidator
+	{
+		// TODO: Implement attribute() method.
+	}
+
+	public static function base(int $base, ?string $chars = null): ChainedValidator
+	{
+		// TODO: Implement base() method.
+	}
+
+	public static function base64(): ChainedValidator
+	{
+		// TODO: Implement base64() method.
+	}
+
+	public static function between($minimum, $maximum): ChainedValidator
+	{
+		// TODO: Implement between() method.
+	}
+
+	public static function bic(string $countryCode): ChainedValidator
+	{
+		// TODO: Implement bic() method.
+	}
+
+	public static function boolType(): ChainedValidator
+	{
+		// TODO: Implement boolType() method.
+	}
+
+	public static function boolVal(): ChainedValidator
+	{
+		// TODO: Implement boolVal() method.
+	}
+
+	public static function bsn(): ChainedValidator
+	{
+		// TODO: Implement bsn() method.
+	}
+
+	public static function call(callable $callable, Validatable $rule): ChainedValidator
+	{
+		// TODO: Implement call() method.
+	}
+
+	public static function callableType(): ChainedValidator
+	{
+		// TODO: Implement callableType() method.
+	}
+
+	public static function callback(callable $callback): ChainedValidator
+	{
+		// TODO: Implement callback() method.
+	}
+
+	public static function charset(string ...$charset): ChainedValidator
+	{
+		// TODO: Implement charset() method.
+	}
+
+	public static function cnh(): ChainedValidator
+	{
+		// TODO: Implement cnh() method.
+	}
+
+	public static function cnpj(): ChainedValidator
+	{
+		// TODO: Implement cnpj() method.
+	}
+
+	public static function control(string ...$additionalChars): ChainedValidator
+	{
+		// TODO: Implement control() method.
+	}
+
+	public static function consonant(string ...$additionalChars): ChainedValidator
+	{
+		// TODO: Implement consonant() method.
+	}
+
+	public static function contains($containsValue, bool $identical = false): ChainedValidator
+	{
+		// TODO: Implement contains() method.
+	}
+
+	public static function containsAny(array $needles, bool $strictCompareArray = false): ChainedValidator
+	{
+		// TODO: Implement containsAny() method.
+	}
+
+	public static function countable(): ChainedValidator
+	{
+		// TODO: Implement countable() method.
+	}
+
+	public static function countryCode(?string $set = null): ChainedValidator
+	{
+		// TODO: Implement countryCode() method.
+	}
+
+	public static function currencyCode(): ChainedValidator
+	{
+		// TODO: Implement currencyCode() method.
+	}
+
+	public static function cpf(): ChainedValidator
+	{
+		// TODO: Implement cpf() method.
+	}
+
+	public static function creditCard(?string $brand = null): ChainedValidator
+	{
+		// TODO: Implement creditCard() method.
+	}
+
+	public static function date(string $format = 'Y-m-d'): ChainedValidator
+	{
+		// TODO: Implement date() method.
+	}
+
+	public static function dateTime(?string $format = null): ChainedValidator
+	{
+		// TODO: Implement dateTime() method.
+	}
+
+	public static function decimal(int $decimals): ChainedValidator
+	{
+		// TODO: Implement decimal() method.
+	}
+
+	public static function digit(string ...$additionalChars): ChainedValidator
+	{
+		// TODO: Implement digit() method.
+	}
+
+	public static function directory(): ChainedValidator
+	{
+		// TODO: Implement directory() method.
+	}
+
+	public static function domain(bool $tldCheck = true): ChainedValidator
+	{
+		// TODO: Implement domain() method.
+	}
+
+	public static function each(Validatable $rule): ChainedValidator
+	{
+		// TODO: Implement each() method.
+	}
+
+	public static function email(): ChainedValidator
+	{
+		// TODO: Implement email() method.
+	}
+
+	public static function endsWith($endValue, bool $identical = false): ChainedValidator
+	{
+		// TODO: Implement endsWith() method.
+	}
+
+	public static function equals($compareTo): ChainedValidator
+	{
+		// TODO: Implement equals() method.
+	}
+
+	public static function equivalent($compareTo): ChainedValidator
+	{
+		// TODO: Implement equivalent() method.
+	}
+
+	public static function even(): ChainedValidator
+	{
+		// TODO: Implement even() method.
+	}
+
+	public static function executable(): ChainedValidator
+	{
+		// TODO: Implement executable() method.
+	}
+
+	public static function exists(): ChainedValidator
+	{
+		// TODO: Implement exists() method.
+	}
+
+	public static function extension(string $extension): ChainedValidator
+	{
+		// TODO: Implement extension() method.
+	}
+
+	public static function factor(int $dividend): ChainedValidator
+	{
+		// TODO: Implement factor() method.
+	}
+
+	public static function falseVal(): ChainedValidator
+	{
+		// TODO: Implement falseVal() method.
+	}
+
+	public static function fibonacci(): ChainedValidator
+	{
+		// TODO: Implement fibonacci() method.
+	}
+
+	public static function file(): ChainedValidator
+	{
+		// TODO: Implement file() method.
+	}
+
+	public static function filterVar(int $filter, $options = null): ChainedValidator
+	{
+		// TODO: Implement filterVar() method.
+	}
+
+	public static function finite(): ChainedValidator
+	{
+		// TODO: Implement finite() method.
+	}
+
+	public static function floatVal(): ChainedValidator
+	{
+		// TODO: Implement floatVal() method.
+	}
+
+	public static function floatType(): ChainedValidator
+	{
+		// TODO: Implement floatType() method.
+	}
+
+	public static function graph(string ...$additionalChars): ChainedValidator
+	{
+		// TODO: Implement graph() method.
+	}
+
+	public static function greaterThan($compareTo): ChainedValidator
+	{
+		// TODO: Implement greaterThan() method.
+	}
+
+	public static function hexRgbColor(): ChainedValidator
+	{
+		// TODO: Implement hexRgbColor() method.
+	}
+
+	public static function iban(): ChainedValidator
+	{
+		// TODO: Implement iban() method.
+	}
+
+	public static function identical($compareTo): ChainedValidator
+	{
+		// TODO: Implement identical() method.
+	}
+
+	public static function image(?finfo $fileInfo = null): ChainedValidator
+	{
+		// TODO: Implement image() method.
+	}
+
+	public static function imei(): ChainedValidator
+	{
+		// TODO: Implement imei() method.
+	}
+
+	public static function in($haystack, bool $compareIdentical = false): ChainedValidator
+	{
+		// TODO: Implement in() method.
+	}
+
+	public static function infinite(): ChainedValidator
+	{
+		// TODO: Implement infinite() method.
+	}
+
+	public static function instance(string $instanceName): ChainedValidator
+	{
+		// TODO: Implement instance() method.
+	}
+
+	public static function intVal(): ChainedValidator
+	{
+		// TODO: Implement intVal() method.
+	}
+
+	public static function intType(): ChainedValidator
+	{
+		// TODO: Implement intType() method.
+	}
+
+	public static function ip(string $range = '*', ?int $options = null): ChainedValidator
+	{
+		// TODO: Implement ip() method.
+	}
+
+	public static function isbn(): ChainedValidator
+	{
+		// TODO: Implement isbn() method.
+	}
+
+	public static function iterableType(): ChainedValidator
+	{
+		// TODO: Implement iterableType() method.
+	}
+
+	public static function json(): ChainedValidator
+	{
+		// TODO: Implement json() method.
+	}
+
+	public static function key(string $reference, ?Validatable $referenceValidator = null, bool $mandatory = true): ChainedValidator
+	{
+		// TODO: Implement key() method.
+	}
+
+	public static function keyNested(string $reference, ?Validatable $referenceValidator = null, bool $mandatory = true): ChainedValidator
+	{
+		// TODO: Implement keyNested() method.
+	}
+
+	public static function keySet(Key ...$rule): ChainedValidator
+	{
+		// TODO: Implement keySet() method.
+	}
+
+	public static function keyValue(string $comparedKey, string $ruleName, string $baseKey): ChainedValidator
+	{
+		// TODO: Implement keyValue() method.
+	}
+
+	public static function languageCode(?string $set = null): ChainedValidator
+	{
+		// TODO: Implement languageCode() method.
+	}
+
+	public static function leapDate(string $format): ChainedValidator
+	{
+		// TODO: Implement leapDate() method.
+	}
+
+	public static function leapYear(): ChainedValidator
+	{
+		// TODO: Implement leapYear() method.
+	}
+
+	public static function length(?int $min = null, ?int $max = null, bool $inclusive = true): ChainedValidator
+	{
+		// TODO: Implement length() method.
+	}
+
+	public static function lowercase(): ChainedValidator
+	{
+		// TODO: Implement lowercase() method.
+	}
+
+	public static function lessThan($compareTo): ChainedValidator
+	{
+		// TODO: Implement lessThan() method.
+	}
+
+	public static function luhn(): ChainedValidator
+	{
+		// TODO: Implement luhn() method.
+	}
+
+	public static function macAddress(): ChainedValidator
+	{
+		// TODO: Implement macAddress() method.
+	}
+
+	public static function max($compareTo): ChainedValidator
+	{
+		// TODO: Implement max() method.
+	}
+
+	public static function maxAge(int $age, ?string $format = null): ChainedValidator
+	{
+		// TODO: Implement maxAge() method.
+	}
+
+	public static function mimetype(string $mimetype): ChainedValidator
+	{
+		// TODO: Implement mimetype() method.
+	}
+
+	public static function min($compareTo): ChainedValidator
+	{
+		// TODO: Implement min() method.
+	}
+
+	public static function minAge(int $age, ?string $format = null): ChainedValidator
+	{
+		// TODO: Implement minAge() method.
+	}
+
+	public static function multiple(int $multipleOf): ChainedValidator
+	{
+		// TODO: Implement multiple() method.
+	}
+
+	public static function negative(): ChainedValidator
+	{
+		// TODO: Implement negative() method.
+	}
+
+	public static function nfeAccessKey(): ChainedValidator
+	{
+		// TODO: Implement nfeAccessKey() method.
+	}
+
+	public static function nif(): ChainedValidator
+	{
+		// TODO: Implement nif() method.
+	}
+
+	public static function nip(): ChainedValidator
+	{
+		// TODO: Implement nip() method.
+	}
+
+	public static function no(bool $useLocale = false): ChainedValidator
+	{
+		// TODO: Implement no() method.
+	}
+
+	public static function noneOf(Validatable ...$rule): ChainedValidator
+	{
+		// TODO: Implement noneOf() method.
+	}
+
+	public static function not(Validatable $rule): ChainedValidator
+	{
+		// TODO: Implement not() method.
+	}
+
+	public static function notBlank(): ChainedValidator
+	{
+		// TODO: Implement notBlank() method.
+	}
+
+	public static function notEmoji(): ChainedValidator
+	{
+		// TODO: Implement notEmoji() method.
+	}
+
+	public static function notEmpty(): ChainedValidator
+	{
+		// TODO: Implement notEmpty() method.
+	}
+
+	public static function notOptional(): ChainedValidator
+	{
+		// TODO: Implement notOptional() method.
+	}
+
+	public static function noWhitespace(): ChainedValidator
+	{
+		// TODO: Implement noWhitespace() method.
+	}
+
+	public static function nullable(Validatable $rule): ChainedValidator
+	{
+		// TODO: Implement nullable() method.
+	}
+
+	public static function nullType(): ChainedValidator
+	{
+		// TODO: Implement nullType() method.
+	}
+
+	public static function number(): ChainedValidator
+	{
+		// TODO: Implement number() method.
+	}
+
+	public static function numericVal(): ChainedValidator
+	{
+		// TODO: Implement numericVal() method.
+	}
+
+	public static function objectType(): ChainedValidator
+	{
+		// TODO: Implement objectType() method.
+	}
+
+	public static function odd(): ChainedValidator
+	{
+		// TODO: Implement odd() method.
+	}
+
+	public static function oneOf(Validatable ...$rule): ChainedValidator
+	{
+		// TODO: Implement oneOf() method.
+	}
+
+	public static function optional(Validatable $rule): ChainedValidator
+	{
+		// TODO: Implement optional() method.
+	}
+
+	public static function perfectSquare(): ChainedValidator
+	{
+		// TODO: Implement perfectSquare() method.
+	}
+
+	public static function pesel(): ChainedValidator
+	{
+		// TODO: Implement pesel() method.
+	}
+
+	public static function phone(): ChainedValidator
+	{
+		// TODO: Implement phone() method.
+	}
+
+	public static function phpLabel(): ChainedValidator
+	{
+		// TODO: Implement phpLabel() method.
+	}
+
+	public static function pis(): ChainedValidator
+	{
+		// TODO: Implement pis() method.
+	}
+
+	public static function polishIdCard(): ChainedValidator
+	{
+		// TODO: Implement polishIdCard() method.
+	}
+
+	public static function positive(): ChainedValidator
+	{
+		// TODO: Implement positive() method.
+	}
+
+	public static function postalCode(string $countryCode): ChainedValidator
+	{
+		// TODO: Implement postalCode() method.
+	}
+
+	public static function primeNumber(): ChainedValidator
+	{
+		// TODO: Implement primeNumber() method.
+	}
+
+	public static function printable(string ...$additionalChars): ChainedValidator
+	{
+		// TODO: Implement printable() method.
+	}
+
+	public static function punct(string ...$additionalChars): ChainedValidator
+	{
+		// TODO: Implement punct() method.
+	}
+
+	public static function readable(): ChainedValidator
+	{
+		// TODO: Implement readable() method.
+	}
+
+	public static function regex(string $regex): ChainedValidator
+	{
+		// TODO: Implement regex() method.
+	}
+
+	public static function resourceType(): ChainedValidator
+	{
+		// TODO: Implement resourceType() method.
+	}
+
+	public static function roman(): ChainedValidator
+	{
+		// TODO: Implement roman() method.
+	}
+
+	public static function scalarVal(): ChainedValidator
+	{
+		// TODO: Implement scalarVal() method.
+	}
+
+	public static function sf(Constraint $constraint, ?SymfonyValidator $validator = null): ChainedValidator
+	{
+		// TODO: Implement sf() method.
+	}
+
+	public static function size(?string $minSize = null, ?string $maxSize = null): ChainedValidator
+	{
+		// TODO: Implement size() method.
+	}
+
+	public static function slug(): ChainedValidator
+	{
+		// TODO: Implement slug() method.
+	}
+
+	public static function sorted(string $direction): ChainedValidator
+	{
+		// TODO: Implement sorted() method.
+	}
+
+	public static function space(string ...$additionalChars): ChainedValidator
+	{
+		// TODO: Implement space() method.
+	}
+
+	public static function startsWith($startValue, bool $identical = false): ChainedValidator
+	{
+		// TODO: Implement startsWith() method.
+	}
+
+	public static function stringType(): ChainedValidator
+	{
+		// TODO: Implement stringType() method.
+	}
+
+	public static function stringVal(): ChainedValidator
+	{
+		// TODO: Implement stringVal() method.
+	}
+
+	public static function subdivisionCode(string $countryCode): ChainedValidator
+	{
+		// TODO: Implement subdivisionCode() method.
+	}
+
+	public static function subset(array $superset): ChainedValidator
+	{
+		// TODO: Implement subset() method.
+	}
+
+	public static function symbolicLink(): ChainedValidator
+	{
+		// TODO: Implement symbolicLink() method.
+	}
+
+	public static function time(string $format = 'H:i:s'): ChainedValidator
+	{
+		// TODO: Implement time() method.
+	}
+
+	public static function tld(): ChainedValidator
+	{
+		// TODO: Implement tld() method.
+	}
+
+	public static function trueVal(): ChainedValidator
+	{
+		// TODO: Implement trueVal() method.
+	}
+
+	public static function type(string $type): ChainedValidator
+	{
+		// TODO: Implement type() method.
+	}
+
+	public static function unique(): ChainedValidator
+	{
+		// TODO: Implement unique() method.
+	}
+
+	public static function uploaded(): ChainedValidator
+	{
+		// TODO: Implement uploaded() method.
+	}
+
+	public static function uppercase(): ChainedValidator
+	{
+		// TODO: Implement uppercase() method.
+	}
+
+	public static function url(): ChainedValidator
+	{
+		// TODO: Implement url() method.
+	}
+
+	public static function uuid(?int $version = null): ChainedValidator
+	{
+		// TODO: Implement uuid() method.
+	}
+
+	public static function version(): ChainedValidator
+	{
+		// TODO: Implement version() method.
+	}
+
+	public static function videoUrl(?string $service = null): ChainedValidator
+	{
+		// TODO: Implement videoUrl() method.
+	}
+
+	public static function vowel(string ...$additionalChars): ChainedValidator
+	{
+		// TODO: Implement vowel() method.
+	}
+
+	public static function when(Validatable $if, Validatable $then, ?Validatable $else = null): ChainedValidator
+	{
+		// TODO: Implement when() method.
+	}
+
+	public static function writable(): ChainedValidator
+	{
+		// TODO: Implement writable() method.
+	}
+
+	public static function xdigit(string ...$additionalChars): ChainedValidator
+	{
+		// TODO: Implement xdigit() method.
+	}
+
+	public static function yes(bool $useLocale = false): ChainedValidator
+	{
+		// TODO: Implement yes() method.
+	}
+
+	public static function zend($validator, ?array $params = null): ChainedValidator
+	{
+		// TODO: Implement zend() method.
+	}
 }

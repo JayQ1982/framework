@@ -1,24 +1,21 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\rule;
 
 use framework\form\component\FormField;
 use framework\form\FormRule;
+use framework\html\HtmlText;
 use UnexpectedValueException;
 
 class MaxValueRule extends FormRule
 {
-	protected $maxValue;
+	protected float|int $maxValue;
 
-	/**
-	 * @param mixed  $maxValue
-	 * @param string $errorMessage
-	 */
-	function __construct($maxValue, string $errorMessage)
+	function __construct(float|int $maxValue, HtmlText $errorMessage)
 	{
 		parent::__construct($errorMessage);
 
@@ -33,11 +30,10 @@ class MaxValueRule extends FormRule
 
 		$fieldValue = $formField->getRawValue();
 
-		if (is_scalar($fieldValue) === true) {
+		if (is_int($fieldValue) || is_float($fieldValue)) {
 			return ($fieldValue <= $this->maxValue);
 		}
 
 		throw new UnexpectedValueException('Could not handle field value for rule ' . __CLASS__);
 	}
 }
-/* EOF */

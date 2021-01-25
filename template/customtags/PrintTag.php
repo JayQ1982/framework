@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
@@ -21,37 +21,37 @@ class PrintTag extends TemplateTag implements TagNode, TagInline
 		return 'print';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return false;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return true;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $node)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$replValue = $this->replace($node->getAttribute('var')->value);
+		$replValue = $this->replace($elementNode->getAttribute('var')->getValue());
 
 		$replNode = new TextNode($tplEngine->getDomReader());
 		$replNode->content = $replValue;
 
-		$node->parentNode->replaceNode($node, $replNode);
+		$elementNode->parentNode->replaceNode($elementNode, $replNode);
 	}
 
-	public function replaceInline(TemplateEngine $tplEngine, $params): string
+	public function replaceInline(TemplateEngine $tplEngine, $tagArr): string
 	{
-		return $this->replace($params['var']);
+		return $this->replace($tagArr['var']);
 	}
 
-	public function replace($selector)
+	public function replace($selector): string
 	{
 		return '<?php echo ' . __CLASS__ . '::generateOutput($this, \'' . $selector . '\'); ?>';
 	}
 
-	public static function generateOutput(TemplateEngine $templateEngine, $selector)
+	public static function generateOutput(TemplateEngine $templateEngine, $selector): float|bool|int|string
 	{
 		$data = $templateEngine->getDataFromSelector($selector);
 
@@ -64,4 +64,3 @@ class PrintTag extends TemplateTag implements TagNode, TagInline
 		return $data;
 	}
 }
-/* EOF */

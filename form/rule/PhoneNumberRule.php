@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\rule;
@@ -18,7 +18,7 @@ class PhoneNumberRule extends FormRule
 	public function validate(FormField $formField): bool
 	{
 		if (!($formField instanceof PhoneNumberField)) {
-			throw new LogicException("The formField must be an instance of PhoneNumberField");
+			throw new LogicException('The formField must be an instance of PhoneNumberField');
 		}
 
 		if ($formField->isValueEmpty()) {
@@ -37,4 +37,3 @@ class PhoneNumberRule extends FormRule
 		return true;
 	}
 }
-/*EOF*/

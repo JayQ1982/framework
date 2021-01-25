@@ -1,16 +1,18 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\htmlparser;
+
+use framework\html\HtmlTagAttribute;
 
 class HtmlDoc
 {
 	private ?string $htmlContent;
 	private ?int $contentPos = null;
-	private HtmlNode $nodeTree;
+	private DocumentNode $nodeTree;
 	private ?HtmlNode $pendingNode;
 	private ?string $namespace;
 	private array $selfClosingTags;
@@ -57,7 +59,7 @@ class HtmlDoc
 		}
 	}
 
-	private function findNextNode()
+	private function findNextNode(): bool
 	{
 		$oldPendingNode = $this->pendingNode;
 		$oldContentPos = $this->contentPos;
@@ -95,7 +97,7 @@ class HtmlDoc
 
 		$newNode = null;
 
-		if (strpos($res[0][0], '<!--') === 0) {
+		if (str_starts_with($res[0][0], '<!--')) {
 			// Comment-node
 			$newNode = new CommentNode($this);
 			$newNode->content = $res[0][0];
@@ -150,7 +152,7 @@ class HtmlDoc
 				preg_match_all('/(.+?)="(.*?)"/', $res[3][0], $resAttrs, PREG_SET_ORDER);
 
 				foreach ($resAttrs as $attr) {
-					$newNode->addAttribute(new HtmlAttribute(trim($attr[1]), trim($attr[2])));
+					$newNode->addAttribute(new HtmlTagAttribute(trim($attr[1]), trim($attr[2]), true));
 				}
 			}
 		}
@@ -229,12 +231,7 @@ class HtmlDoc
 		return $nodes;
 	}
 
-	/**
-	 * @param ElementNode|null $entryNode
-	 *
-	 * @return string
-	 */
-	public function getHtml($entryNode = null)
+	public function getHtml(?ElementNode $entryNode = null): string
 	{
 		$html = '';
 		$nodeList = null;
@@ -259,8 +256,8 @@ class HtmlDoc
 			$tagStr = (($node->namespace !== null) ? $node->namespace . ':' : '') . $node->tagName;
 
 			$attrs = [];
-			foreach ($node->attributesNamed as $key => $val) {
-				$attrs[] = $key . '="' . $val->value . '"';
+			foreach ($node->getAttributes() as $htmlTagAttribute) {
+				$attrs[] = $htmlTagAttribute->render();
 			}
 			$attrStr = (count($attrs) > 0) ? ' ' . implode(' ', $attrs) : '';
 
@@ -308,7 +305,7 @@ class HtmlDoc
 		return $this->nodeTree;
 	}
 
-	public function addSelfClosingTag(string $tagName)
+	public function addSelfClosingTag(string $tagName): void
 	{
 		$this->selfClosingTags[] = $tagName;
 	}
@@ -318,4 +315,3 @@ class HtmlDoc
 		return $this->currentLine;
 	}
 }
-/* EOF */

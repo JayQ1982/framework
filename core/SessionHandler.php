@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
@@ -10,15 +10,22 @@ use Exception;
 
 class SessionHandler
 {
+	private const SESSION_CREATED_INDICATOR = 'sessionCreated';
+	private const TRUSTED_REMOTE_ADDRESS_INDICATOR = 'trustedRemoteAddress';
+	private const TRUSTED_USER_AGENT_INDICATOR = 'trustedUserAgent';
+	private const LAST_ACTIVITY_INDICATOR = 'lastActivity';
+	private const PREFERRED_LANGUAGE_INDICATOR = 'preferredLanguage';
+
 	private int $currentTime;
 	private bool $started = false;
 	private ?string $ID = null;
 	private ?string $savePath;
 	private ?string $name;
 	private ?int $maxLifeTime;
-	private string $remoteAddress;
-	private string $userAgent;
+	private string $clientRemoteAddress;
+	private string $clientUserAgent;
 	private ?string $fingerprint = null;
+	private array $availableLanguages;
 
 	public function __construct(EnvironmentHandler $environmentHandler, HttpRequest $httpRequest)
 	{
@@ -26,8 +33,9 @@ class SessionHandler
 		$this->savePath = $environmentHandler->getSessionSavePath();
 		$this->name = $environmentHandler->getSessionName();
 		$this->maxLifeTime = $environmentHandler->getSessionMaxLifeTime();
-		$this->remoteAddress = $httpRequest->getRemoteAddress();
-		$this->userAgent = $httpRequest->getUserAgent();
+		$this->clientRemoteAddress = $httpRequest->getRemoteAddress();
+		$this->clientUserAgent = $httpRequest->getUserAgent();
+		$this->availableLanguages = $environmentHandler->getAvailableLanguages();
 	}
 
 	private function setSecuritySettings(): void
@@ -57,7 +65,6 @@ class SessionHandler
 
 		$this->setSecuritySettings();
 
-		// set session_save_path
 		if (!is_null($this->savePath) && trim($this->savePath) !== '') {
 			session_save_path($this->savePath);
 		}
@@ -86,24 +93,19 @@ class SessionHandler
 			throw new Exception('Could not start session');
 		}
 
-		if (!isset($_SESSION['SESSION_CREATED'])) {
-			// If default session data has not been initialized yet, we just do it now
+		if (!$this->isSessionCreated()) {
 			$this->initDefaultSessionData(false);
-		} else if ($_SESSION['TRUSTED_REMOTE_ADDR'] != $this->remoteAddress || $_SESSION['PREV_USERAGENT'] != $this->userAgent) {
-			// If trusted info does not match, we destroy and reinitialize it
+		} else if ($this->getTrustedRemoteAddress() !== $this->clientRemoteAddress || $this->getTrustedUserAgent() !== $this->clientUserAgent) {
 			$this->initDefaultSessionData(true);
-		} else if (!is_null($this->maxLifeTime) && isset($_SESSION['LAST_ACTIVITY']) && ($this->currentTime - $_SESSION['LAST_ACTIVITY'] > $this->maxLifeTime)) {
+		} else if ($this->isSessionExpired()) {
 			// Real session lifetime and regeneration after maxLifeTime
 			// See: http://stackoverflow.com/questions/520237/how-do-i-expire-a-php-session-after-30-minutes/1270960#1270960
 			$this->initDefaultSessionData(true);
-		} else if ($this->currentTime - $_SESSION['SESSION_CREATED'] > 1800) {
-			// Session started more than 30 minutes ago, so we change session ID for the current session an invalidate old session ID
+		} else if ($this->isSessionOlderThan30Minutes()) {
 			$this->regenerateID();
 		}
 
-		// Update last access to prevent garbage collection from cleaning up this session
-		$_SESSION['LAST_ACTIVITY'] = $this->currentTime;
-
+		$this->setLastAction();
 		$this->started = true;
 	}
 
@@ -129,7 +131,7 @@ class SessionHandler
 	{
 		@session_regenerate_id(true);
 		$this->ID = session_id();
-		$_SESSION['SESSION_CREATED'] = $this->currentTime;
+		$this->setSessionCreated();
 	}
 
 	public function close(): void
@@ -145,10 +147,9 @@ class SessionHandler
 			session_destroy(); // Destroy session data in storage
 			session_start(); // Cleans current global data ($_SESSION), see http://php.net/manual/de/function.session-destroy.php
 		}
-
-		$_SESSION['SESSION_CREATED'] = $this->currentTime;
-		$_SESSION['TRUSTED_REMOTE_ADDR'] = $this->remoteAddress;
-		$_SESSION['PREV_USERAGENT'] = $this->userAgent;
+		$this->setSessionCreated();
+		$this->setTrustedRemoteAddress();
+		$this->setTrustedUserAgent();
 	}
 
 	/**
@@ -180,7 +181,7 @@ class SessionHandler
 	public function getFingerprint(): string
 	{
 		if (is_null($this->fingerprint)) {
-			$this->fingerprint = hash('sha256', $this->getID() . $this->userAgent, false);
+			$this->fingerprint = hash('sha256', $this->getID() . $this->clientUserAgent, false);
 		}
 
 		return $this->fingerprint;
@@ -190,5 +191,72 @@ class SessionHandler
 	{
 		return $_SESSION[$propertyName] ?? null;
 	}
+
+	private function setSessionCreated(): void
+	{
+		$_SESSION[SessionHandler::SESSION_CREATED_INDICATOR] = $this->currentTime;
+	}
+
+	public function getSessionCreated(): int
+	{
+		return $_SESSION[SessionHandler::SESSION_CREATED_INDICATOR];
+	}
+
+	private function isSessionCreated(): bool
+	{
+		return array_key_exists(SessionHandler::SESSION_CREATED_INDICATOR, $_SESSION);
+	}
+
+	private function isSessionOlderThan30Minutes(): bool
+	{
+		return ($this->currentTime - $this->getSessionCreated() > 1800);
+	}
+
+	private function setTrustedRemoteAddress(): void
+	{
+		$_SESSION[SessionHandler::TRUSTED_REMOTE_ADDRESS_INDICATOR] = $this->clientRemoteAddress;
+	}
+
+	public function getTrustedRemoteAddress(): string
+	{
+		return $_SESSION[SessionHandler::TRUSTED_REMOTE_ADDRESS_INDICATOR];
+	}
+
+	public function setTrustedUserAgent(): void
+	{
+		$_SESSION[SessionHandler::TRUSTED_USER_AGENT_INDICATOR] = $this->clientUserAgent;
+	}
+
+	public function getTrustedUserAgent(): string
+	{
+		return $_SESSION[SessionHandler::TRUSTED_USER_AGENT_INDICATOR];
+	}
+
+	private function isSessionExpired(): bool
+	{
+		return (
+			!is_null($this->maxLifeTime)
+			&& array_key_exists(SessionHandler::LAST_ACTIVITY_INDICATOR, $_SESSION)
+			&& ($this->currentTime - $_SESSION[SessionHandler::LAST_ACTIVITY_INDICATOR] > $this->maxLifeTime)
+		);
+	}
+
+	private function setLastAction(): void
+	{
+		$_SESSION[SessionHandler::LAST_ACTIVITY_INDICATOR] = $this->currentTime;
+	}
+
+	public function setPreferredLanguage(string $language): void
+	{
+		if (!array_key_exists($language, $this->availableLanguages)) {
+			throw new Exception('The preferred language ' . $language . ' is not available');
+		}
+
+		$_SESSION[SessionHandler::PREFERRED_LANGUAGE_INDICATOR] = $language;
+	}
+
+	public function getPreferredLanguage(): ?string
+	{
+		return $_SESSION[SessionHandler::PREFERRED_LANGUAGE_INDICATOR] ?? null;
+	}
 }
-/* EOF */ 

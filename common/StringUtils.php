@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\common;
@@ -15,26 +15,9 @@ use Throwable;
 
 class StringUtils
 {
-	public static function startsWith(string $str, string $startStr): bool
-	{
-		return (mb_strpos($str, $startStr) === 0);
-	}
-
-	public static function endsWith(string $str, string $endStr): bool
-	{
-		$endStrLen = mb_strlen($endStr);
-
-		if (mb_strrpos($str, $endStr) + $endStrLen === mb_strlen($str)) {
-			return true;
-		}
-
-		return false;
-	}
-
 	public static function beforeLast(string $str, string $before): string
 	{
 		$posUntil = mb_strrpos($str, $before);
-
 		if ($posUntil === false) {
 			return $str;
 		}
@@ -45,7 +28,6 @@ class StringUtils
 	public static function afterFirst(string $str, string $after): string
 	{
 		$posFrom = mb_strpos($str, $after);
-
 		if ($posFrom === false) {
 			return '';
 		}
@@ -58,7 +40,6 @@ class StringUtils
 	public static function beforeFirst(string $str, string $before): string
 	{
 		$posUntil = mb_strpos($str, $before);
-
 		if ($posUntil === false) {
 			return $str;
 		}
@@ -66,19 +47,170 @@ class StringUtils
 		return mb_substr($str, 0, $posUntil);
 	}
 
-	public static function emptyToNull(string $string): ?string
+	public static function between(string $str, string $start, string $end): ?string
 	{
-		return empty($string) ? null : $string;
+		$posStart = mb_strpos($str, $start) + mb_strlen($start);
+		$posEnd = mb_strrpos($str, $end, $posStart);
+		if ($posEnd === false) {
+			return null;
+		}
+
+		return mb_substr($str, $posStart, $posEnd - $posStart);
 	}
 
-	public static function utf8_to_punycode(string $string)
+	public static function afterLast(string $str, string $after): ?string
+	{
+		$posFrom = mb_strrpos($str, $after);
+
+		if ($posFrom === false) {
+			return null;
+		}
+
+		return mb_substr($str, $posFrom + mb_strlen($after));
+	}
+
+	public static function insertBeforeLast(string $str, string $beforeLast, string $newStr): string
+	{
+		return StringUtils::beforeLast($str, $beforeLast) . $newStr . $beforeLast . StringUtils::afterLast($str, $beforeLast);
+	}
+
+	public static function startsWith(string $str, string $startStr): bool
+	{
+		return (mb_strpos($str, $startStr) === 0);
+	}
+
+	public static function endsWith(string $str, string $endStr): bool
+	{
+		$endStrLen = mb_strlen($endStr);
+
+		return (mb_strrpos($str, $endStr) + $endStrLen === mb_strlen($str));
+	}
+
+	public static function breakUp(string $sentence, int $atIndex): string
+	{
+		if (mb_strlen($sentence) > $atIndex) {
+			return StringUtils::beforeLast(mb_substr($sentence, 0, 50), " ");
+		}
+
+		return $sentence;
+	}
+
+	public static function tokenize(string $stringToSplit, string $tokenToSplitString): array
+	{
+		$tokenArr = [];
+		$tokStr = strtok($stringToSplit, $tokenToSplitString);
+
+		while ($tokStr !== false) {
+			$tokenArr[] = $tokStr;
+
+			$tokStr = strtok($tokenToSplitString);
+		}
+
+		return $tokenArr;
+	}
+
+	public static function explode(string|array $tokens, string $str): array
+	{
+		$strToExplode = $str;
+		$explodeStr = $tokens;
+
+		if (is_array($tokens) === true) {
+			$explodeStr = chr(31);
+			$strToExplode = str_replace($tokens, $explodeStr, $str);
+		}
+
+		return explode($explodeStr, $strToExplode);
+	}
+
+	/**
+	 * @param string $str       The string to urlify
+	 * @param int    $maxLength The max length of the urlified string. 0 is no length limit.
+	 *
+	 * @return string The urlified string
+	 */
+	public static function urlify(string $str, int $maxLength = 0): string
+	{
+		$charMap = [
+			' '  => '-',
+			'.'  => '',
+			':'  => '',
+			','  => '',
+			'?'  => '',
+			'!'  => '',
+			'´'  => '',
+			'"'  => '',
+			'('  => '',
+			')'  => '',
+			'['  => '',
+			']'  => '',
+			'{'  => '',
+			'}'  => '',
+			'\'' => '',
+
+			// German
+			'ä'  => 'ae',
+			'ö'  => 'oe',
+			'ü'  => 'ue',
+
+			// Français
+			'é'  => 'e',
+			'è'  => 'e',
+			'ê'  => 'e',
+			'à'  => 'a',
+			'â'  => 'a',
+			'ç'  => 'c',
+			'ï'  => '',
+			'î'  => '',
+
+			// Español
+			'ñ'  => 'n',
+			'ó'  => 'o',
+			'ú'  => 'u',
+			'¿'  => '',
+			'¡'  => '',
+		];
+
+		$urlifiedStr = str_replace(array_keys($charMap), $charMap, strtolower(trim($str)));
+
+		// Replace multiple dashes
+		$urlifiedStr = preg_replace('/[-]{2,}/', '-', $urlifiedStr);
+
+		if ($maxLength === 0) {
+			return $urlifiedStr;
+		}
+
+		return substr($urlifiedStr, 0, $maxLength);
+	}
+
+	public static function emptyToNull(string $string): ?string
+	{
+		return ($string === '') ? null : $string;
+	}
+
+	public static function utf8_to_punycode(string $string): false|string
 	{
 		return idn_to_ascii($string, 0, INTL_IDNA_VARIANT_UTS46);
 	}
 
-	public static function punycode_to_utf8(string $string)
+	public static function punycode_to_utf8(string $string): false|string
 	{
 		return idn_to_utf8($string, 0, INTL_IDNA_VARIANT_UTS46);
+	}
+
+	public static function formatBytes($bytes, int $precision = 2): float
+	{
+		$units = ['B', 'KB', 'MB', 'GB', 'TB'];
+
+		$bytes = max($bytes, 0);
+		$pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+		$pow = min($pow, count($units) - 1);
+
+		// Uncomment one of the following alternatives
+		$bytes /= pow(1024, $pow);
+
+		// $bytes /= (1 << (10 * $pow));
+
+		return round($bytes, $precision) . ' ' . $units[$pow];
 	}
 
 	/**
@@ -92,7 +224,7 @@ class StringUtils
 	 *
 	 * @return string : Well formatted phone number in international format, if string was a valid phone number
 	 */
-	public static function phoneNumber(string $phone = '', string $defaultCountryCode = '', bool $internalFormat = false)
+	public static function phoneNumber(string $phone = '', string $defaultCountryCode = '', bool $internalFormat = false): string
 	{
 		$phone = trim($phone);
 		if ($phone === '') {
@@ -104,7 +236,7 @@ class StringUtils
 			$defaultCountryCode = 'CH';
 		}
 
-		$phoneNumber = self::parsePhoneNumber($phone, $defaultCountryCode);
+		$phoneNumber = StringUtils::parsePhoneNumber($phone, $defaultCountryCode);
 
 		if (is_null($phoneNumber)) {
 			// Just return original value, if phone number parsing fails
@@ -149,9 +281,20 @@ class StringUtils
 			}
 
 			return $phoneNumberUtil->isPossibleNumber($phoneNumber) ? $phoneNumber : null;
-		} catch (NumberParseException $e) {
+		} catch (NumberParseException) {
 			return null;
 		}
+	}
+
+	public static function sanitizeDomain(string $domain): ?string
+	{
+		$domain = trim($domain);
+		if ($domain === '') {
+			return '';
+		}
+		$rplArr = ['/\xE2\x80\x8B/', '@^[a-z]+://@i', '@^www\.@i', '/&#8203;/', '/\?/', '/ /', '/\/$/'];
+
+		return preg_replace($rplArr, '', $domain);
 	}
 
 	/**
@@ -176,7 +319,7 @@ class StringUtils
 		$maxCharPos = mb_strlen($availableChars, '8bit') - 1;
 		$string = '';
 		for ($i = 0; $i < $length; $i++) {
-			$randomCharacterPosition = $cryptoSecurity ? self::generateSecureRandomNumber($maxCharPos) : mt_rand(0, $maxCharPos);
+			$randomCharacterPosition = $cryptoSecurity ? StringUtils::generateSecureRandomNumber($maxCharPos) : mt_rand(0, $maxCharPos);
 			$string .= $availableChars[$randomCharacterPosition];
 		}
 
@@ -188,7 +331,7 @@ class StringUtils
 		while ($exceptionCounter < 3) {
 			try {
 				return random_int(0, $max);
-			} catch (Throwable $t) {
+			} catch (Throwable) {
 				// It was not possible to gather sufficient entropy
 				$exceptionCounter++;
 				// Give system some (raised) time to gain entropy again
@@ -198,16 +341,4 @@ class StringUtils
 
 		throw new RuntimeException('Missing System entropy at generation of random string');
 	}
-
-	public static function sanitizeDomain(string $domain): ?string
-	{
-		$domain = mb_strtolower(trim($domain));
-		if ($domain === '') {
-			return '';
-		}
-		$rplArr = ['/\xE2\x80\x8B/', '@^[a-z]+://@i', '@^www\.@i', '/&#8203;/', '/\?/', '/ /', '/\/$/'];
-
-		return preg_replace($rplArr, '', $domain);
-	}
 }
-/* EOF */

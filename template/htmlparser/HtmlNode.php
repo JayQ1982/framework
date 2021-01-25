@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\htmlparser;
@@ -22,8 +22,7 @@ abstract class HtmlNode
 	const DOCUMENT_TYPE_NODE = 10;
 	const DOCUMENT_FRAGMENT_NODE = 11;
 	const NOTATION_NODE = 12;
-
-	public int $nodeType;
+	public string $nodeType;
 	public ?int $line = null;
 	/** @var HtmlNode[] */
 	public array $childNodes = [];
@@ -31,16 +30,16 @@ abstract class HtmlNode
 	public string $content = '';
 	private HtmlDoc $htmlDoc;
 
-	public function __construct(int $nodeType, HtmlDoc $htmlDoc)
+	public function __construct(string $nodeType, HtmlDoc $htmlDoc)
 	{
-		$this->nodeType = $nodeType;
 		$this->htmlDoc = $htmlDoc;
+		$this->nodeType = $nodeType;
 	}
 
 	/**
 	 * @return HtmlNode[] All sub nodes
 	 */
-	public function getAllSubNodes()
+	public function getAllSubNodes(): array
 	{
 		$subNodes = [];
 
@@ -77,12 +76,10 @@ abstract class HtmlNode
 	/**
 	 * Inserts a node before another one
 	 *
-	 * @param mixed    $nodesToInsert A single HtmlNode object or an array of
-	 *                                multiple HtmlNode objects
-	 * @param HtmlNode $beforeNode    HtmlNode object before the new nodes should
-	 *                                be inserted
+	 * @param HtmlNode|HtmlNode[] $nodesToInsert A single HtmlNode object or an array of multiple HtmlNode objects
+	 * @param HtmlNode            $beforeNode    HtmlNode object before the new nodes should be inserted
 	 */
-	public function insertBefore($nodesToInsert, HtmlNode $beforeNode)
+	public function insertBefore(HtmlNode|array $nodesToInsert, HtmlNode $beforeNode)
 	{
 		$pos = $this->findNodePosition($beforeNode);
 
@@ -95,7 +92,7 @@ abstract class HtmlNode
 		$this->childNodes = array_values($this->childNodes);
 	}
 
-	private function findNodePosition(HtmlNode $findNode)
+	private function findNodePosition(HtmlNode $findNode): ?int
 	{
 		$countChildren = count($this->childNodes);
 
@@ -139,12 +136,7 @@ abstract class HtmlNode
 		$this->childNodes[] = $childNode;
 	}
 
-	/**
-	 * Returns the next sibling
-	 *
-	 * @return ElementNode|null The next sibling or NULL if no next sibling exists
-	 */
-	public function getNextSibling()
+	public function getNextSibling(): ?ElementNode
 	{
 		/** @var ElementNode[] $cNodes */
 		$cNodes = $this->parentNode->childNodes;
@@ -166,7 +158,7 @@ abstract class HtmlNode
 	 *
 	 * @return HtmlNode|null The previous sibling or NULL of no previous sibling exists
 	 */
-	public function getPrevSibling()
+	public function getPrevSibling(): ?HtmlNode
 	{
 		$cNodes = $this->parentNode->childNodes;
 		$prevPos = $this->parentNode->findNodePosition($this) - 1;
@@ -208,21 +200,32 @@ abstract class HtmlNode
 	 *
 	 * @param HtmlNode[] $childNodes
 	 */
-	public function setChildNodes(array $childNodes): void
+	public function setChildNodes(array $childNodes)
 	{
 		$this->childNodes = $childNodes;
 	}
 
+	/**
+	 * @return HtmlNode|null
+	 */
 	public function getParentNode(): ?HtmlNode
 	{
 		return $this->parentNode;
 	}
 
+	/**
+	 * @param HtmlNode|null $parentNode
+	 */
 	public function setParentNode(?HtmlNode $parentNode)
 	{
 		$this->parentNode = $parentNode;
 	}
 
+	/**
+	 * Checks if the node has child nodes or not
+	 *
+	 * @return boolean
+	 */
 	public function hasChildren(): bool
 	{
 		if (count($this->childNodes) > 0) {
@@ -232,4 +235,3 @@ abstract class HtmlNode
 		return false;
 	}
 }
-/* EOF */

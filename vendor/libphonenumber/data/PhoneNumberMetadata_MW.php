@@ -37,7 +37,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '111\\d{6}|(?:77|88|99)\\d{7}',
+	  'NationalNumberPattern' => '111\\d{6}|(?:31|77|88|99)\\d{7}',
 	  'ExampleNumber' => '991234567',
 	  'PossibleLength' =>
     [
@@ -89,11 +89,9 @@ return [
   ],
 	'voip' =>
   [
-	  'NationalNumberPattern' => '31\\d{7}',
-	  'ExampleNumber' => '310123456',
 	  'PossibleLength' =>
     [
-      0 => 9,
+      0 => -1,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -173,23 +171,11 @@ return [
     ],
 	  2 =>
     [
-	    'pattern' => '(\\d{2})(\\d{3})(\\d{4})',
-	    'format' => '$1 $2 $3',
-	    'leadingDigitsPatterns' =>
-      [
-        0 => '3',
-      ],
-	    'nationalPrefixFormattingRule' => '0$1',
-	    'domesticCarrierCodeFormattingRule' => '',
-	    'nationalPrefixOptionalWhenFormatting' => false,
-    ],
-	  3 =>
-    [
 	    'pattern' => '(\\d{3})(\\d{2})(\\d{2})(\\d{2})',
 	    'format' => '$1 $2 $3 $4',
 	    'leadingDigitsPatterns' =>
       [
-        0 => '[17-9]',
+        0 => '[137-9]',
       ],
 	    'nationalPrefixFormattingRule' => '0$1',
 	    'domesticCarrierCodeFormattingRule' => '',

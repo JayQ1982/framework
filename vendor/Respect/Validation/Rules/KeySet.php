@@ -5,139 +5,138 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the "LICENSE.md"
- * file that was distributed with this source code.
+ * For the full copyright and license information, please view the LICENSE file
+ * that was distributed with this source code.
  */
+
+declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
 use framework\vendor\Respect\Validation\Exceptions\ComponentException;
 use framework\vendor\Respect\Validation\Validatable;
 
+use function array_key_exists;
+use function array_map;
+use function count;
+use function current;
+use function is_array;
+
 /**
  * Validates a keys in a defined structure.
  *
+ * @author Emmerson Siqueira <emmersonsiqueira@gmail.com>
  * @author Henrique Moody <henriquemoody@gmail.com>
  */
-class KeySet extends AllOf
+final class KeySet extends AbstractWrapper
 {
     /**
-     * @param AllOf $rule
-     *
-     * @return Validatable
+     * @var mixed[]
      */
-    private function filterAllOf(AllOf $rule)
-    {
-        $rules = $rule->getRules();
-        if (count($rules) != 1) {
-            throw new ComponentException('AllOf rule must have only one Key rule');
-        }
+    private $keys;
 
-        return current($rules);
+    /**
+     * @var Key[]
+     */
+    private $keyRules;
+
+	/**
+	 * Initializes the rule.
+	 *
+	 * @param Validatable ...$validatables
+	 */
+    public function __construct(Validatable ...$validatables)
+    {
+        $this->keyRules = array_map([$this, 'getKeyRule'], $validatables);
+        $this->keys = array_map([$this, 'getKeyReference'], $this->keyRules);
+
+        parent::__construct(new AllOf(...$this->keyRules));
     }
 
     /**
-     * {}
+     * {@inheritDoc}
      */
-    public function addRule($rule, $arguments = [])
-    {
-        if ($rule instanceof AllOf) {
-            $rule = $this->filterAllOf($rule);
-        }
-
-        if (!$rule instanceof Key) {
-            throw new ComponentException('KeySet rule accepts only Key rules');
-        }
-
-        $this->appendRule($rule);
-
-        return $this;
-    }
-
-    /**
-     * {}
-     */
-    public function addRules(array $rules)
-    {
-        foreach ($rules as $rule) {
-            $this->addRule($rule);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return array
-     */
-    public function getKeys()
-    {
-        $keys = [];
-        foreach ($this->getRules() as $keyRule) {
-            $keys[] = $keyRule->reference;
-        }
-
-        return $keys;
-    }
-
-    /**
-     * @param array $input
-     *
-     * @return bool
-     */
-    private function hasValidStructure($input)
-    {
-        if (!is_array($input)) {
-            return false;
-        }
-
-        foreach ($this->getRules() as $keyRule) {
-            if (!array_key_exists($keyRule->reference, $input) && $keyRule->mandatory) {
-                return false;
-            }
-
-            unset($input[$keyRule->reference]);
-        }
-
-        return (count($input) == 0);
-    }
-
-    private function checkKeys($input)
+    public function assert($input): void
     {
         if (!$this->hasValidStructure($input)) {
-            $params = ['keys' => $this->getKeys()];
-	        throw $this->reportError($input, $params);
+            throw $this->reportError($input);
         }
+
+        parent::assert($input);
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
-    public function assert($input)
+    public function check($input): void
     {
-        $this->checkKeys($input);
+        if (!$this->hasValidStructure($input)) {
+            throw $this->reportError($input);
+        }
 
-        return parent::assert($input);
+        parent::check($input);
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
-    public function check($input)
-    {
-        $this->checkKeys($input);
-
-        return parent::check($input);
-    }
-
-    /**
-     * {}
-     */
-    public function validate($input)
+    public function validate($input): bool
     {
         if (!$this->hasValidStructure($input)) {
             return false;
         }
 
         return parent::validate($input);
+    }
+
+	/**
+	 * @param Validatable $validatable
+	 *
+	 * @return Key
+	 * @throws ComponentException
+	 */
+    private function getKeyRule(Validatable $validatable): Key
+    {
+        if ($validatable instanceof Key) {
+            return $validatable;
+        }
+
+        if (!$validatable instanceof AllOf || count($validatable->getRules()) !== 1) {
+            throw new ComponentException('KeySet rule accepts only Key rules');
+        }
+
+        return $this->getKeyRule(current($validatable->getRules()));
+    }
+
+	/**
+	 * @param Key $rule
+	 * @return mixed
+*/
+    private function getKeyReference(Key $rule)
+    {
+        return $rule->getReference();
+    }
+
+	/**
+	 * @param mixed $input
+	 *
+	 * @return bool
+	 * @return bool
+	 */
+    private function hasValidStructure($input): bool
+    {
+        if (!is_array($input)) {
+            return false;
+        }
+
+        foreach ($this->keyRules as $keyRule) {
+            if (!array_key_exists($keyRule->getReference(), $input) && $keyRule->isMandatory()) {
+                return false;
+            }
+
+            unset($input[$keyRule->getReference()]);
+        }
+
+        return count($input) == 0;
     }
 }

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  * =============================================================
  * this class uses original source (10.2016) from:
  * http://www.pixelenvision.com/1708/zip-postal-code-validation-regex-php-code-for-12-countries/
@@ -22,7 +22,7 @@ use framework\form\FormRule;
 
 class ZipCodeRule extends FormRule
 {
-	private array $zipreg = [
+	private array $zipCodeRegularExpression = [
 		//		'US'=>'^\d{5}([\-]?\d{4})?$',
 		//		'UK'=>'^(GIR|[A-Z]\d[A-Z\d]??|[A-Z]{2}\d[A-Z\d]??)[ ]??(\d[A-Z]{2})$',
 		'DE' => '\b((?:0[1-46-9]\d{3})|(?:[1-357-9]\d{4})|(?:[4][0-24-9]\d{3})|(?:[6][013-9]\d{3}))\b',
@@ -51,11 +51,10 @@ class ZipCodeRule extends FormRule
 
 		$countryCode = $formField->getCountryCode();
 		$zip = trim($formField->getRawValue());
-		if (isset($this->zipreg[$countryCode])) {
-			return (preg_match('/' . $this->zipreg[$countryCode] . '/i', $zip) === 1);
+		if (isset($this->zipCodeRegularExpression[$countryCode])) {
+			return (preg_match('/' . $this->zipCodeRegularExpression[$countryCode] . '/i', $zip) === 1);
 		}
 
 		return true;
 	}
 }
-/*EOF*/

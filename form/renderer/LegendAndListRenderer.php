@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\renderer;
@@ -11,9 +11,9 @@ use framework\form\component\field\CheckboxOptionsField;
 use framework\form\component\field\RadioOptionsField;
 use framework\form\component\FormField;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
-use framework\form\FormText;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
+use framework\html\HtmlText;
 
 class LegendAndListRenderer extends FormRenderer
 {
@@ -34,99 +34,71 @@ class LegendAndListRenderer extends FormRenderer
 	{
 		$formField = $this->formField;
 
-		$labelInfoText = trim($this->formField->getLabelInfoText());
+		$labelInfoText = $this->formField->getLabelInfoText();
 		$labelText = $formField->getLabel();
-		if ($labelInfoText !== '') {
-			// add a space to separate it from following labelInfo-Tag
-			$labelText .= ' ';
+		if (!is_null($labelInfoText)) {
+			// Add a space to separate it from following labelInfo-Tag
+			$labelText = new HtmlText(' ' . $labelText->render(), true);
 		}
 
 		$legendAttributes = [];
 		if (!$formField->isRenderLabel()) {
-			$legendAttributes[] = new FormTagAttribute('class', 'visuallyhidden');
+			$legendAttributes[] = new HtmlTagAttribute('class', 'visuallyhidden', true);
 		}
 
-		$legendTag = new FormTag('legend', false, $legendAttributes);
-		$legendTag->addText(new FormText($labelText));
+		$legendTag = new HtmlTag('legend', false, $legendAttributes);
+		$legendTag->addText($labelText);
 
-		if ($labelInfoText !== '') {
-			$labelInfoTag = new FormTag('i', false, [
-				new FormTagAttribute('class', 'legend-info'),
+		if (!is_null($labelInfoText)) {
+			$labelInfoTag = new HtmlTag('i', false, [
+				new HtmlTagAttribute('class', 'legend-info', true),
 			]);
-			$labelInfoTag->addText(new FormText($labelInfoText));
+			$labelInfoTag->addText($labelInfoText);
 			$legendTag->addTag($labelInfoTag);
 		}
 
 		if ($formField->isRequired() && $formField->isRenderRequiredAbbr()) {
-			$abbrTag = new FormTag('abbr', false, [
-				new FormTagAttribute('title', 'Erforderliche Eingabe'),
-				new FormTagAttribute('class', 'required'),
+			$abbrTag = new HtmlTag('abbr', false, [
+				new HtmlTagAttribute('title', 'Erforderliche Eingabe', true),
+				new HtmlTagAttribute('class', 'required', true),
 			]);
-			$abbrTag->addText(new FormText('*'));
+			$abbrTag->addText(new HtmlText('*', true));
 			$legendTag->addTag($abbrTag);
 		}
 
-		$attributes = [new FormTagAttribute('class', 'legend-and-list' . ($formField->hasErrors() ? ' has-error' : ''))];
-		$ariaDescribedBy = [];
-
-		if ($formField->hasErrors()) {
-			$attributes[] = new FormTagAttribute('aria-invalid', 'true');
-			$ariaDescribedBy[] = $formField->getName() . '-error';
-		}
-
-		if (!is_null($formField->getFieldInfoAsHTML())) {
-			$ariaDescribedBy[] = $formField->getName() . '-info';
-		}
-		if (count($ariaDescribedBy) > 0) {
-			$attributes[] = new FormTagAttribute('aria-describedby', implode(' ', $ariaDescribedBy));
-		}
-
-		$fieldsetTag = new FormTag('fieldset', false, $attributes);
+		$fieldsetTag = LegendAndListRenderer::createFieldsetTag($formField);
 		$fieldsetTag->addTag($legendTag);
 
 		if ($formField instanceof CheckboxOptionsField) {
 			$checkboxOptionsRenderer = new CheckboxOptionsRenderer($formField);
 			$checkboxOptionsRenderer->prepare();
 
-			$fieldsetTag->addTag($checkboxOptionsRenderer->getFormTag());
-			$fieldsetTag = $this->prepareErrorDisplay($fieldsetTag);
+			$fieldsetTag->addTag($checkboxOptionsRenderer->getHtmlTag());
+			FormRenderer::addErrorsToParentHtmlTag($formField, $fieldsetTag);
 		} else if ($formField instanceof RadioOptionsField) {
 			$radioOptionsRenderer = new RadioOptionsRenderer($formField);
 			$radioOptionsRenderer->prepare();
 
-			$fieldsetTag->addTag($radioOptionsRenderer->getFormTag());
-			$fieldsetTag = $this->prepareErrorDisplay($fieldsetTag);
+			$fieldsetTag->addTag($radioOptionsRenderer->getHtmlTag());
+			FormRenderer::addErrorsToParentHtmlTag($formField, $fieldsetTag);
 		}
 
-		if (!is_null($formField->getFieldInfoAsHTML())) {
-			$fieldsetTag = $formField->addFieldInfo($fieldsetTag);
+		if (!is_null($formField->getFieldInfo())) {
+			FormRenderer::addFieldInfoToParentHtmlTag($formField, $fieldsetTag);
 		}
 
-		$this->setFormTag($fieldsetTag);
+		$this->setHtmlTag($fieldsetTag);
 	}
 
-	protected function prepareErrorDisplay(FormTag $formTag): FormTag
+	public static function createFieldsetTag(FormField $formField): HtmlTag
 	{
-		$formField = $this->formField;
-		if (!$formField->hasErrors()) {
-			return $formTag;
-		}
+		$htmlTag = new HtmlTag(
+			'fieldset',
+			false,
+			[new HtmlTagAttribute('class', 'legend-and-list' . ($formField->hasErrors() ? ' has-error' : ''), true)]
+		);
+		FormRenderer::addAriaAttributesToHtmlTag($formField, $htmlTag);
 
-		$bTag = new FormTag('b', false);
-		$errorsHTML = [];
-		foreach ($formField->getErrors() as $msg) {
-			$errorsHTML[] = FormRenderer::htmlEncode($msg);
-		}
-		$bTag->addText(new FormText(implode('<br>', $errorsHTML), true));
-
-		$divTag = new FormTag('div', false, [
-			new FormTagAttribute('class', 'form-input-error'),
-			new FormTagAttribute('id', $formField->getName() . '-error'),
-		]);
-		$divTag->addTag($bTag);
-		$formTag->addTag($divTag);
-
-		return $formTag;
+		return $htmlTag;
 	}
 }
-/* EOF */

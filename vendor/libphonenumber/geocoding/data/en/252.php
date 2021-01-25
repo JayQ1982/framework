@@ -14,5 +14,4 @@ return [
   2521 => 'Mogadishu',
   2523 => 'Hargeisa',
   2524 => 'Garowe',
-  25261 => 'Mogadishu',
 ];

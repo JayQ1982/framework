@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\table\column;
@@ -22,4 +22,3 @@ class DefaultColumn extends AbstractTableColumn
 		return $tableItemModel->renderValue($this->getIdentifier(), $this->renderNewLines);
 	}
 }
-/* EOF */

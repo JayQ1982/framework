@@ -1,46 +1,98 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\table\table;
 
 use framework\core\HttpRequest;
 use framework\db\FrameworkDB;
-use framework\common\Pagination;
 use framework\table\column\AbstractTableColumn;
+use framework\table\filter\AbstractTableFilter;
+use framework\table\renderer\SortableTableHeadRenderer;
+use framework\table\renderer\TablePaginationRenderer;
 use framework\table\TableHelper;
 use framework\table\TableItemModel;
 
-class DbResultTable extends Table
+class DbResultTable extends SmartTable
 {
+	private const sessionDataType = 'table';
+	protected const filter = '[filter]';
+	protected const pagination = '[pagination]';
+
 	private FrameworkDB $db;
 	private HttpRequest $httpRequest;
+	private bool $filledDataBySelectQuery = false;
+	private ?AbstractTableColumn $defaultSortColumn = null;
 	private string $selectQuery;
 	private array $params;
-	private int $currentPage = 1;
 	private int $itemsPerPage;
-	private ?AbstractTableColumn $defaultSortColumn = null;
-	private bool $filledDataBySelectQuery = false;
+	private ?AbstractTableFilter $abstractTableFilter;
+	private TablePaginationRenderer $tablePaginationRenderer;
 	private ?int $filledAmount = null;
 	private ?int $totalAmount = null;
+	private array $additionalLinkParameters = [];
+	private bool $limitToOnePage;
 
 	public function __construct(
-		string $identifier,
+		string $identifier, // Can be name of main table, but must be unique per site
 		FrameworkDB $db,
 		HttpRequest $httpRequest,
 		string $selectQuery,
 		array $params = [],
-		int $itemsPerPage = 25
-	) {
-		parent::__construct($identifier);
+		?AbstractTableFilter $abstractTableFilter = null,
+		?TablePaginationRenderer $tablePaginationRenderer = null,
+		?SortableTableHeadRenderer $sortableTableHeadRenderer = null,
+		int $itemsPerPage = 25, // Max rows in table before pagination starts, if result is not limited to one page
+		bool $limitToOnePage = false // Set to true to disable pagination
+	)
+	{
+		if (is_null($sortableTableHeadRenderer)) {
+			$sortableTableHeadRenderer = new SortableTableHeadRenderer();
+		}
+		parent::__construct($identifier, $sortableTableHeadRenderer);
+
+		$this->setNoDataHtml(DbResultTable::filter . $this->getNoDataHtml());
+		$this->setFullHtml(DbResultTable::filter . SmartTable::totalAmount . DbResultTable::pagination . '<div class="table-global-wrap">' . SmartTable::table . '</div>' . DbResultTable::pagination);
 
 		$this->db = $db;
 		$this->httpRequest = $httpRequest;
 		$this->selectQuery = $selectQuery;
 		$this->params = $params;
+		$this->abstractTableFilter = $abstractTableFilter;
+		$this->tablePaginationRenderer = is_null($tablePaginationRenderer) ? new TablePaginationRenderer() : $tablePaginationRenderer;
 		$this->itemsPerPage = $itemsPerPage;
+		$this->limitToOnePage = $limitToOnePage;
+	}
+
+	public static function getFromSession(string $dataType, string $identifier, string $index): ?string
+	{
+		if (!isset($_SESSION[$dataType][$identifier])) {
+			$_SESSION[$dataType][$identifier] = [];
+		}
+
+		return $_SESSION[$dataType][$identifier][$index] ?? null;
+	}
+
+	public static function saveToSession(string $dataType, string $identifier, string $index, string $value): void
+	{
+		$_SESSION[$dataType][$identifier][$index] = $value;
+	}
+
+	public function getCurrentSortColumn(): ?string
+	{
+		return DbResultTable::getFromSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'sort_column');
+	}
+
+	public function getCurrentSortDirection(): string
+	{
+		return DbResultTable::getFromSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'sort_direction');
+	}
+
+	public function getCurrentPaginationPage(): int
+	{
+		return (int)DbResultTable::getFromSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'pagination_page');
 	}
 
 	public function addColumn(AbstractTableColumn $abstractTableColumn, bool $isDefaultSortColumn = false): void
@@ -52,35 +104,41 @@ class DbResultTable extends Table
 		}
 	}
 
-	public function render(bool $renderTotalAmount, bool $renderRawData = false): string
+	public function render(): string
 	{
 		$this->fillBySelectQuery();
 
-		$totalAmount = $this->getTotalAmount();
-		$filledAmount = $this->filledAmount;
+		$html = parent::render();
 
-		$paginationHtml = '';
-		if ($totalAmount > $filledAmount) {
-			$paginationHtml = Pagination::render($totalAmount, $this->currentPage, $this->itemsPerPage);
-		}
-
-		$returnHtml = parent::render($renderTotalAmount, $renderRawData);
-
-		return $paginationHtml . $returnHtml . $paginationHtml;
+		return str_replace(
+			[
+				DbResultTable::filter,
+				DbResultTable::pagination,
+			],
+			[
+				is_null($this->abstractTableFilter) ? '' : $this->abstractTableFilter->render(),
+				$this->tablePaginationRenderer->render($this, $this->itemsPerPage),
+			],
+			$html
+		);
 	}
 
-	public function fillBySelectQuery()
+	public function fillBySelectQuery(): void
 	{
 		if ($this->filledDataBySelectQuery) {
 			return;
 		}
+
 		$httpRequest = $this->httpRequest;
+		if (!is_null($this->abstractTableFilter)) {
+			$this->abstractTableFilter->validate($this);
+		}
 		$this->initSorting($httpRequest);
 		$this->initPaginationPage($httpRequest);
 
 		$orderBySql = '';
-		$sortColumn = $this->getFromSession('sort_column');
-		$sortDirection = $this->getFromSession('sort_direction');
+		$sortColumn = $this->getCurrentSortColumn();
+		$sortDirection = $this->getCurrentSortDirection();
 		if (!empty($sortColumn)) {
 			$orderBySql = ' ORDER BY ' . $sortColumn . (($sortDirection === TableHelper::SORT_DESC) ? ' ' . TableHelper::SORT_DESC : '');
 		}
@@ -91,12 +149,12 @@ class DbResultTable extends Table
 			'LIMIT ?, ?',
 		]);
 		$params = $this->params;
-		$params[] = ($this->currentPage - 1) * $this->itemsPerPage;
+		$params[] = ($this->getCurrentPaginationPage() - 1) * $this->itemsPerPage;
 		$params[] = $this->itemsPerPage;
 
 		$res = $this->db->select($sql, $params);
 		foreach ($res as $dataItem) {
-			$this->addTableItem(new TableItemModel($dataItem));
+			$this->addDataItem(new TableItemModel($dataItem));
 		}
 		$this->filledDataBySelectQuery = true;
 		$this->filledAmount = count($res);
@@ -124,40 +182,40 @@ class DbResultTable extends Table
 					&& in_array($requestedSortColumn, $availableSortOptions)
 					&& array_key_exists($requestedSortDirection, TableHelper::OPPOSITE_SORT_DIRECTION)
 				) {
-					$this->saveToSession('sort_column', $requestedSortColumn);
-					$this->saveToSession('sort_direction', $requestedSortDirection);
+					DbResultTable::saveToSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'sort_column', $requestedSortColumn);
+					DbResultTable::saveToSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'sort_direction', $requestedSortDirection);
 				}
 			}
 		}
 
-		if (is_null($this->getFromSession('sort_column')) || !is_null($httpRequest->getInputString('reset'))) {
+		if (empty($this->getCurrentSortColumn()) || !is_null($httpRequest->getInputString('reset'))) {
 			$defaultSortColumn = $this->defaultSortColumn;
 			if (is_null($defaultSortColumn)) {
-				$this->saveToSession('sort_column', '');
-				$this->saveToSession('sort_direction', TableHelper::SORT_ASC);
+				DbResultTable::saveToSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'sort_column', current($this->getColumns())->getIdentifier());
+				DbResultTable::saveToSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'sort_direction', TableHelper::SORT_ASC);
 			} else {
-				$this->saveToSession('sort_column', $defaultSortColumn->getIdentifier());
-				$this->saveToSession('sort_direction', $defaultSortColumn->isSortAscendingByDefault() ? TableHelper::SORT_ASC : TableHelper::SORT_DESC);
+				DbResultTable::saveToSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'sort_column', $defaultSortColumn->getIdentifier());
+				DbResultTable::saveToSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'sort_direction', $defaultSortColumn->isSortAscendingByDefault() ? TableHelper::SORT_ASC : TableHelper::SORT_DESC);
 			}
 		}
 	}
 
 	private function initPaginationPage(HttpRequest $httpRequest): void
 	{
-		$requestedPage = $httpRequest->getInputInteger('page');
-		if (!empty($requestedPage)) {
-			$this->saveToSession('pagination_page', $requestedPage);
+		$inputPageArr = explode('|', $httpRequest->getInputString('page'));
+		$inputPage = (int)$inputPageArr[0];
+		$inputTable = trim($inputPageArr[1] ?? '');
+		if ($inputTable === $this->getIdentifier() && $inputPage > 0) {
+			DbResultTable::saveToSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'pagination_page', $inputPage);
 		}
 
 		if (
-			(int)$this->getFromSession('pagination_page') < 1
+			$this->getCurrentPaginationPage() < 1
 			|| !is_null($httpRequest->getInputString('find'))
 			|| !is_null($httpRequest->getInputString('reset'))
 		) {
-			$this->saveToSession('pagination_page', 1);
+			DbResultTable::saveToSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'pagination_page', 1);
 		}
-
-		$this->currentPage = (int)$this->getFromSession('pagination_page');
 	}
 
 	public function getTotalAmount(): int
@@ -168,7 +226,7 @@ class DbResultTable extends Table
 
 		$this->fillBySelectQuery();
 
-		if ($this->currentPage === 1 && $this->filledAmount < $this->itemsPerPage) {
+		if (($this->getCurrentPaginationPage() === 1 && $this->filledAmount < $this->itemsPerPage) || $this->limitToOnePage) {
 			return $this->totalAmount = $this->filledAmount;
 		}
 
@@ -203,5 +261,49 @@ class DbResultTable extends Table
 
 		return $this->totalAmount = $this->db->select(implode(' ', $newCountQueryParts), $this->params)[0]->amount;
 	}
+
+	public function getDb(): FrameworkDB
+	{
+		return $this->db;
+	}
+
+	public function getHttpRequest(): HttpRequest
+	{
+		return $this->httpRequest;
+	}
+
+	public function getSelectQuery(): string
+	{
+		return $this->selectQuery;
+	}
+
+	public function setParams(array $params): void
+	{
+		$this->params = $params;
+	}
+
+	public function addToSelectQuery(string $additionalSql): void
+	{
+		$this->selectQuery .= PHP_EOL . $additionalSql;
+	}
+
+	public function addParam(string|float|int $param): void
+	{
+		$this->params[] = $param;
+	}
+
+	public function addAdditionalLinkParameter(string $key, string $value): void
+	{
+		$this->additionalLinkParameters[urlencode($key)] = urlencode($value);
+	}
+
+	public function getAdditionalLinkParameters(): array
+	{
+		return $this->additionalLinkParameters;
+	}
+
+	public function setLimitToOnePage(bool $limitToOnePage): void
+	{
+		$this->limitToOnePage = $limitToOnePage;
+	}
 }
-/* EOF */

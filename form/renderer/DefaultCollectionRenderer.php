@@ -1,15 +1,15 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\renderer;
 
 use framework\form\FormCollection;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
 
 class DefaultCollectionRenderer extends FormRenderer
 {
@@ -22,17 +22,16 @@ class DefaultCollectionRenderer extends FormRenderer
 
 	public function prepare(): void
 	{
-		$componentTag = new FormTag($this->formCollection->getName(), false);
+		$componentTag = new HtmlTag($this->formCollection->getName(), false);
 
 		if ($this->formCollection->hasErrors()) {
-			$componentTag->addFormTagAttribute(new FormTagAttribute('class', 'has-error'));
+			$componentTag->addHtmlTagAttribute(new HtmlTagAttribute('class', 'has-error', true));
 		}
 
 		foreach ($this->formCollection->getChildComponents() as $childComponent) {
-			$componentTag->addTag($childComponent->getFormTag());
+			$componentTag->addTag($childComponent->getHtmlTag());
 		}
 
-		$this->setFormTag($componentTag);
+		$this->setHtmlTag($componentTag);
 	}
 }
-/* EOF */

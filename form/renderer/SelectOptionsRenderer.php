@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\renderer;
@@ -9,16 +9,14 @@ namespace framework\form\renderer;
 use LogicException;
 use framework\form\component\field\SelectOptionsField;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
-use framework\form\FormText;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
 
 class SelectOptionsRenderer extends FormRenderer
 {
 	private SelectOptionsField $selectOptionsField;
 	private bool $chosen = false;
 	private bool $multi = false;
-	private ?string $onchange;
 
 	public function __construct(SelectOptionsField $selectOptionsField)
 	{
@@ -28,60 +26,50 @@ class SelectOptionsRenderer extends FormRenderer
 	public function prepare(): void
 	{
 		$selectOptionsField = $this->selectOptionsField;
-		$options = $selectOptionsField->getOptions();
+		$options = $selectOptionsField->getFormOptions()->getData();
 
 		$fieldName = $selectOptionsField->getName();
 		$selectAttributes = [
-			new FormTagAttribute('name', $this->multi ? $fieldName . '[]' : $fieldName),
-			new FormTagAttribute('id', $selectOptionsField->getId()),
+			new HtmlTagAttribute('name', $this->multi ? $fieldName . '[]' : $fieldName, true),
+			new HtmlTagAttribute('id', $selectOptionsField->getId(), true),
 		];
 
 		if ($this->chosen) {
-			$selectAttributes[] = new FormTagAttribute('class', 'chosen');
+			$selectAttributes[] = new HtmlTagAttribute('class', 'chosen', true);
 		}
 		if ($this->multi) {
-			$selectAttributes[] = new FormTagAttribute('multiple', null);
-		}
-		if (!is_null($this->onchange)) {
-			$selectAttributes[] = new FormTagAttribute('onchange', $this->onchange);
-		}
-		if (!is_null($selectOptionsField->getSize())) {
-			$selectAttributes[] = new FormTagAttribute('size', $selectOptionsField->getSize());
+			$selectAttributes[] = new HtmlTagAttribute('multiple', null, true);
 		}
 
-		$selectTag = new FormTag('select', false, $selectAttributes);
+		$selectTag = new HtmlTag('select', false, $selectAttributes);
 
-		if ($selectOptionsField->hasEmptyValue()) {
-			$optionsWithEmptyValueEntry = ['' => $selectOptionsField->getEmptyValueLabel()] + $options;
-		} else {
-			$optionsWithEmptyValueEntry = $options;
+		if ($selectOptionsField->isRenderEmptyValueOption() && !array_key_exists('', $options)) {
+			$options = ['' => $selectOptionsField->getEmptyValueLabel()] + $options;
 		}
 		$selectedValue = $selectOptionsField->getRawValue();
 		if ($this->multi && !is_array($selectedValue)) {
 			throw new LogicException('The selected value must be an array if selection of multiple elements is allowed');
 		}
 
-		$this->prepareOptionsDisplay($selectTag, $optionsWithEmptyValueEntry, $selectedValue);
+		$this->prepareOptionsDisplay($selectTag, $options, $selectedValue);
 
-		$this->setFormTag($selectTag);
+		$this->setHtmlTag($selectTag);
 	}
 
-	private function prepareOptionsDisplay(FormTag $parentTag, array $options, $selectedValue): void
+	private function prepareOptionsDisplay(HtmlTag $parentTag, array $options, array|null|int|string $selectedValue): void
 	{
 		foreach ($options as $key => $val) {
-
 			if (is_array($val)) {
-				$childTag = new FormTag('optgroup', false, [new FormTagAttribute('label', $key)]);
+				$childTag = new HtmlTag('optgroup', false, [new HtmlTagAttribute('label', $key, true)]);
 				$this->prepareOptionsDisplay($childTag, $val, $selectedValue);
 			} else {
-				$attributes = [new FormTagAttribute('value', $key)];
+				$attributes = [new HtmlTagAttribute('value', $key, true)];
 				if (($this->multi && in_array($key, $selectedValue)) || (!$this->multi && $key == $selectedValue)) {
-					$attributes[] = new FormTagAttribute('selected', null);
+					$attributes[] = new HtmlTagAttribute('selected', null, true);
 				}
 
-				$childTag = new FormTag('option', false, $attributes);
-				// Force isHTML to false because there are no html-tags allowed in option-tags
-				$childTag->addText(new FormText($val, false));
+				$childTag = new HtmlTag('option', false, $attributes);
+				$childTag->addText($val);
 			}
 			$parentTag->addTag($childTag);
 		}
@@ -106,10 +94,4 @@ class SelectOptionsRenderer extends FormRenderer
 	{
 		$this->multi = $newValue;
 	}
-
-	public function setOnChange(?string $onChange): void
-	{
-		$this->onchange = $onChange;
-	}
 }
-/* EOF */

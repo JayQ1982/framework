@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\response;
@@ -11,7 +11,7 @@ use framework\core\HttpResponse;
 
 class errorResponseContent extends responseContent
 {
-	public function __construct(string $contentType, string $errorMessage, $errorCode = null, array $additionalInfo = [])
+	public function __construct(string $contentType, string $errorMessage, null|int|string $errorCode = null, array $additionalInfo = [])
 	{
 		parent::__construct([HttpResponse::TYPE_JSON, HttpResponse::TYPE_TXT, HttpResponse::TYPE_CSV], $contentType);
 
@@ -20,11 +20,11 @@ class errorResponseContent extends responseContent
 			'message' => $errorMessage,
 			'code'    => $errorCode,
 		];
-		if (!empty($additionalInfo)) {
-			$errorData['additionalInfo'] = (array)$additionalInfo;
+		if (count($additionalInfo) !== 0) {
+			$errorData['additionalInfo'] = $additionalInfo;
 		}
 
-		switch ($contentType) {
+		switch ($this->contentType) {
 			case HttpResponse::TYPE_JSON:
 				$this->setContent(JsonUtils::enJson([
 					'status' => $status,
@@ -40,4 +40,3 @@ class errorResponseContent extends responseContent
 		}
 	}
 }
-/* EOF */

@@ -150,7 +150,7 @@ return [
 	    'format' => '$1 $2 $3',
 	    'leadingDigitsPatterns' =>
       [
-        0 => '[246]',
+        0 => '[246]|9[57]',
       ],
 	    'nationalPrefixFormattingRule' => '',
 	    'domesticCarrierCodeFormattingRule' => '',

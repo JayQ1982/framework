@@ -26,10 +26,11 @@ return [
   ],
 	'fixedLine' =>
   [
-	  'NationalNumberPattern' => '4(?:[09][4-689]\\d|4)\\d{4}',
+	  'NationalNumberPattern' => '4(?:0[4-689]|9[4-68])\\d{5}',
 	  'ExampleNumber' => '40412345',
 	  'PossibleLength' =>
     [
+      0 => 8,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -89,9 +90,11 @@ return [
   ],
 	'voip' =>
   [
+	  'NationalNumberPattern' => '499\\d{5}',
+	  'ExampleNumber' => '49901234',
 	  'PossibleLength' =>
     [
-      0 => -1,
+      0 => 8,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -109,9 +112,11 @@ return [
   ],
 	'uan' =>
   [
+	  'NationalNumberPattern' => '44\\d{4}',
+	  'ExampleNumber' => '440123',
 	  'PossibleLength' =>
     [
-      0 => -1,
+      0 => 6,
     ],
 	  'PossibleLengthLocalOnly' =>
     [

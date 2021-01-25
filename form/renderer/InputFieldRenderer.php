@@ -1,70 +1,45 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\renderer;
 
-use LogicException;
 use framework\form\component\field\InputField;
 use framework\form\component\field\OptionsField;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
 
 class InputFieldRenderer extends FormRenderer
 {
-	/** @var InputField|OptionsField */
-	private $inputField;
+	private InputField|OptionsField $formField;
 
-	/**
-	 * @param InputField|OptionsField $inputField
-	 */
-	public function __construct($inputField)
+	public function __construct(InputField|OptionsField $formField)
 	{
-		if (!($inputField instanceof InputField) && !($inputField instanceof OptionsField)) {
-			throw new LogicException("The input field must be either InputField or OptionsField.");
-		}
-
-		$this->inputField = $inputField;
+		$this->formField = $formField;
 	}
 
 	public function prepare(): void
 	{
-		$inputField = $this->inputField;
+		$formField = $this->formField;
 
-		$htmlValue = $inputField->renderValue();
+		$inputTag = new HtmlTag('input', true);
+		$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('type', $formField->getType(), true));
+		$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('name', $formField->getName(), true));
+		$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('id', $formField->getId(), true));
 
-		$attributes = [
-			new FormTagAttribute('type', $inputField->getType()),
-			new FormTagAttribute('name', $inputField->getName()),
-			new FormTagAttribute('id', $inputField->getId()),
-		];
+		$htmlValue = $formField->getRawValue();
 		if (!is_null($htmlValue)) {
-			$attributes[] = new FormTagAttribute('value', $htmlValue);
+			$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('value', $htmlValue, false));
 		}
 
-		if (!is_null($inputField->getPlaceholder())) {
-			$attributes[] = new FormTagAttribute('placeholder', $inputField->getPlaceholder());
+		if (!is_null($formField->getPlaceholder())) {
+			$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('placeholder', $formField->getPlaceholder(), true));
 		}
 
-		$ariaDescribedBy = [];
-
-		if ($inputField->hasErrors()) {
-			$attributes[] = new FormTagAttribute('aria-invalid', 'true');
-			$ariaDescribedBy[] = $inputField->getName() . '-error';
-		}
-
-		if (!is_null($inputField->getFieldInfoAsHTML())) {
-			$ariaDescribedBy[] = $inputField->getName() . '-info';
-		}
-
-		if (count($ariaDescribedBy) > 0) {
-			$attributes[] = new FormTagAttribute('aria-describedby', implode(' ', $ariaDescribedBy));
-		}
-
-		$this->setFormTag(new FormTag('input', true, $attributes));
+		FormRenderer::addAriaAttributesToHtmlTag($formField, $inputTag);
+		$this->setHtmlTag($inputTag);
 	}
 }
-/* EOF */

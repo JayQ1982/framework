@@ -1,12 +1,13 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\component\field;
 
 use framework\form\renderer\HiddenFieldRenderer;
+use framework\html\HtmlText;
 
 class HiddenField extends InputField
 {
@@ -22,8 +23,7 @@ class HiddenField extends InputField
 	 */
 	public function __construct(string $name, $value = null)
 	{
-		parent::__construct($name, '', $value);
+		parent::__construct($name, new HtmlText('', true), $value);
 		$this->setRenderer(new HiddenFieldRenderer($this));
 	}
 }
-/* EOF */

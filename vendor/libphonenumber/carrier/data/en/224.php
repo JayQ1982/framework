@@ -12,6 +12,7 @@
 
 return [
   22460 => 'Sotelgui',
+  22461 => 'Orange',
   22462 => 'Orange',
   22463 => 'Intercel',
   22465 => 'Cellcom',

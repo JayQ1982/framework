@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\table\column;
@@ -20,7 +20,11 @@ class OptionsColumn extends AbstractTableColumn
 
 	protected function renderCellValue(TableItemModel $tableItemModel): string
 	{
-		return $this->options[$tableItemModel->getRawValue($this->getIdentifier())] ?? '';
+		$rawValue = $tableItemModel->getRawValue($this->getIdentifier());
+		if (array_key_exists($rawValue, $this->options)) {
+			return $this->options[$rawValue];
+		}
+
+		return $tableItemModel->renderValue($this->getIdentifier());
 	}
 }
-/* EOF */

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
@@ -14,37 +14,37 @@ use framework\template\template\TemplateTag;
 
 class FormAddRemoveTag extends TemplateTag implements TagNode
 {
-	public static function getName()
+	public static function getName(): string
 	{
 		return 'formAddRemove';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return false;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return true;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $node)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$tplEngine->checkRequiredAttributes($node, ['chosen', 'name']);
+		$tplEngine->checkRequiredAttributes($elementNode, ['chosen', 'name']);
 
-		$chosenEntriesSelector = $node->getAttribute('chosen')->value;
-		$poolEntriesSelector = $node->doesAttributeExist('pool') ? $node->getAttribute('pool')->value : null;
-		$nameSelector = $node->getAttribute('name')->value;
+		$chosenEntriesSelector = $elementNode->getAttribute('chosen')->getValue();
+		$poolEntriesSelector = $elementNode->doesAttributeExist('pool') ? $elementNode->getAttribute('pool')->getValue() : null;
+		$nameSelector = $elementNode->getAttribute('name')->getValue();
 
 		$newNode = new TextNode($tplEngine->getDomReader());
-		$newNode->content = '<?= ' . self::class . '::render(\'' . $nameSelector . '\', \'' . $chosenEntriesSelector . '\', \'' . $poolEntriesSelector . '\', $this); ?>';
+		$newNode->content = '<?= ' . FormAddRemoveTag::class . '::render(\'' . $nameSelector . '\', \'' . $chosenEntriesSelector . '\', \'' . $poolEntriesSelector . '\', $this); ?>';
 
-		$node->parentNode->insertBefore($newNode, $node);
-		$node->parentNode->removeNode($node);
+		$elementNode->parentNode->insertBefore($newNode, $elementNode);
+		$elementNode->parentNode->removeNode($elementNode);
 	}
 
-	public static function render($name, $chosenSelector, $poolSelector, TemplateEngine $tplEngine)
+	public static function render($name, $chosenSelector, $poolSelector, TemplateEngine $tplEngine): string
 	{
 		$chosenEntries = $tplEngine->getDataFromSelector($chosenSelector);
 		$poolEntries = [];
@@ -86,4 +86,3 @@ class FormAddRemoveTag extends TemplateTag implements TagNode
 		return $html;
 	}
 }
-/* EOF */

@@ -14,7 +14,7 @@
 return [
 	'generalDesc' =>
   [
-	  'NationalNumberPattern' => '(?:444|55\\d|888)\\d{4}',
+	  'NationalNumberPattern' => '(?:444|(?:55|8\\d)\\d|666)\\d{4}',
 	  'PossibleLength' =>
     [
       0 => 7,
@@ -25,7 +25,7 @@ return [
   ],
 	'fixedLine' =>
   [
-	  'NationalNumberPattern' => '(?:444|888)\\d{4}',
+	  'NationalNumberPattern' => '444\\d{4}',
 	  'ExampleNumber' => '4441234',
 	  'PossibleLength' =>
     [
@@ -36,7 +36,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '55[4-9]\\d{4}',
+	  'NationalNumberPattern' => '(?:55[3-9]|666|8\\d\\d)\\d{4}',
 	  'ExampleNumber' => '5551234',
 	  'PossibleLength' =>
     [
@@ -147,7 +147,7 @@ return [
 	    'format' => '$1 $2',
 	    'leadingDigitsPatterns' =>
       [
-        0 => '[458]',
+        0 => '[4-68]',
       ],
 	    'nationalPrefixFormattingRule' => '',
 	    'domesticCarrierCodeFormattingRule' => '',

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\response;
@@ -10,7 +10,7 @@ use Exception;
 
 abstract class responseContent
 {
-	private string $contentType;
+	protected string $contentType;
 	private ?string $content = null;
 
 	protected function __construct(array $allowedContentTypes, string $contentType)
@@ -31,4 +31,3 @@ abstract class responseContent
 		return $this->content;
 	}
 }
-/* EOF */

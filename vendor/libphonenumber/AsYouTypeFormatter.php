@@ -254,8 +254,10 @@ class AsYouTypeFormatter
 			}
 			if ($this->createFormattingTemplate($numberFormat)) {
 				$this->currentFormattingPattern = $pattern;
-				$nationalPrefixSeparatorsMatcher = new Matcher(self::$nationalPrefixSeparatorsPattern,
-					$numberFormat->getNationalPrefixFormattingRule());
+				$nationalPrefixSeparatorsMatcher = new Matcher(
+					self::$nationalPrefixSeparatorsPattern,
+					$numberFormat->getNationalPrefixFormattingRule()
+				);
 				$this->shouldAddSpaceAfterNationalPrefix = $nationalPrefixSeparatorsMatcher->find();
 				// With a new formatting template, the matched position using the old template
 				// needs to be reset.
@@ -289,7 +291,8 @@ class AsYouTypeFormatter
 			// prefix.
 			if ($this->extractedNationalPrefix !== ''
 				&& PhoneNumberUtil::formattingRuleHasFirstGroupOnly(
-					$format->getNationalPrefixFormattingRule())
+					$format->getNationalPrefixFormattingRule()
+				)
 				&& !$format->getNationalPrefixOptionalWhenFormatting()
 				&& !$format->hasDomesticCarrierCodeFormattingRule()) {
 				// If it is a national number that had a national prefix, any rules that aren't valid with a
@@ -302,7 +305,8 @@ class AsYouTypeFormatter
 			if ($this->extractedNationalPrefix === ''
 				&& !$this->isCompleteNumber
 				&& !PhoneNumberUtil::formattingRuleHasFirstGroupOnly(
-					$format->getNationalPrefixFormattingRule())
+					$format->getNationalPrefixFormattingRule()
+				)
 				&& !$format->getNationalPrefixOptionalWhenFormatting()) {
 				// This number was entered without a national prefix, and this formatting rule requires one,
 				// so we discard it.
@@ -879,8 +883,10 @@ class AsYouTypeFormatter
 		$digitMatcher = new Matcher(self::$digitPattern, $this->formattingTemplate);
 		if ($digitMatcher->find($this->lastMatchPosition)) {
 			$tempTemplate = $digitMatcher->replaceFirst($nextChar);
-			$this->formattingTemplate = $tempTemplate . mb_substr($this->formattingTemplate, mb_strlen($tempTemplate,
-					'UTF-8'), null, 'UTF-8');
+			$this->formattingTemplate = $tempTemplate . mb_substr($this->formattingTemplate, mb_strlen(
+					$tempTemplate,
+					'UTF-8'
+				), null, 'UTF-8');
 			$this->lastMatchPosition = $digitMatcher->start();
 
 			return mb_substr($this->formattingTemplate, 0, $this->lastMatchPosition + 1);

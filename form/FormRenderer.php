@@ -1,16 +1,20 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form;
 
 use LogicException;
+use framework\form\component\FormField;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
+use framework\html\HtmlText;
 
 abstract class FormRenderer
 {
-	private ?FormTag $formTag = null; // The base Tag-Element for this renderer, which may contain child-elements
+	private ?HtmlTag $htmlTag = null; // The base Tag-Element for this renderer, which may contain child-elements
 
 	/** The descending classes must use this method to prepare the base Tag-Element */
 	abstract public function prepare(): void;
@@ -18,24 +22,24 @@ abstract class FormRenderer
 	/**
 	 * Method to set the base Tag-Element. It's not allowed to overwrite it, if already set!
 	 *
-	 * @param FormTag $formTag : The Tag-Element to be set
+	 * @param HtmlTag $htmlTag : The Tag-Element to be set
 	 */
-	protected function setFormTag(FormTag $formTag): void
+	protected function setHtmlTag(HtmlTag $htmlTag): void
 	{
-		if (!is_null($this->formTag)) {
+		if (!is_null($this->htmlTag)) {
 			throw new LogicException('You cannot overwrite an already defined Tag-Element.');
 		}
-		$this->formTag = $formTag;
+		$this->htmlTag = $htmlTag;
 	}
 
 	/**
 	 * Get the current base Tag-Element for this renderer
 	 *
-	 * @return FormTag|null : The current base Tag-Element or null, if not set
+	 * @return HtmlTag|null : The current base Tag-Element or null, if not set
 	 */
-	public function getFormTag(): ?FormTag
+	public function getHtmlTag(): ?HtmlTag
 	{
-		return $this->formTag;
+		return $this->htmlTag;
 	}
 
 	/**
@@ -45,26 +49,54 @@ abstract class FormRenderer
 	 */
 	public function getHTML(): string
 	{
-		return is_null($this->formTag) ? '' : $this->formTag->render();
+		return is_null($this->htmlTag) ? '' : $this->htmlTag->render();
 	}
 
-	static function htmlEncode($value)
+	public static function addErrorsToParentHtmlTag(FormComponent $formComponentWithErrors, HtmlTag $parentHtmlTag): void
 	{
-		if (is_null($value)) {
-			return ''; // It's for display, not for value-processing
+		if (!$formComponentWithErrors->hasErrors()) {
+			return;
 		}
 
-		if (is_scalar($value)) {
-			return htmlspecialchars($value, ENT_QUOTES);
+		$bTag = new HtmlTag('b', false);
+		$errorsHTML = [];
+		foreach ($formComponentWithErrors->getErrorsAsHtmlTextObjects() as $htmlText) {
+			$errorsHTML[] = $htmlText->render();
+		}
+		$bTag->addText(new HtmlText(implode('<br>', $errorsHTML), true));
+
+		$divTag = new HtmlTag('div', false, [
+			new HtmlTagAttribute('class', 'form-input-error', true),
+			new HtmlTagAttribute('id', $formComponentWithErrors->getName() . '-error', true),
+		]);
+		$divTag->addTag($bTag);
+		$parentHtmlTag->addTag($divTag);
+	}
+
+	public static function addFieldInfoToParentHtmlTag(FormField $formFieldWithFieldInfo, HtmlTag $parentHtmlTag): void
+	{
+		$divTag = new HtmlTag('div', false, [
+			new HtmlTagAttribute('class', 'form-input-info', true),
+			new HtmlTagAttribute('id', $formFieldWithFieldInfo->getName() . '-info', true),
+		]);
+		$divTag->addText($formFieldWithFieldInfo->getFieldInfo());
+		$parentHtmlTag->addTag($divTag);
+	}
+
+	public static function addAriaAttributesToHtmlTag(FormField $formField, HtmlTag $parentHtmlTag): void
+	{
+		$ariaDescribedBy = [];
+
+		if ($formField->hasErrors()) {
+			$parentHtmlTag->addHtmlTagAttribute(new HtmlTagAttribute('aria-invalid', 'true', true));
+			$ariaDescribedBy[] = $formField->getName() . '-error';
 		}
 
-		if (is_array($value)) {
-			foreach ($value as $key => $val) {
-				$value[$key] = self::htmlEncode($val);
-			}
+		if (!is_null($formField->getFieldInfo())) {
+			$ariaDescribedBy[] = $formField->getName() . '-info';
 		}
-
-		return $value;
+		if (count($ariaDescribedBy) > 0) {
+			$parentHtmlTag->addHtmlTagAttribute(new HtmlTagAttribute('aria-describedby', implode(' ', $ariaDescribedBy), true));
+		}
 	}
 }
-/* EOF */

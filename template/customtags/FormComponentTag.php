@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
@@ -14,34 +14,34 @@ use framework\template\template\TemplateTag;
 
 class FormComponentTag extends TemplateTag implements TagNode
 {
-	public static function getName()
+	public static function getName(): string
 	{
 		return 'formComponent';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return false;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return true;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $node)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$tplEngine->checkRequiredAttributes($node, ['form', 'name']);
+		$tplEngine->checkRequiredAttributes($elementNode, ['form', 'name']);
 
 		// DATA
 		$newNode = new TextNode($tplEngine->getDomReader());
-		$newNode->content = '<?= ' . self::class . '::render(\'' . $node->getAttribute('form')->value . '\', \'' . $node->getAttribute('name')->value . '\', $this); ?>';
+		$newNode->content = '<?= ' . FormComponentTag::class . '::render(\'' . $elementNode->getAttribute('form')->getValue() . '\', \'' . $elementNode->getAttribute('name')->getValue() . '\', $this); ?>';
 
-		$node->parentNode->insertBefore($newNode, $node);
-		$node->parentNode->removeNode($node);
+		$elementNode->parentNode->insertBefore($newNode, $elementNode);
+		$elementNode->parentNode->removeNode($elementNode);
 	}
 
-	public static function render($formSelector, $componentName, TemplateEngine $tplEngine)
+	public static function render($formSelector, $componentName, TemplateEngine $tplEngine): string
 	{
 		$callback = [$tplEngine->getDataFromSelector($formSelector), 'getChildComponent'];
 		$component = call_user_func($callback, $componentName);
@@ -49,4 +49,3 @@ class FormComponentTag extends TemplateTag implements TagNode
 		return call_user_func([$component, 'render']);
 	}
 }
-/* EOF */

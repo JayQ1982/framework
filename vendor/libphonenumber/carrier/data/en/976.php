@@ -11,6 +11,8 @@
  */
 
 return [
+  97650 => 'Unitel',
+  97655 => 'Unitel',
   97680 => 'Unitel',
   97683 => 'G-Mobile',
   97685 => 'Mobicom',

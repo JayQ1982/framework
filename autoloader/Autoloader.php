@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\autoloader;
@@ -27,7 +27,7 @@ class Autoloader
 
 	private function checkIfCacheDirectoryExists(?string $cacheFilePath): bool
 	{
-		if (empty($cacheFilePath)) {
+		if (is_null($cacheFilePath) || trim($cacheFilePath) === '') {
 			return true;
 		}
 		$dir = dirname($cacheFilePath);
@@ -40,7 +40,7 @@ class Autoloader
 
 	private function initCachedClasses(?string $cacheFilePath): array
 	{
-		if (empty($cacheFilePath) || !file_exists($cacheFilePath)) {
+		if (is_null($cacheFilePath) || trim($cacheFilePath) === '' || !file_exists($cacheFilePath)) {
 			return [];
 		}
 
@@ -87,7 +87,7 @@ class Autoloader
 			$phpFilePath = implode(DIRECTORY_SEPARATOR, $classPathParts);
 
 			$phpFilePathRemove = $autoloaderPathModel->getPhpFilePathRemove();
-			if (!empty($phpFilePathRemove)) {
+			if (!is_null($phpFilePathRemove) && trim($phpFilePathRemove) !== '') {
 				$phpFilePath = preg_replace('#' . $phpFilePathRemove . '#', '', $phpFilePath);
 			}
 
@@ -127,23 +127,21 @@ class Autoloader
 		return null;
 	}
 
-	private function doInclude(string $includePath, string $className)
+	private function doInclude(string $includePath, string $className): void
 	{
 		if (class_exists($className)) {
-			return false;
+			return;
 		}
 		/** @noinspection PhpIncludeInspection */
 		require_once $includePath;
 
 		$this->cachedClasses[$className] = $includePath;
 		$this->cachedClassesChanged = true;
-
-		return true;
 	}
 
 	public function __destruct()
 	{
-		if (empty($this->cacheFilePath) || !$this->cachedClassesChanged) {
+		if (is_null($this->cacheFilePath) || trim($this->cacheFilePath) === '' || !$this->cachedClassesChanged) {
 			return;
 		}
 
@@ -151,4 +149,3 @@ class Autoloader
 		file_put_contents($this->cacheFilePath, $serialized);
 	}
 }
-/* EOF */

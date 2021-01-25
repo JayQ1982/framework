@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\security;
@@ -17,21 +17,21 @@ class CsrfToken
 	 *
 	 * @return string
 	 */
-	public static function getToken($forceNew = false): string
+	public static function getToken(bool $forceNew = false): string
 	{
 		if ($forceNew) {
-			unset($_SESSION[self::CSRFTOKENSTORAGE]);
+			unset($_SESSION[CsrfToken::CSRFTOKENSTORAGE]);
 		}
-		if (!isset($_SESSION[self::CSRFTOKENSTORAGE])) {
-			$_SESSION[self::CSRFTOKENSTORAGE] = base64_encode(openssl_random_pseudo_bytes(32));
+		if (!isset($_SESSION[CsrfToken::CSRFTOKENSTORAGE])) {
+			$_SESSION[CsrfToken::CSRFTOKENSTORAGE] = base64_encode(openssl_random_pseudo_bytes(32));
 		}
 
-		return $_SESSION[self::CSRFTOKENSTORAGE];
+		return $_SESSION[CsrfToken::CSRFTOKENSTORAGE];
 	}
 
 	public static function renderAsGetParam(): string
 	{
-		return self::CSRFTOKENSTORAGE . '=' . urlencode(self::getToken());
+		return CsrfToken::CSRFTOKENSTORAGE . '=' . urlencode(CsrfToken::getToken());
 	}
 
 	/**
@@ -41,12 +41,17 @@ class CsrfToken
 	 */
 	public static function renderAsHiddenPostField(): string
 	{
-		return '<input type="hidden" name="' . self::CSRFTOKENSTORAGE . '" value="' . htmlentities(self::getToken()) . '">';
+		// The token is a base64_encoded string which doesn't contain characters that need to be html encoded for rendering
+		return '<input type="hidden" name="' . CsrfToken::CSRFTOKENSTORAGE . '" value="' . CsrfToken::getToken() . '">';
 	}
 
 	public static function getFieldName(): string
 	{
-		return self::CSRFTOKENSTORAGE;
+		return CsrfToken::CSRFTOKENSTORAGE;
+	}
+
+	public static function validateToken(string $token): bool
+	{
+		return ($token === CsrfToken::getToken());
 	}
 }
-/* EOF */

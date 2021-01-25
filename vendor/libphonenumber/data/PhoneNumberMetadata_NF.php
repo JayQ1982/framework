@@ -38,7 +38,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '3[58]\\d{4}',
+	  'NationalNumberPattern' => '(?:14|3[58])\\d{4}',
 	  'ExampleNumber' => '381234',
 	  'PossibleLength' =>
     [
@@ -152,7 +152,7 @@ return [
 	    'format' => '$1 $2',
 	    'leadingDigitsPatterns' =>
       [
-        0 => '1',
+        0 => '1[0-3]',
       ],
 	    'nationalPrefixFormattingRule' => '',
 	    'domesticCarrierCodeFormattingRule' => '',
@@ -164,7 +164,7 @@ return [
 	    'format' => '$1 $2',
 	    'leadingDigitsPatterns' =>
       [
-        0 => '3',
+        0 => '[13]',
       ],
 	    'nationalPrefixFormattingRule' => '',
 	    'domesticCarrierCodeFormattingRule' => '',

@@ -1,21 +1,22 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\rule;
 
 use framework\form\component\FormField;
 use framework\form\FormRule;
+use framework\html\HtmlText;
 
 class ValidAmountRule extends FormRule
 {
-	private bool $float;
+	private bool $valueIsFloat;
 
-	public function __construct(bool $float, string $errorMessage)
+	public function __construct(bool $valueIsFloat, HtmlText $errorMessage)
 	{
-		$this->float = $float;
+		$this->valueIsFloat = $valueIsFloat;
 
 		parent::__construct($errorMessage);
 	}
@@ -31,11 +32,10 @@ class ValidAmountRule extends FormRule
 			return false;
 		}
 
-		if (!$this->float && is_float($value)) {
+		if (!$this->valueIsFloat && is_float($value)) {
 			return false;
 		}
 
 		return true;
 	}
 }
-/* EOF */

@@ -1,30 +1,36 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
 
-use LogicException;
+use framework\auth\Authenticator;
 use framework\common\CSVFile;
+use framework\common\SimpleXMLExtended;
 use framework\common\StringUtils;
+use framework\db\FrameworkDB;
+use framework\exception\NotFoundException;
+use framework\exception\UnauthorizedException;
+use framework\html\HtmlDocument;
 use framework\response\errorResponseContent;
 use framework\response\successResponseContent;
+use LogicException;
+use stdClass;
 
 abstract class baseView
 {
 	private Core $core;
+	private ?Authenticator $authenticator;
+	private ?string $content = null;
 	private array $mandatoryParams;
 	private array $optionalParams;
-	private array $placeholders = [];
-	private array $navigationLevels = [];
-	private ?string $content = null;
-	private ?string $individualHtmlFileName = null;
 
 	protected function __construct(
 		Core $core,
 		array $ipWhitelist,
+		?Authenticator $authenticator,
 		array $requiredAccessRights,
 		string $contentDescription = '',
 		array $mandatoryParams = [],
@@ -33,28 +39,25 @@ abstract class baseView
 		?string $individualContentType = null
 	) {
 		$this->core = $core;
+		$this->authenticator = $authenticator;
 		$this->mandatoryParams = $mandatoryParams;
 		$this->optionalParams = $optionalParams;
 
 		$httpRequest = $core->getHttpRequest();
 		$requestHandler = $core->getRequestHandler();
-		$errorHandler = $core->getErrorHandler();
-		$authenticator = $core->getAuthenticator();
-		$contentHandler = $core->getContentHandler();
-		$settingsHandler = $core->getSettingsHandler();
 
 		$outputHelpContent = (!is_null($httpRequest->getInputString('help')) && $requestHandler->isDisplayHelpContent());
 		if ($outputHelpContent) {
-			$this->setContentType($contentHandler, HttpResponse::TYPE_TXT);
+			$this->setContentType(HttpResponse::TYPE_TXT);
 		} else if (!is_null($individualContentType)) {
-			$this->setContentType($contentHandler, $individualContentType);
+			$this->setContentType($individualContentType);
 		}
 
-		if (!empty($ipWhitelist) && !in_array($httpRequest->getRemoteAddress(), $ipWhitelist)) {
-			$errorHandler->display_error(HttpStatusCodes::HTTP_UNAUTHORIZED);
+		if (count($ipWhitelist) > 0 && !in_array($httpRequest->getRemoteAddress(), $ipWhitelist)) {
+			throw new UnauthorizedException();
 		}
 
-		if (!empty($requiredAccessRights)) {
+		if (count($requiredAccessRights) > 0) {
 			$authenticator->checkAccess(true, $requiredAccessRights, true);
 		}
 
@@ -64,25 +67,12 @@ abstract class baseView
 			return;
 		}
 
-		$this->checkMandatoryParameters($contentHandler, $httpRequest, $errorHandler, $mandatoryParams);
-
-		$this->placeholders = $contentHandler->getPlaceholders();
-		$this->navigationLevels = $contentHandler->getNavigationLevels();
-
-		if ($settingsHandler->exists('versions')) {
-			$versions = $settingsHandler->get('versions');
-
-			foreach (get_object_vars($versions) as $key => $val) {
-				$this->setPlaceholder($key . 'Version', $val);
-			}
-		}
+		$this->checkMandatoryParameters($core, $mandatoryParams);
 	}
 
-	abstract public function execute(): void;
-
-	protected function setContentType(ContentHandler $contentHandler, string $contentType): void
+	protected function setContentType(string $contentType): void
 	{
-		$contentHandler->setContentType($contentType);
+		$this->core->getContentHandler()->setContentType($contentType);
 	}
 
 	private function setHelpContent(
@@ -125,6 +115,11 @@ abstract class baseView
 		$this->setContent(implode(PHP_EOL, $helpLines));
 	}
 
+	public function hasContent(): bool
+	{
+		return !is_null($this->content);
+	}
+
 	protected function setContent(string $contentString): void
 	{
 		if ($this->hasContent()) {
@@ -133,68 +128,27 @@ abstract class baseView
 		$this->content = $contentString;
 	}
 
-	public function hasContent(): bool
+	public function getContent(): ?string
 	{
-		return !is_null($this->content);
+		return $this->content;
 	}
 
-	private function checkMandatoryParameters(ContentHandler $contentHandler, HttpRequest $httpRequest, ErrorHandler $errorHandler, array $mandatoryParams): void
+	private function checkMandatoryParameters(Core $core, array $mandatoryParams): void
 	{
-		$contentType = $contentHandler->getContentType();
+		$httpRequest = $core->getHttpRequest();
+		$contentType = $core->getContentHandler()->getContentType();
 
 		foreach ($mandatoryParams as $mandatoryParam => $paramDescription) {
 			$paramValue = $httpRequest->getInputValue($mandatoryParam);
 			if ((!is_array($paramValue) && trim($paramValue) === '') || (is_array($paramValue) && count($paramValue) === 0)) {
 				if ($contentType === HttpResponse::TYPE_HTML) {
-					$errorHandler->display_error(HttpStatusCodes::HTTP_NOT_FOUND);
+					throw new NotFoundException($core, false);
 				}
 				$this->setErrorResponseContent('missing or empty mandatory parameter: ' . $mandatoryParam);
 
 				return;
 			}
 		}
-	}
-
-	protected function setErrorResponseContent(string $errorMessage, $errorCode = null, array $additionalInfo = []): void
-	{
-		$errorResponseContent = new errorResponseContent($this->core->getContentHandler()->getContentType(), $errorMessage, $errorCode, $additionalInfo);
-		$this->setContent($errorResponseContent->getContent());
-	}
-
-	protected function setSuccessResponseContent(array $result = []): void
-	{
-		$successResponseContent = new successResponseContent($this->core->getContentHandler()->getContentType(), $result);
-		$this->setContent($successResponseContent->getContent());
-	}
-
-	public function getIndividualHtmlFileName(): ?string
-	{
-		return $this->individualHtmlFileName;
-	}
-
-	protected function setIndividualHtmlFileName(string $individualHtmlFileName): void
-	{
-		$this->individualHtmlFileName = $individualHtmlFileName;
-	}
-
-	public function getContent(): ?string
-	{
-		return $this->content;
-	}
-
-	public function getPlaceholders(): array
-	{
-		return $this->placeholders;
-	}
-
-	public function getNavigationLevels(): array
-	{
-		return $this->navigationLevels;
-	}
-
-	protected function setIndividualTemplate(string $templateName): void
-	{
-		$this->core->getContentHandler()->setTemplate($templateName);
 	}
 
 	public function getMandatoryParams(): array
@@ -207,48 +161,28 @@ abstract class baseView
 		return $this->optionalParams;
 	}
 
-	/**
-	 * @param string $key
-	 * @param mixed  $val : Usually string, but can also be an array or object (will be handled by template engine rendering)
-	 */
-	protected function setPlaceholder(string $key, $val): void
+	abstract public function execute(): void;
+
+	protected function getText(string $fieldName, array $replacements = []): string
 	{
-		$this->placeholders[$key] = $val;
+		return $this->core->getLocaleHandler()->getText($fieldName, $replacements);
 	}
 
-	protected function checkPlaceholder(string $placeholderName): bool
+	protected function getAuthenticator(): ?Authenticator
 	{
-		return array_key_exists($placeholderName, $this->placeholders);
-	}
-
-	protected function getPlaceholder(string $placeholderName)
-	{
-		return array_key_exists($placeholderName, $this->placeholders) ? $this->placeholders[$placeholderName] : '';
-	}
-
-	protected function setNavigationLevel(int $key, string $val): void
-	{
-		$this->navigationLevels[$key] = $val;
-	}
-
-	protected function checkNavigationLevel($key): bool
-	{
-		return array_key_exists($key, $this->navigationLevels);
-	}
-
-	protected function getNavigationLevel($key): string
-	{
-		return isset($this->navigationLevels[$key]) ? $this->navigationLevels[$key] : '';
-	}
-
-	protected function getGenerationTime(): float
-	{
-		return round(microtime(true) - REQUEST_TIME, 4);
+		return $this->authenticator;
 	}
 
 	protected function getCore(): Core
 	{
 		return $this->core;
+	}
+
+	protected function getDB(string $name = 'default'): FrameworkDB
+	{
+		$core = $this->getCore();
+
+		return FrameworkDB::getInstance($core->getEnvironmentHandler(), $core->getRequestHandler()->getLanguage(), $name);
 	}
 
 	protected function getPathVar(int $nr): ?string
@@ -260,10 +194,8 @@ abstract class baseView
 
 	private function onlyDefinedInputParametersAllowed(string $parameterName): void
 	{
-		if (!array_key_exists($parameterName, $this->mandatoryParams) && !array_key_exists($parameterName,
-				$this->optionalParams)) {
-			throw new LogicException('Access to not defined input parameter "' . $parameterName .
-				'"');
+		if (!array_key_exists($parameterName, $this->mandatoryParams) && !array_key_exists($parameterName, $this->optionalParams)) {
+			throw new LogicException('Access to not defined input parameter "' . $parameterName . '"');
 		}
 	}
 
@@ -306,11 +238,34 @@ abstract class baseView
 		return $this->core->getHttpRequest()->getInputArray($keyName);
 	}
 
+	protected function setContentByXmlObject(SimpleXMLExtended $xmlObject): void
+	{
+		$this->setContent($xmlObject->asXML());
+	}
+
+	protected function setContentByJsonObject(stdClass $jsonObject): void
+	{
+		$this->setContent(json_encode($jsonObject));
+	}
+
+	protected function setErrorResponseContent(string $errorMessage, null|int|string $errorCode = null, array $additionalInfo = []): void
+	{
+		$errorResponseContent = new errorResponseContent($this->core->getContentHandler()->getContentType(), $errorMessage, $errorCode, $additionalInfo);
+		$this->setContent($errorResponseContent->getContent());
+	}
+
+	protected function setSuccessResponseContent(array $resultData = []): void
+	{
+		$successResponseContent = new successResponseContent($this->core->getContentHandler()->getContentType(), $resultData);
+		$this->setContent($successResponseContent->getContent());
+	}
+
 	protected function setCsvContent(array $data, string $fileName, bool $forceDownload = false): void
 	{
-		if (empty($fileName)) {
+		if ($fileName === '') {
 			$fileName = 'csv_data_' . date('YmdHis') . '.csv';
 		}
+
 		$csv = new CSVFile($fileName, true);
 		foreach ($data as $rowNumber => $rowData) {
 			foreach ((array)$rowData as $cellNumber => $cellContent) {
@@ -324,5 +279,14 @@ abstract class baseView
 		}
 		$httpResponse->sendAndExit();
 	}
+
+	/**
+	 * Shortcut for direct access to the HtmlDocument
+	 *
+	 * @return HtmlDocument
+	 */
+	protected function getHtmlDocument(): HtmlDocument
+	{
+		return $this->getCore()->getContentHandler()->getHtmlDocument();
+	}
 }
-/* EOF */

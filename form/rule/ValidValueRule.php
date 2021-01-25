@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\rule;
@@ -9,13 +9,14 @@ namespace framework\form\rule;
 use ArrayObject;
 use framework\form\component\FormField;
 use framework\form\FormRule;
+use framework\html\HtmlText;
 use UnexpectedValueException;
 
 class ValidValueRule extends FormRule
 {
 	protected array $validValues;
 
-	public function __construct(array $validValues, string $errorMessage)
+	public function __construct(array $validValues, HtmlText $errorMessage)
 	{
 		parent::__construct($errorMessage);
 
@@ -41,4 +42,3 @@ class ValidValueRule extends FormRule
 		throw new UnexpectedValueException('Could not handle field value for rule ' . __CLASS__);
 	}
 }
-/* EOF */

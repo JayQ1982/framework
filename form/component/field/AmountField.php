@@ -1,27 +1,21 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\component\field;
 
 use framework\form\rule\ValidAmountRule;
+use framework\html\HtmlText;
 
 class AmountField extends TextField
 {
-	/**
-	 * @param string      $name          : See FormField->__construct()
-	 * @param string      $label         : See FormField->__construct()
-	 * @param bool        $float         : true if we expect value to be float, false we just expect an integer
-	 * @param null        $value         : See FormField->__construct()
-	 * @param string      $invalidError  : The error message to be displayed if value is invalid
-	 * @param null|string $requiredError : See TextField->__construct()
-	 */
-	public function __construct(string $name, string $label, bool $float, $value = null, string $invalidError = 'Der angegebene Wert ist ungültig.', ?string $requiredError = null)
+	public function __construct(string $name, HtmlText $label, bool $valueIsFloat, null|int|float $initialValue = null, ?HtmlText $individualInvalidError = null, ?HtmlText $requiredError = null)
 	{
-		parent::__construct($name, $label, $value, $requiredError);
-		$this->addRule(new ValidAmountRule($float, $invalidError));
+		parent::__construct($name, $label, $initialValue, $requiredError);
+
+		$invalidError = is_null($individualInvalidError) ? new HtmlText('Der angegebene Wert ist ungültig.', true) : $individualInvalidError;
+		$this->addRule(new ValidAmountRule($valueIsFloat, $invalidError));
 	}
 }
-/* EOF */

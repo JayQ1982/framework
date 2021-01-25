@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\common;
@@ -85,23 +85,23 @@ class ImageResizer
 						$faktor = $faktor_w;
 					}
 				}
-				$new_w = round($orig_w * $faktor, 0);
-				$new_h = round($orig_h * $faktor, 0);
+				$new_w = round($orig_w * $faktor);
+				$new_h = round($orig_h * $faktor);
 			} else {
 				$new_w = $orig_w;
 				$new_h = $orig_h;
 			}
 
 			if ($new_w > $thumb_w) {
-				$src_x = round(($new_w - $thumb_w) / 2 / $faktor, 0);
+				$src_x = round(($new_w - $thumb_w) / 2 / $faktor);
 			} else if ($new_w < $thumb_w) {
-				$dst_x = round(($thumb_w - $new_w) / 2, 0);
+				$dst_x = round(($thumb_w - $new_w) / 2);
 			}
 
 			if ($new_h > $thumb_h) {
-				$src_y = round(($new_h - $thumb_h) / 2 / $faktor, 0);
+				$src_y = round(($new_h - $thumb_h) / 2 / $faktor);
 			} else if ($new_h < $thumb_h) {
-				$dst_y = round(($thumb_h - $new_h) / 2, 0);
+				$dst_y = round(($thumb_h - $new_h) / 2);
 			}
 			ini_set('gd.jpeg_ignore_warning', 1);
 			switch (strtolower($ext)) {
@@ -160,4 +160,3 @@ class ImageResizer
 		}
 	}
 }
-/* EOF */

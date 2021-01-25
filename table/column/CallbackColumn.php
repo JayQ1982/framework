@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\table\column;
@@ -24,4 +24,3 @@ class CallbackColumn extends AbstractTableColumn
 		return call_user_func($this->callbackFunction, $tableItemModel);
 	}
 }
-/* EOF */

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
@@ -14,33 +14,33 @@ use framework\template\template\TemplateTag;
 
 class ForgroupTag extends TemplateTag implements TagNode
 {
-	public static function getName()
+	private ?string $var = null;
+	private ?string $no = null;
+
+	public static function getName(): string
 	{
 		return 'forgroup';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return false;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return false;
 	}
 
-	private string $var;
-	private string $no;
-
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $node)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$var = $node->getAttribute('var')->value;
+		$var = $elementNode->getAttribute('var')->getValue();
 
 		$entryNoArr = explode(':', $var);
 		$this->no = $entryNoArr[0];
 		$this->var = $entryNoArr[1];
 
-		$tplEngine->checkRequiredAttributes($node, ['var']);
+		$tplEngine->checkRequiredAttributes($elementNode, ['var']);
 
 		$replNode = new TextNode($tplEngine->getDomReader());
 
@@ -49,27 +49,26 @@ class ForgroupTag extends TemplateTag implements TagNode
 		$replNode->content = "<?php \$tmpGrpVal = \$this->getDataFromSelector('{$varName}', true);\n";
 		$replNode->content .= " if(\$tmpGrpVal !== null) {\n";
 		$replNode->content .= "\$this->addData('{$this->var}', \$tmpGrpVal, true); ?>";
-		$replNode->content .= self::prepareHtml($node->getInnerHtml());
+		$replNode->content .= ForgroupTag::prepareHtml($elementNode->getInnerHtml());
 		$replNode->content .= "<?php } ?>";
 
-		$node->getParentNode()->replaceNode($node, $replNode);
+		$elementNode->getParentNode()->replaceNode($elementNode, $replNode);
 	}
 
-	private function prepareHtml($html)
+	private function prepareHtml($html): array|string|null
 	{
 		$newHtml = preg_replace_callback('/{' . $this->var . '\.(.*?)}/', [$this, 'replace'], $html);
 
 		return preg_replace_callback('/{(\w+?)(?:\.([\w|.]+))?}/', [$this, 'replaceForeign'], $newHtml);
 	}
 
-	private function replaceForeign($matches)
+	private function replaceForeign($matches): string
 	{
 		return '<?php echo $' . $matches[1] . '->' . str_replace('.', '->', $matches[2]) . '; ?>';
 	}
 
-	private function replace($matches)
+	private function replace($matches): string
 	{
 		return '<?php echo $' . $this->var . $this->no . '->' . str_replace('.', '->', $matches[1]) . '; ?>';
 	}
 }
-/* EOF */

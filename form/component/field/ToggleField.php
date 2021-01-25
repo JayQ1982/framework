@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\component\field;
@@ -9,11 +9,13 @@ namespace framework\form\component\field;
 use LogicException;
 use framework\form\component\FormField;
 use framework\form\FormComponent;
+use framework\form\FormOptions;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
-use framework\form\FormText;
+use framework\form\renderer\LegendAndListRenderer;
 use framework\form\rule\RequiredRule;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
+use framework\html\HtmlText;
 
 class ToggleField extends OptionsField
 {
@@ -21,25 +23,25 @@ class ToggleField extends OptionsField
 	private string $defaultChildFieldRenderer = '\framework\form\renderer\DefinitionListRenderer';
 	private bool $displayLegend;
 	private bool $multiple;
-	private ?string $listDescription = null;
+	private ?HtmlText $listDescription = null;
 
-	public function __construct(string $name, string $label, array $options, bool $optionsAreHTML, $value, ?string $requiredError = null, bool $displayLegend = true, bool $multiple = false)
+	public function __construct(string $name, HtmlText $label, FormOptions $formOptions, $initialValue, ?HtmlText $requiredError = null, bool $displayLegend = true, bool $multiple = false)
 	{
 		$this->multiple = $multiple;
 
 		if ($multiple) {
-			$value = $this->changeValueToArray($value);
+			$initialValue = $this->changeValueToArray($initialValue);
 		}
 		$this->displayLegend = $displayLegend;
 
-		parent::__construct($name, $label, $options, $optionsAreHTML, $value);
+		parent::__construct($name, $label, $formOptions, $initialValue);
 
 		if (!is_null($requiredError)) {
 			$this->addRule(new RequiredRule($requiredError));
 		}
 	}
 
-	public function setListDescription(?string $listDescription): void
+	public function setListDescription(?HtmlText $listDescription): void
 	{
 		$this->listDescription = $listDescription;
 	}
@@ -49,20 +51,14 @@ class ToggleField extends OptionsField
 		$this->defaultChildFieldRenderer = $rendererName;
 	}
 
-	/**
-	 * @param string|int $mainOption
-	 * @param FormField  $childField
-	 *
-	 * @throws LogicException
-	 */
-	public function addChildField($mainOption, FormField $childField): void
+	public function addChildField(string $mainOption, FormField $childField): void
 	{
 		$this->addChildComponent($mainOption, $childField);
 	}
 
-	public function addChildComponent($mainOption, FormComponent $childComponent): void
+	public function addChildComponent(string $mainOption, FormComponent $childComponent): void
 	{
-		if (!isset($this->getOptions()[$mainOption])) {
+		if (!$this->getFormOptions()->exists($mainOption)) {
 			throw new LogicException('The mainOption ' . $mainOption . ' does not exist!');
 		}
 		$childComponent->setParentFormComponent($this);
@@ -70,13 +66,7 @@ class ToggleField extends OptionsField
 		$this->childrenByMainOption[$mainOption][$childComponent->getName()] = $childComponent;
 	}
 
-	/**
-	 * @param string|int $mainOption
-	 * @param string     $fieldName
-	 *
-	 * @return FormField
-	 */
-	public function getChildField($mainOption, string $fieldName): FormField
+	public function getChildField(string $mainOption, string $fieldName): FormField
 	{
 		$childField = $this->getChildComponent($mainOption, $fieldName);
 		if (($childField instanceof FormField) === false) {
@@ -86,13 +76,7 @@ class ToggleField extends OptionsField
 		return $childField;
 	}
 
-	/**
-	 * @param string|int $mainOption
-	 * @param string     $componentName
-	 *
-	 * @return FormComponent|FormField
-	 */
-	public function getChildComponent($mainOption, string $componentName)
+	public function getChildComponent(string $mainOption, string $componentName): FormField|FormComponent
 	{
 		if (!isset($this->childrenByMainOption[$mainOption][$componentName])) {
 			throw new LogicException('The mainOption ' . $mainOption . ' has no child ' . $componentName);
@@ -112,57 +96,54 @@ class ToggleField extends OptionsField
 		return $this->childrenByMainOption;
 	}
 
-	public function getFormTag(): FormTag
+	public function getHtmlTag(): HtmlTag
 	{
-		$ulTag = new FormTag('ul', false, [new FormTagAttribute('class', 'form-toggle-list')]);
+		$ulTag = new HtmlTag('ul', false, [new HtmlTagAttribute('class', 'form-toggle-list', true)]);
 
-		// Iterate through every selectable option of the ToggleField
-		$optionsAreHTML = $this->isOptionsHTML();
-		foreach ($this->getOptions() as $key => $val) {
-
+		foreach ($this->getFormOptions()->getData() as $key => $htmlText) {
 			$combinedSpecifier = $this->getName() . '_' . $key;
 
 			// ... create from inner to outer tag ...
 
 			// Define the attributes for the <input> element:
 			$inputAttributes = [
-				new FormTagAttribute('type', $this->multiple ? 'checkbox' : 'radio'),
-				new FormTagAttribute('toggle-id', $combinedSpecifier),
-				new FormTagAttribute('name', $this->multiple ? $this->getName() . '[]' : $this->getName()),
-				new FormTagAttribute('value', $key),
+				new HtmlTagAttribute('type', $this->multiple ? 'checkbox' : 'radio', true),
+				new HtmlTagAttribute('toggle-id', $combinedSpecifier, true),
+				new HtmlTagAttribute('name', $this->multiple ? $this->getName() . '[]' : $this->getName(), true),
+				new HtmlTagAttribute('value', $key, true),
 			];
 
 			if (isset($this->childrenByMainOption[$key])) {
-				$inputAttributes[] = new FormTagAttribute('aria-describedby', $combinedSpecifier);
+				$inputAttributes[] = new HtmlTagAttribute('aria-describedby', $combinedSpecifier, true);
 			}
 			// If that option has been selected, mark it as such with an extra attribute:
 			if ($this->multiple) {
 				if (in_array($key, $this->getRawValue())) {
-					$inputAttributes[] = new FormTagAttribute('checked', null);
+					$inputAttributes[] = new HtmlTagAttribute('checked', null, true);
 				}
 			} else {
 				if ((string)$key === (string)$this->getRawValue()) {
-					$inputAttributes[] = new FormTagAttribute('checked', null);
+					$inputAttributes[] = new HtmlTagAttribute('checked', null, true);
 				}
 			}
 			// Create the Toggle-<input>
-			$input = new FormTag('input', true, $inputAttributes);
+			$input = new HtmlTag('input', true, $inputAttributes);
 
 			// Create the Toggle-<label> element:
-			$label = new FormTag('label', false);
+			$label = new HtmlTag('label', false);
 			// add the Toggle-<input> into Toggle-<label>
 			$label->addTag($input);
-			$label->addText(new FormText(' ' . $val, $optionsAreHTML));
+			$label->addText(new HtmlText(' ' . $htmlText->render(), true));
 
 			// create -Toggle-<li> tag and add the Toggle-<label> to it
-			$li = new FormTag('li', false);
+			$li = new HtmlTag('li', false);
 			$li->addTag($label);
 
 			// Now add the child fields to that Toggle-<li>-Option:
 			if (isset($this->childrenByMainOption[$key])) {
-				$div = new FormTag('div', false, [
-					new FormTagAttribute('class', 'form-toggle-content'),
-					new FormTagAttribute('id', $combinedSpecifier),
+				$div = new HtmlTag('div', false, [
+					new HtmlTagAttribute('class', 'form-toggle-content', true),
+					new HtmlTagAttribute('id', $combinedSpecifier, true),
 				]);
 				/** @var FormField $childField */
 				foreach ($this->childrenByMainOption[$key] as $childField) {
@@ -178,7 +159,7 @@ class ToggleField extends OptionsField
 						$childField->setRenderer($childComponentRenderer);
 					}
 					// Add the child field into the <div>
-					$div->addTag($childField->getFormTag());
+					$div->addTag($childField->getHtmlTag());
 				}
 				// Add the <div> with the collected child elements to the <li>-Option
 				$li->addTag($div);
@@ -194,92 +175,53 @@ class ToggleField extends OptionsField
 			if ($this->hasErrors()) {
 				$divClasses[] = 'has-error';
 			}
-			$divTag = new FormTag('div', false, [new FormTagAttribute('class', implode(' ', $divClasses))]);
+			$divTag = new HtmlTag('div', false, [new HtmlTagAttribute('class', implode(' ', $divClasses), true)]);
 			$divTag->addTag($ulTag);
-			$divTag = $this->renderErrors($divTag);
+
+			FormRenderer::addErrorsToParentHtmlTag($this, $divTag);
 
 			return $divTag;
 		}
 
-		$labelText = $this->getLabel();
-
 		// A legend is desired left beside the ToggleField-Area:
 		$legendAttributes = [];
 		if (!$this->isRenderLabel()) {
-			$legendAttributes[] = new FormTagAttribute('class', 'visuallyhidden');
+			$legendAttributes[] = new HtmlTagAttribute('class', 'visuallyhidden', true);
 		}
 
-		$legendTag = new FormTag('legend', false, $legendAttributes);
-		$legendTag->addText(new FormText($labelText));
+		$legendTag = new HtmlTag('legend', false, $legendAttributes);
+		$legendTag->addText($this->getLabel());
 
 		if ($this->isRequired() && $this->isRenderRequiredAbbr()) {
-			$abbrTag = new FormTag('abbr', false, [
-				new FormTagAttribute('title', 'Erforderliche Eingabe'),
-				new FormTagAttribute('class', 'required'),
+			$abbrTag = new HtmlTag('abbr', false, [
+				new HtmlTagAttribute('title', 'Erforderliche Eingabe', true),
+				new HtmlTagAttribute('class', 'required', true),
 			]);
-			$abbrTag->addText(new FormText('*'));
+			$abbrTag->addText(new HtmlText('*', true));
 			$legendTag->addTag($abbrTag);
 		}
 
-		$labelInfoText = trim($this->getLabelInfoText());
-		if ($labelInfoText !== '') {
-			$labelInfoTag = new FormTag('i', false, [
-				new FormTagAttribute('class', 'legend-info'),
+		$labelInfoText = $this->getLabelInfoText();
+		if (!is_null($labelInfoText)) {
+			$labelInfoTag = new HtmlTag('i', false, [
+				new HtmlTagAttribute('class', 'legend-info', true),
 			]);
-			$labelInfoTag->addText(new FormText($labelInfoText));
+			$labelInfoTag->addText($labelInfoText);
 			$legendTag->addTag($labelInfoTag);
 		}
 
-		$attributes = [new FormTagAttribute('class', 'legend-and-list' . ($this->hasErrors() ? ' has-error' : ''))];
-		$ariaDescribedBy = [];
-
-		if ($this->hasErrors()) {
-			$attributes[] = new FormTagAttribute('aria-invalid', 'true');
-			$ariaDescribedBy[] = $this->getName() . '-error';
-		}
-
-		if (!is_null($this->getFieldInfoAsHTML())) {
-			$ariaDescribedBy[] = $this->getName() . '-info';
-		}
-		if (count($ariaDescribedBy) > 0) {
-			$attributes[] = new FormTagAttribute('aria-describedby', implode(' ', $ariaDescribedBy));
-		}
-
-		$fieldsetTag = new FormTag('fieldset', false, $attributes);
+		$fieldsetTag = LegendAndListRenderer::createFieldsetTag($this);
 		$fieldsetTag->addTag($legendTag);
 
 		if (!is_null($this->listDescription)) {
-			$fieldsetTag->addText(new FormText('<div class="fieldset-info">' . FormRenderer::htmlEncode($this->listDescription) . '</div>', true));
+			$fieldsetTag->addText(new HtmlText('<div class="fieldset-info">' . $this->listDescription->render() . '</div>', true));
 		}
 
 		//  the <ul> tag will now be attached
 		$fieldsetTag->addTag($ulTag);
-		$fieldsetTag = $this->renderErrors($fieldsetTag);
+		FormRenderer::addErrorsToParentHtmlTag($this, $fieldsetTag);
 
 		return $fieldsetTag;
-	}
-
-	protected function renderErrors(FormTag $formTag): FormTag
-	{
-		if (!$this->hasErrors()) {
-			return $formTag;
-		}
-
-		$bTag = new FormTag('b', false);
-		$errorsHTML = [];
-		foreach ($this->getErrors() as $msg) {
-			$errorsHTML[] = FormRenderer::htmlEncode($msg);
-		}
-		$bTag->addText(new FormText(implode('<br>', $errorsHTML), true));
-
-		$divTag = new FormTag('div', false, [
-			new FormTagAttribute('class', 'form-input-error'),
-			new FormTagAttribute('id', $this->getName() . '-error'),
-		]);
-		$divTag->addTag($bTag);
-		$formTag->addTag($divTag);
-
-		return $formTag;
 	}
 
 	public function validate(array $inputData, bool $overwriteValue = true): bool
@@ -339,4 +281,3 @@ class ToggleField extends OptionsField
 		parent::setValue($value);
 	}
 }
-/* EOF */

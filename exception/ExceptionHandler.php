@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\exception;
@@ -16,97 +16,6 @@ use Throwable;
 
 class ExceptionHandler
 {
-	const ERRORS = [
-		HttpStatusCodes::HTTP_BAD_REQUEST                   => [
-			"title"   => "Bad Request",
-			"message" => "You sent bad data.",
-		],
-		HttpStatusCodes::HTTP_UNAUTHORIZED                  => [
-			"title"   => "Unauthorized",
-			"message" => "You are not authorized to access the requested content.",
-		],
-		HttpStatusCodes::HTTP_PAYMENT_REQUIRED              => [
-			"title"   => "Payment required",
-			"message" => "Payment required.",
-		],
-		HttpStatusCodes::HTTP_FORBIDDEN                     => [
-			"title"   => "Forbidden",
-			"message" => "You are not allowed to access the requested content.",
-		],
-		HttpStatusCodes::HTTP_NOT_FOUND                     => [
-			"title"   => "Page not found",
-			"message" => "The requested page was not found.",
-		],
-		HttpStatusCodes::HTTP_METHOD_NOT_ALLOWED            => [
-			"title"   => "Method Not Allowed",
-			"message" => "Method Not Allowed.",
-		],
-		HttpStatusCodes::HTTP_NOT_ACCEPTABLE                => [
-			"title"   => "Not Acceptable",
-			"message" => "Not Acceptable (encoding).",
-		],
-		HttpStatusCodes::HTTP_PROXY_AUTHENTICATION_REQUIRED => [
-			"title"   => "Proxy Authentication Required",
-			"message" => "Proxy Authentication Required.",
-		],
-		HttpStatusCodes::HTTP_REQUEST_TIME_OUT              => [
-			"title"   => "Request Time-out",
-			"message" => "Request Timed Out.",
-		],
-		HttpStatusCodes::HTTP_CONFLICT                      => [
-			"title"   => "Conflict",
-			"message" => "Conflicting Request.",
-		],
-		HttpStatusCodes::HTTP_GONE                          => [
-			"title"   => "Gone",
-			"message" => "Gone.",
-		],
-		HttpStatusCodes::HTTP_LENGTH_REQUIRED               => [
-			"title"   => "Length Required",
-			"message" => "Content Length Required.",
-		],
-		HttpStatusCodes::HTTP_PRECONDITION_FAILED           => [
-			"title"   => "Precondition Failed",
-			"message" => "Precondition Failed.",
-		],
-		HttpStatusCodes::HTTP_REQUEST_ENTITY_TOO_LARGE      => [
-			"title"   => "Request Entity Too Large",
-			"message" => "Request Entity Too Long.",
-		],
-		HttpStatusCodes::HTTP_REQUEST_URL_TOO_LONG          => [
-			"title"   => "Request-URI Too Long",
-			"message" => "Request URI Too Long.",
-		],
-		HttpStatusCodes::HTTP_UNSUPPORTED_MEDIA_TYPE        => [
-			"title"   => "Unsupported Media Type",
-			"message" => "Unsupported Media Type.",
-		],
-		HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR         => [
-			"title"   => "Internal Server Error",
-			"message" => "An internal server error occurred.",
-		],
-		HttpStatusCodes::HTTP_NOT_IMPLEMENTED               => [
-			"title"   => "501 Not Implemented",
-			"message" => "Not Implemented.",
-		],
-		HttpStatusCodes::HTTP_BAD_GATEWAY                   => [
-			"title"   => "Bad Gateway",
-			"message" => "Bad Gateway.",
-		],
-		HttpStatusCodes::HTTP_SERVICE_UNAVAILABLE           => [
-			"title"   => "Service Unavailable",
-			"message" => "Service Unavailable.",
-		],
-		HttpStatusCodes::HTTP_GATEWAY_TIME_OUT              => [
-			"title"   => "Gateway Time-out",
-			"message" => "Gateway Timeout.",
-		],
-		HttpStatusCodes::HTTP_VERSION_NOT_SUPPORTED         => [
-			"title"   => "HTTP Version not supported",
-			"message" => "HTTP Version Not Supported.",
-		],
-	];
-
 	private Core $core;
 
 	public function __construct(Core $core)
@@ -115,93 +24,114 @@ class ExceptionHandler
 		set_exception_handler([$this, 'handleException']);
 	}
 
-	public function handleException(Throwable $throwable)
-	{
-		if ($this->core->getEnvironmentHandler()->isDebug()) {
-			$this->returnErrorResponse(true, $throwable);
-		}
-
-		$logger = $this->core->getLogger();
-		if (!is_null($logger) && !in_array($throwable->getCode(), [401, 404])) {
-			$logger->log('', $throwable);
-		}
-
-		$this->returnErrorResponse(false, $throwable);
-	}
-
-	private function returnErrorResponse(bool $debug, Throwable $throwable): void
+	public function handleException(Throwable $throwable): void
 	{
 		$core = $this->core;
-		$errorCode = $throwable->getCode();
-		$errorMessage = $throwable->getMessage();
+		if ($core->getEnvironmentHandler()->isDebug()) {
+			$this->sendDebugHttpResponseAndExit($throwable);
+		}
 
-		// Unfortunately, some exceptions (e.g. PDOException) can have non-INTEGER error codes.
-		// See http://php.net/manual/de/class.pdoexception.php -> comments
-		$intErrorCode = intval($errorCode);
+		if ($throwable instanceof NotFoundException) {
+			$this->sendHttpResponseAndExit(
+				$core,
+				HttpStatusCodes::HTTP_NOT_FOUND,
+				$throwable->getMessage(),
+				$throwable->getCode(),
+				'notFound.html',
+				$throwable->getIndividualPlaceholders()
+			);
+		}
 
-		if (((string)$intErrorCode) !== ((string)$errorCode)) {
-			$errorCode = 0;
-			$errorMessage = '[' . $intErrorCode . '] ' . $errorMessage;
+		if ($throwable instanceof UnauthorizedException) {
+			$this->sendHttpResponseAndExit(
+				$core,
+				HttpStatusCodes::HTTP_UNAUTHORIZED,
+				$throwable->getMessage(),
+				$throwable->getCode(),
+				'unauthorized.html',
+				$throwable->getIndividualPlaceholders()
+			);
+		}
+
+		$this->core->getLogger()->log('', $throwable);
+		$this->sendHttpResponseAndExit(
+			$core,
+			HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR,
+			'Internal Server Error',
+			$throwable->getCode(),
+			'default.html',
+			[]
+		);
+	}
+
+	private function sendDebugHttpResponseAndExit(Throwable $throwable): void
+	{
+		$core = $this->core;
+
+		$realException = is_null($throwable->getPrevious()) ? $throwable : $throwable->getPrevious();
+		$errorCode = $realException->getCode();
+		$errorMessage = $realException->getMessage();
+
+		if ($throwable instanceof NotFoundException) {
+			$httpStatusCode = HttpStatusCodes::HTTP_NOT_FOUND;
+			$placeholders = $throwable->getIndividualPlaceholders();
+		} else if ($throwable instanceof UnauthorizedException) {
+			$httpStatusCode = HttpStatusCodes::HTTP_UNAUTHORIZED;
+			$placeholders = $throwable->getIndividualPlaceholders();
 		} else {
-			// It was an integer representation, fixing type (INT expected, not STRING)
-			$errorCode = $intErrorCode;
-		}
-
-		if ($errorCode === 0) {
-			$errorCode = HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR;
-		}
-
-		$settingsHandler = $core->getSettingsHandler();
-
-		$placeholders = [];
-		$placeholders['title'] = self::ERRORS[$errorCode]['title'] ?? self::ERRORS[HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR]['title'];
-		$placeholders['errorMessage'] = self::ERRORS[$errorCode]['message'] ?? self::ERRORS[HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR]['message'];
-
-		if ($settingsHandler->exists('errors')) {
-			$errorCodes = $settingsHandler->get('errors');
-			if (isset($errorCodes->{$errorCode})) {
-				$placeholders['title'] = $errorCodes->{$errorCode}->title;
-				$placeholders['errorMessage'] = $errorCodes->{$errorCode}->message;
-			}
+			$httpStatusCode = HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR;
+			$placeholders = ['title' => 'Internal Server Error'];
 		}
 
 		$contentHandler = $core->getContentHandler();
 		$contentType = is_null($contentHandler) ? HttpResponse::TYPE_HTML : $contentHandler->getContentType();
 
-		if ($debug) {
-			$placeholders['errorType'] = get_class($throwable);
-			$placeholders['errorMessage'] = $errorMessage;
-			$placeholders['errorFile'] = $throwable->getFile();
-			$placeholders['errorLine'] = $throwable->getLine();
-			$placeholders['errorCode'] = $errorCode;
-			$placeholders['backtrace'] = ($contentType === HttpResponse::TYPE_HTML) ? $throwable->getTraceAsString() : $throwable->getTrace();
-		}
+		$placeholders['errorType'] = get_class($throwable);
+		$placeholders['errorMessage'] = $errorMessage;
+		$placeholders['errorFile'] = $realException->getFile();
+		$placeholders['errorLine'] = $realException->getLine();
+		$placeholders['errorCode'] = $realException->getCode();
+		$placeholders['backtrace'] = ($contentType === HttpResponse::TYPE_HTML) ? $realException->getTraceAsString() : $realException->getTrace();
+
+		$this->sendHttpResponseAndExit($core, $httpStatusCode, $errorMessage, $errorCode, 'debug.html', $placeholders);
+	}
+
+	private function sendHttpResponseAndExit(
+		Core $core,
+		int $httpStatusCode,
+		string $errorMessage,
+		int $errorCode,
+		string $htmlFileName,
+		array $placeholders
+	): void {
+		$contentHandler = $core->getContentHandler();
+		$contentType = is_null($contentHandler) ? HttpResponse::TYPE_HTML : $contentHandler->getContentType();
 
 		if ($contentType === HttpResponse::TYPE_HTML) {
 			$httpResponse = HttpResponse::createHtmlResponse(
-				$errorCode,
-				$this->getHtmlContent($core, $debug, $placeholders),
+				$httpStatusCode,
+				$this->getHtmlContent($core, $htmlFileName, $placeholders),
 				$core->getEnvironmentHandler()->getCspPolicySettings(),
 				CspNonce::get()
 			);
 			$httpResponse->sendAndExit();
 		}
 
-		$content = '';
+		$contentString = '';
 		if (in_array($contentType, [HttpResponse::TYPE_JSON, HttpResponse::TYPE_TXT, HttpResponse::TYPE_CSV])) {
-			$errorResponseContent = new errorResponseContent($contentType, $placeholders['title'], $errorCode, $placeholders);
-			$content = $errorResponseContent->getContent();
+			$errorResponseContent = new errorResponseContent($contentType, $errorMessage, $errorCode, $placeholders);
+			$contentString = $errorResponseContent->getContent();
 		}
-		$httpResponse = HttpResponse::createResponseFromString($errorCode, $content, $contentType);
+
+		$httpResponse = HttpResponse::createResponseFromString($httpStatusCode, $contentString, $contentType);
 		$httpResponse->sendAndExit();
 	}
 
-	private function getHtmlContent(Core $core, bool $debug, array $placeholders): string
+	private function getHtmlContent(Core $core, string $htmlFileName, array $placeholders): string
 	{
-		$contentFile = $debug ? 'debug.html' : 'public.html';
-		$contentPath = $core->getCoreProperties()->getSiteRoot() . 'error_docs' . DIRECTORY_SEPARATOR . $contentFile;
+		$contentPath = $core->getCoreProperties()->getSiteRoot() . 'error_docs/' . $htmlFileName;
 		if (!file_exists($contentPath)) {
-			return $placeholders['title'] . '<br>' . $placeholders['errorMessage'];
+			return 'Missing error html file ' . $htmlFileName;
 		}
 
 		$placeholders['cspNonce'] = CspNonce::get();
@@ -228,4 +158,3 @@ class ExceptionHandler
 		return str_replace($srcArr, $rplArr, $content);
 	}
 }
-/* EOF */

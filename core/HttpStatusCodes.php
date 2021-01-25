@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
@@ -10,7 +10,6 @@ use ReflectionClass;
 
 class HttpStatusCodes
 {
-
 	// 1xx - Informations
 	const HTTP_CONTINUE = 100;
 	const HTTP_SWITCHING_PROTOCOLS = 101;
@@ -76,7 +75,7 @@ class HttpStatusCodes
 	const HTTP_BANDWITH_LIMIT_EXCEEDED = 509;
 	const HTTP_NOT_EXTENDED = 510;
 
-	public static function getAllStatusCodes()
+	public static function getAllStatusCodes(): array
 	{
 		$reflectionClass = new ReflectionClass(__CLASS__);
 
@@ -86,7 +85,7 @@ class HttpStatusCodes
 	public static function getStatusHeader(int $httpStatusCode): string
 	{
 		$statusHeader = 'HTTP/1.1 ' . $httpStatusCode;
-		$statusCodeDescription = self::getStatusCodeDescription($httpStatusCode);
+		$statusCodeDescription = HttpStatusCodes::getStatusCodeDescription($httpStatusCode);
 		if (!is_null($statusCodeDescription)) {
 			$statusHeader .= ' ' . $statusCodeDescription;
 		}
@@ -97,33 +96,32 @@ class HttpStatusCodes
 	public static function getStatusCodeDescription(int $httpStatusCode): ?string
 	{
 		$statusCodeDescriptions = [
-			self::HTTP_OK                            => 'OK',
-			self::HTTP_NOT_MODIFIED                  => 'Not Modified',
-			self::HTTP_BAD_REQUEST                   => 'Bad Request',
-			self::HTTP_UNAUTHORIZED                  => 'Unauthorized',
-			self::HTTP_PAYMENT_REQUIRED              => 'Payment Required',
-			self::HTTP_FORBIDDEN                     => 'Forbidden',
-			self::HTTP_NOT_FOUND                     => 'Not found',
-			self::HTTP_METHOD_NOT_ALLOWED            => 'Method Not Allowed',
-			self::HTTP_NOT_ACCEPTABLE                => 'Not Acceptable',
-			self::HTTP_PROXY_AUTHENTICATION_REQUIRED => 'Proxy Authentication Required',
-			self::HTTP_REQUEST_TIME_OUT              => 'Request Time-out',
-			self::HTTP_CONFLICT                      => 'Conflict',
-			self::HTTP_GONE                          => 'Gone',
-			self::HTTP_LENGTH_REQUIRED               => 'Length Required',
-			self::HTTP_PRECONDITION_FAILED           => 'Precondition Failed',
-			self::HTTP_REQUEST_ENTITY_TOO_LARGE      => 'Request Entity Too Large',
-			self::HTTP_REQUEST_URL_TOO_LONG          => 'Request-URI Too Long',
-			self::HTTP_UNSUPPORTED_MEDIA_TYPE        => 'Unsupported Media Type',
-			self::HTTP_INTERNAL_SERVER_ERROR         => 'Internal Server Error',
-			self::HTTP_NOT_IMPLEMENTED               => 'Not Implemented',
-			self::HTTP_BAD_GATEWAY                   => 'Bad Gateway',
-			self::HTTP_SERVICE_UNAVAILABLE           => 'Service Unavailable',
-			self::HTTP_GATEWAY_TIME_OUT              => 'Gateway Time-out',
-			self::HTTP_VERSION_NOT_SUPPORTED         => 'HTTP Version not supported',
+			HttpStatusCodes::HTTP_OK                            => 'OK',
+			HttpStatusCodes::HTTP_NOT_MODIFIED                  => 'Not Modified',
+			HttpStatusCodes::HTTP_BAD_REQUEST                   => 'Bad Request',
+			HttpStatusCodes::HTTP_UNAUTHORIZED                  => 'Unauthorized',
+			HttpStatusCodes::HTTP_PAYMENT_REQUIRED              => 'Payment Required',
+			HttpStatusCodes::HTTP_FORBIDDEN                     => 'Forbidden',
+			HttpStatusCodes::HTTP_NOT_FOUND                     => 'Not found',
+			HttpStatusCodes::HTTP_METHOD_NOT_ALLOWED            => 'Method Not Allowed',
+			HttpStatusCodes::HTTP_NOT_ACCEPTABLE                => 'Not Acceptable',
+			HttpStatusCodes::HTTP_PROXY_AUTHENTICATION_REQUIRED => 'Proxy Authentication Required',
+			HttpStatusCodes::HTTP_REQUEST_TIME_OUT              => 'Request Time-out',
+			HttpStatusCodes::HTTP_CONFLICT                      => 'Conflict',
+			HttpStatusCodes::HTTP_GONE                          => 'Gone',
+			HttpStatusCodes::HTTP_LENGTH_REQUIRED               => 'Length Required',
+			HttpStatusCodes::HTTP_PRECONDITION_FAILED           => 'Precondition Failed',
+			HttpStatusCodes::HTTP_REQUEST_ENTITY_TOO_LARGE      => 'Request Entity Too Large',
+			HttpStatusCodes::HTTP_REQUEST_URL_TOO_LONG          => 'Request-URI Too Long',
+			HttpStatusCodes::HTTP_UNSUPPORTED_MEDIA_TYPE        => 'Unsupported Media Type',
+			HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR         => 'Internal Server Error',
+			HttpStatusCodes::HTTP_NOT_IMPLEMENTED               => 'Not Implemented',
+			HttpStatusCodes::HTTP_BAD_GATEWAY                   => 'Bad Gateway',
+			HttpStatusCodes::HTTP_SERVICE_UNAVAILABLE           => 'Service Unavailable',
+			HttpStatusCodes::HTTP_GATEWAY_TIME_OUT              => 'Gateway Time-out',
+			HttpStatusCodes::HTTP_VERSION_NOT_SUPPORTED         => 'HTTP Version not supported',
 		];
 
 		return isset($statusCodeDescriptions[$httpStatusCode]) ? $statusCodeDescriptions[$httpStatusCode] : null;
 	}
 }
-/* EOF */

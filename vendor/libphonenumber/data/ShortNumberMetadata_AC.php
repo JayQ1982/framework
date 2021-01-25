@@ -25,7 +25,7 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '911',
+	  'NationalNumberPattern' => '9(?:11|99)',
 	  'ExampleNumber' => '911',
 	  'PossibleLength' =>
     [
@@ -46,7 +46,7 @@ return [
   ],
 	'emergency' =>
   [
-	  'NationalNumberPattern' => '911',
+	  'NationalNumberPattern' => '9(?:11|99)',
 	  'ExampleNumber' => '911',
 	  'PossibleLength' =>
     [
@@ -57,7 +57,7 @@ return [
   ],
 	'shortCode' =>
   [
-	  'NationalNumberPattern' => '911',
+	  'NationalNumberPattern' => '9(?:11|99)',
 	  'ExampleNumber' => '911',
 	  'PossibleLength' =>
     [

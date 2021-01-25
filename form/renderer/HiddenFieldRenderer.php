@@ -1,15 +1,15 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\renderer;
 
 use framework\form\component\field\HiddenField;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
 
 class HiddenFieldRenderer extends FormRenderer
 {
@@ -25,12 +25,11 @@ class HiddenFieldRenderer extends FormRenderer
 		$hiddenField = $this->hiddenField;
 
 		$attributes = [
-			new FormTagAttribute('type', $hiddenField->getType()),
-			new FormTagAttribute('name', $hiddenField->getName()),
-			new FormTagAttribute('value', $hiddenField->renderValue()),
+			new HtmlTagAttribute('type', $hiddenField->getType(), true),
+			new HtmlTagAttribute('name', $hiddenField->getName(), true),
+			new HtmlTagAttribute('value', $hiddenField->renderValue(), true),
 		];
 
-		$this->setFormTag(new FormTag('input', true, $attributes));
+		$this->setHtmlTag(new HtmlTag('input', true, $attributes));
 	}
 }
-/* EOF */

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\template;
@@ -9,10 +9,10 @@ namespace framework\template\template;
 class DirectoryTemplateCache extends TemplateCacheStrategy
 {
 	const CACHE_SUFFIX = '.php';
-	protected $baseDir;
-	protected $baseDirLength;
+	protected string $baseDir;
+	protected int $baseDirLength;
 
-	function __construct($cachePath, $baseDir = DIRECTORY_SEPARATOR)
+	function __construct(string $cachePath, string $baseDir = DIRECTORY_SEPARATOR)
 	{
 		parent::__construct($cachePath);
 
@@ -33,7 +33,7 @@ class DirectoryTemplateCache extends TemplateCacheStrategy
 			$changeTime = filectime($cacheFilePath);
 		}
 
-		return $this->createTemplateCacheEntry($cacheFileName, $changeTime, -1);
+		return new TemplateCacheEntry($cacheFileName, $changeTime, -1);
 	}
 
 	public function addCachedTplFile(string $tplFile, ?TemplateCacheEntry $currentCacheEntry, string $compiledTemplateContent): TemplateCacheEntry
@@ -44,7 +44,7 @@ class DirectoryTemplateCache extends TemplateCacheStrategy
 		if (file_exists($cacheFilePath) === true) {
 			file_put_contents($cacheFilePath, $compiledTemplateContent);
 
-			return $this->createTemplateCacheEntry($cacheFileName, time(), -1);
+			return new TemplateCacheEntry($cacheFileName, time(), -1);
 		}
 
 		$fileLocation = pathinfo($cacheFilePath, PATHINFO_DIRNAME);
@@ -55,25 +55,13 @@ class DirectoryTemplateCache extends TemplateCacheStrategy
 
 		file_put_contents($cacheFilePath, $compiledTemplateContent);
 
-		return $this->createTemplateCacheEntry($cacheFileName, time(), -1);
+		return new TemplateCacheEntry($cacheFileName, time(), -1);
 	}
 
 	protected function getCacheFileName(string $tplFile): string
 	{
-		$offset = (strpos($tplFile, $this->baseDir) !== false) ? $this->baseDirLength : 0;
+		$offset = str_contains($tplFile, $this->baseDir) ? $this->baseDirLength : 0;
 
-		return preg_replace('/\.\w+$/', self::CACHE_SUFFIX, substr($tplFile, $offset));
-	}
-
-	protected function createTemplateCacheEntry($path, $changeTime, $size)
-	{
-		$templateCacheEntry = new TemplateCacheEntry();
-
-		$templateCacheEntry->path = $path;
-		$templateCacheEntry->changeTime = $changeTime;
-		$templateCacheEntry->size = $size;
-
-		return $templateCacheEntry;
+		return preg_replace('/\.\w+$/', DirectoryTemplateCache::CACHE_SUFFIX, substr($tplFile, $offset));
 	}
 }
-/* EOF */

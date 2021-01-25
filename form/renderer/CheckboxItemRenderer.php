@@ -1,16 +1,15 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\renderer;
 
 use framework\form\component\field\CheckboxOptionsField;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
-use framework\form\FormText;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
 
 class CheckboxItemRenderer extends FormRenderer
 {
@@ -25,88 +24,62 @@ class CheckboxItemRenderer extends FormRenderer
 	{
 		$checkboxOptionsField = $this->checkboxOptionsField;
 
-		$formElementClasses = ['form-element'];
+		$htmlElementClasses = ['form-element'];
 		if ($checkboxOptionsField->hasErrors()) {
-			$formElementClasses[] = 'has-error';
+			$htmlElementClasses[] = 'has-error';
 		}
 
-		$formElementDiv = new FormTag('div', false, [new FormTagAttribute('class', implode(' ', $formElementClasses))]);
+		$htmlElementDiv = new HtmlTag('div', false, [new HtmlTagAttribute('class', implode(' ', $htmlElementClasses), true)]);
 
-		$formItemCheckboxDiv = new FormTag('div', false, [new FormTagAttribute('class', 'form-item-checkbox')]);
+		$formItemCheckboxDiv = new HtmlTag('div', false, [new HtmlTagAttribute('class', 'form-item-checkbox', true)]);
 
-		$labelTag = new FormTag('label', false);
+		$labelTag = new HtmlTag('label', false);
 		$labelTag->addTag($this->getInputTag());
-		$labelTag->addText(new FormText($checkboxOptionsField->getLabel()));
+		$labelTag->addText($checkboxOptionsField->getLabel());
 		$formItemCheckboxDiv->addTag($labelTag);
-		$formElementDiv->addTag($formItemCheckboxDiv);
+		$htmlElementDiv->addTag($formItemCheckboxDiv);
 
-		if (!is_null($checkboxOptionsField->getFieldInfoAsHTML())) {
-			$formElementDiv = $checkboxOptionsField->addFieldInfo($formElementDiv);
+		if (!is_null($checkboxOptionsField->getFieldInfo())) {
+			FormRenderer::addFieldInfoToParentHtmlTag($checkboxOptionsField, $htmlElementDiv);
 		}
 
-		$formElementDiv = $this->prepareErrorDisplay($formElementDiv);
+		FormRenderer::addErrorsToParentHtmlTag($checkboxOptionsField, $htmlElementDiv);
 
-		$this->setFormTag($formElementDiv);
+		$this->setHtmlTag($htmlElementDiv);
 	}
 
-	private function getInputTag(): FormTag
+	private function getInputTag(): HtmlTag
 	{
-		$options = $this->checkboxOptionsField->getOptions();
-		$optionValue = (string)key($options);
+		$options = $this->checkboxOptionsField->getFormOptions()->getData();
+		$optionValue = key($options);
 		$attributes = [
-			new FormTagAttribute('type', 'checkbox'),
-			new FormTagAttribute('name', $this->checkboxOptionsField->getName()),
-			new FormTagAttribute('id', $this->checkboxOptionsField->getId()),
-			new FormTagAttribute('value', $optionValue),
+			new HtmlTagAttribute('type', 'checkbox', true),
+			new HtmlTagAttribute('name', $this->checkboxOptionsField->getName(), true),
+			new HtmlTagAttribute('id', $this->checkboxOptionsField->getId(), true),
+			new HtmlTagAttribute('value', $optionValue, true),
 		];
 
 		$checkboxValue = $this->checkboxOptionsField->getRawValue();
 
 		if (is_scalar($checkboxValue) && (string)$checkboxValue == $optionValue) {
-			$attributes[] = new FormTagAttribute('checked', null);
+			$attributes[] = new HtmlTagAttribute('checked', null, true);
 		}
 
 		$ariaDescribedBy = [];
 
 		if ($this->checkboxOptionsField->hasErrors()) {
-			$attributes[] = new FormTagAttribute('aria-invalid', 'true');
+			$attributes[] = new HtmlTagAttribute('aria-invalid', 'true', true);
 			$ariaDescribedBy[] = $this->checkboxOptionsField->getName() . '-error';
 		}
 
-		if (!is_null($this->checkboxOptionsField->getFieldInfoAsHTML())) {
+		if (!is_null($this->checkboxOptionsField->getFieldInfo())) {
 			$ariaDescribedBy[] = $this->checkboxOptionsField->getName() . '-info';
 		}
 
 		if (count($ariaDescribedBy) > 0) {
-			$attributes[] = new FormTagAttribute('aria-describedby', implode(' ', $ariaDescribedBy));
+			$attributes[] = new HtmlTagAttribute('aria-describedby', implode(' ', $ariaDescribedBy), true);
 		}
 
-		return new FormTag('input', true, $attributes);
-	}
-
-	protected function prepareErrorDisplay(FormTag $formTag): FormTag
-	{
-		$checkboxOptionsField = $this->checkboxOptionsField;
-
-		if (!$checkboxOptionsField->hasErrors()) {
-			return $formTag;
-		}
-
-		$bTag = new FormTag('b', false);
-		$errorsHTML = [];
-		foreach ($checkboxOptionsField->getErrors() as $msg) {
-			$errorsHTML[] = FormRenderer::htmlEncode($msg);
-		}
-		$bTag->addText(new FormText(implode('<br>', $errorsHTML), true));
-
-		$divTag = new FormTag('div', false, [
-			new FormTagAttribute('class', 'form-input-error'),
-			new FormTagAttribute('id', $checkboxOptionsField->getName() . '-error'),
-		]);
-		$divTag->addTag($bTag);
-		$formTag->addTag($divTag);
-
-		return $formTag;
+		return new HtmlTag('input', true, $attributes);
 	}
 }
-/* EOF */

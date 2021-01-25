@@ -1,21 +1,19 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\api\response;
 
-use SimpleXMLElement;
+use framework\common\SimpleXMLExtended;
 
 class xmlCurlResponse extends curlResponse
 {
-	/**
-	 * @return SimpleXMLElement|false
-	 */
-	protected function convert()
+	// TODO: Add possibilities for easier access to data in expected type (int, string, ...)
+	protected function convert(): SimpleXMLExtended
 	{
-		return simplexml_load_string($this->getResponseBodyAsString(), 'SimpleXMLElement', LIBXML_NOCDATA);
+		return new SimpleXMLExtended($this->getResponseBodyAsString(), LIBXML_NOCDATA);
 	}
 
 	protected function getFormat(): string
@@ -23,4 +21,3 @@ class xmlCurlResponse extends curlResponse
 		return curlResponse::RESPONSE_XML;
 	}
 }
-/* EOF */

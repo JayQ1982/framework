@@ -1,20 +1,19 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\api;
 
-use framework\api\response\arrayCurlResponse;
+use Exception;
+use framework\api\response\curlResponse;
 use framework\api\response\jsonCurlResponse;
 use framework\api\response\xmlCurlResponse;
-use framework\api\response\curlResponse;
+use framework\common\SimpleXMLExtended;
 use framework\core\HttpStatusCodes;
 use RuntimeException;
-use Exception;
 use stdClass;
-use SimpleXMLElement;
 
 /**
  * This class represents one curl request to the given url. Although it's possible,
@@ -30,17 +29,17 @@ class curlRequest
 	const TYPE_POST = 'POST';
 	const TYPE_PATCH = 'PATCH';
 	const ALLOWED_REQUEST_TYPES = [
-		self::TYPE_DELETE,
-		self::TYPE_PUT,
-		self::TYPE_GET,
-		self::TYPE_POST,
-		self::TYPE_PATCH,
+		curlRequest::TYPE_DELETE,
+		curlRequest::TYPE_PUT,
+		curlRequest::TYPE_GET,
+		curlRequest::TYPE_POST,
+		curlRequest::TYPE_PATCH,
 	];
 
-	private string $lastErrMsg = ''; // Gather the very last error message so we can display it
+	private string $lastErrMsg = ''; // Gather the very last error message so we can display it.
 	private string $lastErrCode = '0'; // Gather the very last error code so we can display it. Might not be an INT in every case ...
-	/** @var resource $curl : Curl resource declared as static to use connection persistence for multiple requests to same url */
-	private static $curl;
+	/** @var null|false|resource - Curl resource declared as static to use connection persistence for multiple requests to same url */
+	private static $curl = null;
 	private static int $instanceCounter = 0; // Counter for instances of this class so we can properly close curl in destructor for the last instance
 	private string $url; // Target url for this request
 	private ?string $postData = null; // Post data to be used in request
@@ -48,7 +47,7 @@ class curlRequest
 	private int $connectTimeoutInSeconds = 10;
 	private array $httpHeaders = []; // Array with http headers (CURLOPT_HTTPHEADER)
 	private array $curlOptions = []; // Array with curl options
-	private ?string $responseBody; // Response body after execution
+	private ?string $responseBody = null; // Response body after execution
 	private ?array $responseHeader = null; // Response header after execution
 	private ?int $responseHttpCode = null; // http Code after execution
 	private bool $allowRedirect = false; // Allow 301 redirects (set to false by default)
@@ -62,17 +61,17 @@ class curlRequest
 	 */
 	public function __construct(string $url)
 	{
-		self::$instanceCounter++;
+		curlRequest::$instanceCounter++;
 		$this->url = $url;
 		$this->setLastErrMsg('execute() was not called.');
 	}
 
 	public function __destruct()
 	{
-		self::$instanceCounter--;
+		curlRequest::$instanceCounter--;
 		// If "curl" was used, close it properly with last instance of this class
-		if (self::$instanceCounter == 0 && is_resource(self::$curl)) {
-			curl_close(self::$curl);
+		if (curlRequest::$instanceCounter == 0 && is_resource(curlRequest::$curl)) {
+			curl_close(curlRequest::$curl);
 		}
 	}
 
@@ -85,8 +84,8 @@ class curlRequest
 	 */
 	public function setRequestType(string $requestType): void
 	{
-		if (!in_array($requestType, self::ALLOWED_REQUEST_TYPES)) {
-			throw new Exception('Invalid request type ' . $requestType . '. Allowed values are ' . implode(', ', self::ALLOWED_REQUEST_TYPES));
+		if (!in_array($requestType, curlRequest::ALLOWED_REQUEST_TYPES)) {
+			throw new Exception('Invalid request type ' . $requestType . '. Allowed values are ' . implode(', ', curlRequest::ALLOWED_REQUEST_TYPES));
 		}
 		$this->requestType = $requestType;
 	}
@@ -145,10 +144,7 @@ class curlRequest
 		}
 	}
 
-	/**
-	 * @return null|string
-	 */
-	public function getPostData()
+	public function getPostData(): ?string
 	{
 		return $this->postData;
 	}
@@ -226,19 +222,18 @@ class curlRequest
 	 * Execute the curl request
 	 *
 	 * @return bool: true on success, false if any error occurred
-	 * @throws RuntimeException
 	 */
 	public function execute(): bool
 	{
 		// Set curl resource
-		if (is_resource(self::$curl)) {
-			// reuse curl resource, if already initialised before
-			curl_reset(self::$curl);
+		if (is_resource(curlRequest::$curl)) {
+			// Reuse curl resource, if already initialised before
+			curl_reset(curlRequest::$curl);
 		} else {
 			// Initialize a new curl resource or throw an exception on failure
-			self::$curl = curl_init();
+			curlRequest::$curl = curl_init();
 
-			if (self::$curl === false) {
+			if (curlRequest::$curl === false) {
 				throw new RuntimeException(__CLASS__ . ': Could not initialize a CURL handle.');
 			}
 		}
@@ -248,9 +243,9 @@ class curlRequest
 		// If request type was not set manually before, we determine it (GET or POST) based on postData
 		if (is_null($this->requestType)) {
 			if (is_null($this->postData)) {
-				$this->requestType = self::TYPE_GET;
+				$this->requestType = curlRequest::TYPE_GET;
 			} else {
-				$this->requestType = self::TYPE_POST;
+				$this->requestType = curlRequest::TYPE_POST;
 			}
 		}
 
@@ -270,22 +265,22 @@ class curlRequest
 
 		// Set request type specific options
 		switch ($this->requestType) {
-			case self::TYPE_GET:
+			case curlRequest::TYPE_GET:
 				$curlOpts[CURLOPT_HTTPGET] = true;
 				break;
 
-			case self::TYPE_POST:
+			case curlRequest::TYPE_POST:
 				$curlOpts[CURLOPT_POST] = true;
 				$curlOpts[CURLOPT_POSTFIELDS] = $this->postData;
 				break;
 
-			case self::TYPE_PUT:
-			case self::TYPE_PATCH:
+			case curlRequest::TYPE_PUT:
+			case curlRequest::TYPE_PATCH:
 				$curlOpts[CURLOPT_CUSTOMREQUEST] = $this->requestType;
 				$curlOpts[CURLOPT_POSTFIELDS] = $this->postData;
 				break;
 
-			case self::TYPE_DELETE:
+			case curlRequest::TYPE_DELETE:
 				$curlOpts[CURLOPT_CUSTOMREQUEST] = $this->requestType;
 				break;
 		}
@@ -298,10 +293,10 @@ class curlRequest
 				$curlOpts[$name] = $value;
 			}
 		}
-		curl_setopt_array(self::$curl, $curlOpts);
+		curl_setopt_array(curlRequest::$curl, $curlOpts);
 
-		$this->responseBody = curl_exec(self::$curl);
-		$this->responseHeader = curl_getinfo(self::$curl);
+		$this->responseBody = curl_exec(curlRequest::$curl);
+		$this->responseHeader = curl_getinfo(curlRequest::$curl);
 		$this->responseHttpCode = intval($this->responseHeader['http_code'] ?? 0);
 
 		if (
@@ -315,24 +310,14 @@ class curlRequest
 		) {
 			// That was definitely a bad response
 			$text = __CLASS__ . ': Bad HTTP response code received: ' . $this->responseHttpCode;
-			switch ($this->responseHttpCode) {
-				// for often expected errors add a more descriptive text
-				case HttpStatusCodes::HTTP_MOVED_PERMANENTLY :
-					$text .= ' ("moved permanently". Check URL/settings.)';
-					break;
-				case HttpStatusCodes::HTTP_SEE_OTHER :
-					$text .= ' ("Redirect". Maybe HTTP-to-HTTPS? Check URL/settings.)';
-					break;
-				case HttpStatusCodes::HTTP_NOT_FOUND :
-					$text .= ' ("not found" on server)';
-					break;
-				case HttpStatusCodes::HTTP_NOT_ACCEPTABLE :
-					$text .= ' ("not acceptable" on server. Check request format/data.)';
-					break;
-				case HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR :
-					$text .= ' (remote "Server error")';
-					break;
-			}
+			$text .= match ($this->responseHttpCode) {
+				HttpStatusCodes::HTTP_MOVED_PERMANENTLY => ' ("moved permanently". Check URL/settings.)',
+				HttpStatusCodes::HTTP_SEE_OTHER => ' ("Redirect". Maybe HTTP-to-HTTPS? Check URL/settings.)',
+				HttpStatusCodes::HTTP_NOT_FOUND => ' ("not found" on server)',
+				HttpStatusCodes::HTTP_NOT_ACCEPTABLE => ' ("not acceptable" on server. Check request format/data.)',
+				HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR => ' (remote "Server error")',
+				default => ''
+			};
 			$text .= '. URL was: ' . parse_url($this->url, PHP_URL_PATH);
 			$this->setLastErrMsg($text);
 
@@ -341,20 +326,19 @@ class curlRequest
 
 		if ($this->responseBody === false) {
 			// Try to detect problem for faster understanding in logs/protocols
-			$errNo = curl_errno(self::$curl);
-			$errMsg = __CLASS__ . ': (' . $errNo . ') ' . curl_error(self::$curl);
+			$errNo = curl_errno(curlRequest::$curl);
+			$errMsg = __CLASS__ . ': (' . $errNo . ') ' . curl_error(curlRequest::$curl);
 			// See http://www.php.net/manual/en/function.curl-errno.php for further values of interest.
-			// @formatter:off
-			switch ($errNo) {
-				case 9  : $errMsg .= '; Hint: (Remote) Access denied.'; break;
-				case 35 : $errMsg .= '; Hint: Problem with ssl connection.'; break;
-				case 45 : $errMsg .= '; Hint: Interface failed. Maybe problem with networking on server?'; break;
-				case 52 : $errMsg .= '; Hint: Got no data.'; break;
-				case 58 : $errMsg .= '; Hint: Problem with certificate on ssl connection.'; break;
-				case 60 : $errMsg .= '; Hint: Problem with CA certificate on ssl connection. Maybe OS update missing on server?'; break;
-				case 67 : $errMsg .= '; Hint: Login denied.'; break;
-			}
-			// @formatter:on
+			$errMsg .= match ($errNo) {
+				9 => '; Hint: (Remote) Access denied.',
+				35 => '; Hint: Problem with ssl connection.',
+				45 => '; Hint: Interface failed. Maybe problem with networking on server?',
+				52 => '; Hint: Got no data.',
+				58 => '; Hint: Problem with certificate on ssl connection.',
+				60 => '; Hint: Problem with CA certificate on ssl connection. Maybe OS update missing on server?',
+				67 => '; Hint: Login denied.',
+				default => ''
+			};
 			$this->setLastErrMsg($errMsg);
 
 			return $this->success = false;
@@ -364,36 +348,19 @@ class curlRequest
 		return $this->success = true;
 	}
 
-	/**
-	 * @return bool|null|string
-	 */
-	public function getRawResponseBody()
+	public function getRawResponseBody(): bool|string|null
 	{
 		return $this->responseBody;
 	}
 
-	/**
-	 * @return bool|SimpleXMLElement
-	 */
-	public function getResponseBodyAsXml()
+	public function getResponseBodyAsXml(): SimpleXMLExtended|bool
 	{
 		return $this->formatFetcher(new xmlCurlResponse($this));
 	}
 
-	/**
-	 * @return bool|stdClass
-	 */
-	public function getResponseBodyAsJson()
+	public function getResponseBodyAsJson(): bool|stdClass
 	{
 		return $this->formatFetcher(new jsonCurlResponse($this));
-	}
-
-	/**
-	 * @return bool|array
-	 */
-	public function getResponseBodyAsArray()
-	{
-		return $this->formatFetcher(new arrayCurlResponse($this));
 	}
 
 	/**
@@ -401,9 +368,9 @@ class curlRequest
 	 *
 	 * @param curlResponse $curlResponseObject : A (derived) instantiation of abstract class "curlResponse"
 	 *
-	 * @return false|array|stdClass|SimpleXMLElement
+	 * @return false|array|stdClass|SimpleXMLExtended
 	 */
-	private function formatFetcher(CurlResponse $curlResponseObject)
+	private function formatFetcher(curlResponse $curlResponseObject): SimpleXMLExtended|false|array|stdClass
 	{
 		$value = $curlResponseObject->get();
 		if ($value === false) {
@@ -413,22 +380,12 @@ class curlRequest
 		return $value;
 	}
 
-	/**
-	 * Returns the response header
-	 *
-	 * @return null|array
-	 */
-	public function getResponseHeader()
+	public function getResponseHeader(): ?array
 	{
 		return $this->responseHeader;
 	}
 
-	/**
-	 * Returns the HTTP response code
-	 *
-	 * @return null|int
-	 */
-	public function getResponseHttpCode()
+	public function getResponseHttpCode(): ?int
 	{
 		return $this->responseHttpCode;
 	}
@@ -455,9 +412,9 @@ class curlRequest
 	 *
 	 * @param $data
 	 *
-	 * @return string|array
+	 * @return int|array|string
 	 */
-	protected function all_to_string($data)
+	protected function all_to_string($data): int|array|string
 	{
 		if (is_bool($data)) {
 			$data = ($data) ? 1 : 0;
@@ -528,4 +485,3 @@ class curlRequest
 		return $this->lastErrCode;
 	}
 }
-/* EOF */

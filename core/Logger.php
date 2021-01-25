@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
@@ -30,16 +30,19 @@ class Logger
 		$hashableContent = $message;
 
 		if (!is_null($exceptionToLog)) {
+			$previousException = $exceptionToLog->getPrevious();
+			$realException = is_null($previousException) ? $exceptionToLog : $previousException;
+
 			if (trim($message) !== '') {
-				$message .= self::dnl;
+				$message .= Logger::dnl;
 			}
-			$message .= get_class($exceptionToLog) . ': (' . $exceptionToLog->getCode() . ') "' . $exceptionToLog->getMessage() . '"' . PHP_EOL;
-			$message .= 'thrown in file: ' . $exceptionToLog->getFile() . ' (Line: ' . $exceptionToLog->getLine() . ')' . self::dnl;
+			$message .= get_class($realException) . ': (' . $realException->getCode() . ') "' . $realException->getMessage() . '"' . PHP_EOL;
+			$message .= 'thrown in file: ' . $realException->getFile() . ' (Line: ' . $realException->getLine() . ')' . Logger::dnl;
 			$hashableContent = $message;
-			$message .= $exceptionToLog->getTraceAsString();
+			$message .= $realException->getTraceAsString();
 
 			// Don't use dynamic data ($traceLineArray['args']) from backtrace for hash-able content
-			foreach ($exceptionToLog->getTrace() as $traceLineArray) {
+			foreach ($realException->getTrace() as $traceLineArray) {
 				$hashableContent .=
 					($traceLineArray['file'] ?? '') .
 					($traceLineArray['line'] ?? '') .
@@ -61,7 +64,7 @@ class Logger
 		$isNewIssue = $this->isNewIssue($ticketFullPath);
 		$this->writeMessage($message, $ticketFullPath);
 		if ($isNewIssue) {
-			$this->mailMessage('Ticketfile: ' . $ticketFile . self::dnl . $message);
+			$this->mailMessage('Ticketfile: ' . $ticketFile . Logger::dnl . $message);
 		}
 	}
 
@@ -82,11 +85,11 @@ class Logger
 
 	private function writeMessage(string $message, string $filenameFullPath): void
 	{
-		$message .= self::dnl . '$_SERVER = ' . print_r($_SERVER, true);
-		$message .= self::dnl . '$_GET = ' . print_r($_GET, true);
-		$message .= self::dnl . '$_POST = ' . print_r($_POST, true);
-		$message .= self::dnl . '$_FILES = ' . print_r($_FILES, true);
-		$message .= self::dnl . '$_COOKIE = ' . print_r($_COOKIE, true);
+		$message .= Logger::dnl . '$_SERVER = ' . print_r($_SERVER, true);
+		$message .= Logger::dnl . '$_GET = ' . print_r($_GET, true);
+		$message .= Logger::dnl . '$_POST = ' . print_r($_POST, true);
+		$message .= Logger::dnl . '$_FILES = ' . print_r($_FILES, true);
+		$message .= Logger::dnl . '$_COOKIE = ' . print_r($_COOKIE, true);
 
 		$this->checkMaxFileSize($filenameFullPath);
 		// Because of date('u')-PHP-bug (always 00000)
@@ -102,7 +105,6 @@ class Logger
 			return;
 		}
 		$headers = [
-			/*'Subject: An error occurred on '.$_SERVER['SERVER_NAME'],*/
 			'From: error@' . $_SERVER['SERVER_NAME'],
 			'Date: ' . date('r'),
 			'Content-Type: text/plain; charset=UTF-8',
@@ -159,4 +161,3 @@ class Logger
 		return true;
 	}
 }
-/* EOF */ 

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\response;
@@ -11,21 +11,21 @@ use framework\core\HttpResponse;
 
 class successResponseContent extends responseContent
 {
-	public function __construct(string $contentType, array $result = [])
+	public function __construct(string $contentType, array $resultData = [])
 	{
 		parent::__construct([HttpResponse::TYPE_JSON, HttpResponse::TYPE_TXT, HttpResponse::TYPE_CSV], $contentType);
 
 		$status = 'success';
 
-		switch ($contentType) {
+		switch ($this->contentType) {
 			case HttpResponse::TYPE_JSON:
-				$this->setContent(JsonUtils::enJson(['status' => $status, 'result' => $result]));
+				$this->setContent(JsonUtils::enJson(['status' => $status, 'result' => $resultData]));
 				break;
 			case HttpResponse::TYPE_TXT:
 			case HttpResponse::TYPE_CSV:
 				$content = $status;
-				if (!empty($data)) {
-					$content .= print_r($data, true);
+				if (count($resultData) !== 0) {
+					$content .= print_r($resultData, true);
 				}
 				$this->setContent($content);
 				break;

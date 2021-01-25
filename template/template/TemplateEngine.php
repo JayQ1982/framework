@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\template;
@@ -18,14 +18,14 @@ use Throwable;
 
 class TemplateEngine
 {
-	protected HtmlDoc $htmlDoc;
+	protected ?HtmlDoc $htmlDoc = null;
 	protected string $tplNsPrefix;
 	protected ArrayObject $dataPool;
 	protected ArrayObject $dataTable;
 	protected array $customTags = [];
-	protected ?TemplateCacheEntry $cached;
+	protected ?TemplateCacheEntry $cached = null;
 	protected TemplateCacheStrategy $templateCacheInterface;
-	protected ?string $currentTemplateFile = null;
+	protected string $currentTemplateFile = '';
 	protected ?TemplateTag $lastTplTag = null;
 	protected array $getterMethodPrefixes = ['get', 'is', 'has'];
 
@@ -38,16 +38,15 @@ class TemplateEngine
 	{
 		$this->templateCacheInterface = $tplCacheInterface;
 		$this->tplNsPrefix = $tplNsPrefix;
-		$this->customTags = array_merge(self::getDefaultCustomTags(), $customTags);
+		$this->customTags = array_merge(TemplateEngine::getDefaultCustomTags(), $customTags);
 
 		$this->dataPool = new ArrayObject();
 		$this->dataTable = new ArrayObject();
 	}
 
-	protected static function getDefaultCustomTags()
+	protected static function getDefaultCustomTags(): array
 	{
 		return [
-			'auth'            => 'framework\template\customtags\AuthTag',
 			'checkboxOptions' => 'framework\template\customtags\CheckboxOptionsTag',
 			'checkbox'        => 'framework\template\customtags\CheckboxTag',
 			'date'            => 'framework\template\customtags\DateTag',
@@ -64,7 +63,6 @@ class TemplateEngine
 			'option'          => 'framework\template\customtags\OptionTag',
 			'radioOptions'    => 'framework\template\customtags\RadioOptionsTag',
 			'radio'           => 'framework\template\customtags\RadioTag',
-			'subNavi'         => 'framework\template\customtags\SubNaviTag',
 			'subSite'         => 'framework\template\customtags\SubSiteTag',
 			'text'            => 'framework\template\customtags\TextTag',
 			'print'           => 'framework\template\customtags\PrintTag',
@@ -72,7 +70,7 @@ class TemplateEngine
 		];
 	}
 
-	protected function load()
+	protected function load(): void
 	{
 		$this->lastTplTag = null;
 		$this->htmlDoc->parse();
@@ -100,13 +98,9 @@ class TemplateEngine
 		foreach ($nodeList as $node) {
 			// Parse inline tags if activated
 			if ($node instanceof ElementNode === true) {
-				$attrs = $node->attributes;
-				$countAttrs = count($attrs);
-
-				if ($countAttrs > 0) {
-					for ($i = 0; $i < $countAttrs; ++$i) {
-						$attrs[$i]->value = $this->replaceInlineTag($attrs[$i]->value);
-					}
+				foreach ($node->getAttributes() as $name => $htmlTagAttribute) {
+					$htmlTagAttribute->setValue($this->replaceInlineTag($htmlTagAttribute->getValue()));
+					$node->updateAttribute($name, $htmlTagAttribute);
 				}
 			} else {
 				if ($node instanceof TextNode || /*$node instanceof CommentNode ||*/
@@ -214,7 +208,7 @@ class TemplateEngine
 	 *
 	 * @return TemplateCacheEntry
 	 */
-	public function parse(string $tplFile)
+	public function parse(string $tplFile): TemplateCacheEntry
 	{
 		if (($this->cached = $this->getTemplateCacheEntry($tplFile)) !== null) {
 			return $this->cached;
@@ -229,10 +223,10 @@ class TemplateEngine
 	 *
 	 * @param string $filePath Path to the template file that should be checked
 	 *
-	 * @return TemplateCacheEntry
+	 * @return ?TemplateCacheEntry
 	 * @throws Exception
 	 */
-	private function getTemplateCacheEntry(string $filePath)
+	private function getTemplateCacheEntry(string $filePath): ?TemplateCacheEntry
 	{
 		if (stream_resolve_include_path($filePath) === false) {
 			throw new Exception('Could not find template file: ' . $filePath);
@@ -248,7 +242,7 @@ class TemplateEngine
 			$changeTime = @filectime($filePath);
 		}
 
-		if (($tplCacheEntry->size >= 0 && $tplCacheEntry->size !== @filesize($filePath)) || $tplCacheEntry->changeTime < $changeTime) {
+		if (($tplCacheEntry->getSize() >= 0 && $tplCacheEntry->getSize() !== @filesize($filePath)) || $tplCacheEntry->getChangeTime() < $changeTime) {
 			return null;
 		}
 
@@ -274,7 +268,7 @@ class TemplateEngine
 			ob_start();
 
 			/** @noinspection PhpIncludeInspection */
-			require $this->templateCacheInterface->getCachePath() . $templateCacheEntry->path;
+			require $this->templateCacheInterface->getCachePath() . $templateCacheEntry->getPath();
 
 			return ob_get_clean();
 		} catch (Throwable $e) {
@@ -286,7 +280,7 @@ class TemplateEngine
 		}
 	}
 
-	protected function cache($tplFile)
+	protected function cache($tplFile): TemplateCacheEntry
 	{
 		$cacheFileName = null;
 
@@ -316,10 +310,7 @@ class TemplateEngine
 		return $this->templateCacheInterface->addCachedTplFile($tplFile, $currentCacheEntry, $compiledTemplateContent);
 	}
 
-	/**
-	 * @return HtmlDoc
-	 */
-	public function getDomReader()
+	public function getDomReader(): HtmlDoc
 	{
 		return $this->htmlDoc;
 	}
@@ -327,14 +318,14 @@ class TemplateEngine
 	/**
 	 * Checks if a template node is followed by another template tag with a specific tagName.
 	 *
-	 * @param ElementNode $tagNode  The template tag
-	 * @param array       $tagNames Array with tagName(s) of the following template tag(s)
+	 * @param ElementNode $elementNode The template tag
+	 * @param array       $tagNames    Array with tagName(s) of the following template tag(s)
 	 *
 	 * @return bool
 	 */
-	public function isFollowedBy(ElementNode $tagNode, array $tagNames)
+	public function isFollowedBy(ElementNode $elementNode, array $tagNames): bool
 	{
-		$nextSibling = $tagNode->getNextSibling();
+		$nextSibling = $elementNode->getNextSibling();
 
 		return !($nextSibling === null || $nextSibling->namespace !== $this->getTplNsPrefix() || in_array($nextSibling->tagName, $tagNames) === false);
 	}
@@ -348,7 +339,7 @@ class TemplateEngine
 	 *
 	 * @throws Exception
 	 */
-	public function addData(string $key, $value, $overwrite = false): void
+	public function addData(string $key, mixed $value, $overwrite = false)
 	{
 		if ($this->dataPool->offsetExists($key) === true && $overwrite === false) {
 			throw new Exception("Data with the key '" . $key . "' is already registered");
@@ -373,7 +364,7 @@ class TemplateEngine
 	 *
 	 * @return mixed The value for that key or the key itself
 	 */
-	public function getData(string $key)
+	public function getData(string $key): mixed
 	{
 		if ($this->dataPool->offsetExists($key) === false) {
 			return null;
@@ -394,17 +385,17 @@ class TemplateEngine
 		}
 	}
 
-	public function getAllData()
+	public function getAllData(): ArrayObject
 	{
 		return $this->dataPool;
 	}
 
-	public function getTplNsPrefix()
+	public function getTplNsPrefix(): string
 	{
 		return $this->tplNsPrefix;
 	}
 
-	public function getTemplateCacheInterface()
+	public function getTemplateCacheInterface(): TemplateCacheStrategy
 	{
 		return $this->templateCacheInterface;
 	}
@@ -412,9 +403,9 @@ class TemplateEngine
 	/**
 	 * Returns the latest template tag found by the engine
 	 *
-	 * @return TemplateTag
+	 * @return ?TemplateTag
 	 */
-	public function getLastTplTag()
+	public function getLastTplTag(): ?TemplateTag
 	{
 		return $this->lastTplTag;
 	}
@@ -422,7 +413,7 @@ class TemplateEngine
 	/**
 	 * @return string The template file path which gets parsed at the moment
 	 */
-	public function getCurrentTemplateFile()
+	public function getCurrentTemplateFile(): string
 	{
 		return $this->currentTemplateFile;
 	}
@@ -434,12 +425,12 @@ class TemplateEngine
 	 * @return bool
 	 * @throws Exception
 	 */
-	public function checkRequiredAttributes(ElementNode $contextTag, array $attributes)
+	public function checkRequiredAttributes(ElementNode $contextTag, array $attributes): bool
 	{
 		foreach ($attributes as $attribute) {
-			$val = $contextTag->getAttribute($attribute)->value;
+			$val = $contextTag->getAttribute($attribute)->getValue();
 
-			if ($val !== null) {
+			if (!is_null($val)) {
 				continue;
 			}
 
@@ -467,7 +458,7 @@ class TemplateEngine
 	 * @return mixed
 	 * @throws Exception
 	 */
-	protected function getSelectorValue(string $selectorStr, bool $returnNull = false)
+	protected function getSelectorValue(string $selectorStr, $returnNull = false): mixed
 	{
 		$selParts = explode('.', $selectorStr);
 		$firstPart = array_shift($selParts);
@@ -538,7 +529,8 @@ class TemplateEngine
 				} else {
 					throw new Exception('Don\'t know how to handle selector part "' . $part . '"');
 				}
-			} else if (is_array($varData) === true) {
+			} else if (is_array($varData)) {
+				$varData = (array)$varData;
 				if (array_key_exists($part, $varData) === false) {
 					throw new Exception('Array key "' . $part . '" does not exist in array "' . $currentSel . '"');
 				}
@@ -555,4 +547,3 @@ class TemplateEngine
 		return $varData;
 	}
 }
-/* EOF */

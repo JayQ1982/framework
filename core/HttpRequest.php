@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
@@ -36,7 +36,7 @@ class HttpRequest
 		$this->cookies = $_COOKIE;
 		$this->host = $this->initHost();
 		$this->uri = $_SERVER['REQUEST_URI'];
-		$this->path = StringUtils::beforeLast($this->uri, '?');
+		$this->path = StringUtils::beforeFirst($this->uri, '?');
 		$this->port = (int)$_SERVER['SERVER_PORT'];
 		$this->protocol = $this->initProtocol();
 		$this->query = $_SERVER['QUERY_STRING'];
@@ -58,12 +58,12 @@ class HttpRequest
 		if (isset($_SERVER['SERVER_NAME'])) {
 			return $_SERVER['SERVER_NAME'];
 		}
-		throw new Exception('HttpRequestException: HTTP_HOST and SERVER_NAME are not defined');
+		throw new Exception('HTTP_HOST and SERVER_NAME are not defined');
 	}
 
 	private function initProtocol(): string
 	{
-		if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 1) {
+		if (isset($_SERVER['HTTPS']) && (int)$_SERVER['HTTPS'] === 1) {
 			// Apache
 			return HttpRequest::PROTOCOL_HTTPS;
 		}
@@ -201,6 +201,49 @@ class HttpRequest
 		}
 
 		return $protocol . '://' . $this->host . $this->uri;
+	}
+
+	/**
+	 * Returns the details about a file
+	 *
+	 * @param string $name The name of the file field
+	 *
+	 * @return array|null Returns the information about the file or null if it does not exist
+	 */
+	public function getFile(string $name): ?array
+	{
+		return isset($_FILES[$name]) ? $_FILES[$name] : null;
+	}
+
+	/**
+	 * Returns a normalized array with file information where each entry of the array
+	 * is a set of all information known about one file if the FILES field has an array markup
+	 * like field_name[]
+	 *
+	 * @param string $name The name of the file field
+	 *
+	 * @return array Returns an array with the information about the files
+	 */
+	public function getFiles(string $name): array
+	{
+		$filesArr = $this->getFile($name);
+
+		$files = [];
+		$filesCount = count($filesArr['name']);
+
+		for ($i = 0; $i < $filesCount; ++$i) {
+			$file = [
+				'name'     => $filesArr['name'][$i],
+				'type'     => $filesArr['type'][$i],
+				'tmp_name' => $filesArr['tmp_name'][$i],
+				'error'    => $filesArr['error'][$i],
+				'size'     => $filesArr['size'][$i],
+			];
+
+			$files[] = $file;
+		}
+
+		return $files;
 	}
 }
 /* EOF */

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\rule;
@@ -30,7 +30,7 @@ class ValidDateRule extends FormRule
 			if ($dtErrors['warning_count'] > 0 || $dtErrors['error_count'] > 0) {
 				return false;
 			}
-		} catch (Throwable $e) {
+		} catch (Throwable) {
 			return false;
 		}
 
@@ -39,4 +39,3 @@ class ValidDateRule extends FormRule
 		return true;
 	}
 }
-/* EOF */

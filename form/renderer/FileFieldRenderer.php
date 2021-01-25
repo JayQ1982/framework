@@ -1,16 +1,17 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\renderer;
 
 use framework\form\component\field\FileField;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
-use framework\form\FormText;
+use framework\html\HtmlDocument;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
+use framework\html\HtmlText;
 
 class FileFieldRenderer extends FormRenderer
 {
@@ -41,63 +42,41 @@ class FileFieldRenderer extends FormRenderer
 			$stillAllowedToUploadCount = 0;
 		}
 
-		$attributes = [
-			new FormTagAttribute('type', 'file'),
-			new FormTagAttribute('name', $fileField->getName() . '[]'),
-			new FormTagAttribute('id', $fileField->getId()),
-		];
-
-		$wrapperClass = 'fileupload';
-		if ($stillAllowedToUploadCount > 1) {
-			$attributes[] = new FormTagAttribute('multiple', null);
-
-			if ($this->enhanceMultipleField) {
-				$wrapperClass = 'fileupload-enhanced';
-			}
-		}
-
-		$ariaDescribedBy = [];
-
-		if ($fileField->hasErrors()) {
-			$attributes[] = new FormTagAttribute('aria-invalid', 'true');
-			$ariaDescribedBy[] = $fileField->getName() . '-error';
-		}
-
-		if (!is_null($fileField->getFieldInfoAsHTML())) {
-			$ariaDescribedBy[] = $fileField->getName() . '-info';
-		}
-
-		if (count($ariaDescribedBy) > 0) {
-			$attributes[] = new FormTagAttribute('aria-describedby', implode(' ', $ariaDescribedBy));
-		}
-
-		$wrapper = new FormTag('div', false, [
-			new FormTagAttribute('class', $wrapperClass),
-			new FormTagAttribute('data-max-files', $stillAllowedToUploadCount),
+		$wrapperClass = ($stillAllowedToUploadCount > 1 && $this->enhanceMultipleField) ? 'fileupload-enhanced' : 'fileupload';
+		$wrapper = new HtmlTag('div', false, [
+			new HtmlTagAttribute('class', $wrapperClass, true),
+			new HtmlTagAttribute('data-max-files', $stillAllowedToUploadCount, true),
 		]);
 
 		if (!empty($alreadyUploadedFiles)) {
-			$fileListBox = new FormTag('ul', false, [
-				new FormTagAttribute('class', 'list-fileupload'),
+			$fileListBox = new HtmlTag('ul', false, [
+				new HtmlTagAttribute('class', 'list-fileupload', true),
 			]);
 			$htmlContent = '';
-			foreach ($alreadyUploadedFiles as $hash => $fileData) {
-				$htmlContent .= '<li class="clearfix"><b>' . FormRenderer::htmlEncode($fileData->getName()) . '</b> <button type="submit" name="' . FileField::PREFIX . '_removeAttachment" value="' . FormRenderer::htmlEncode($hash) . '">löschen</button>';
+			foreach ($alreadyUploadedFiles as $hash => $fileDataModel) {
+				$htmlContent .= '<li class="clearfix"><b>' . HtmlDocument::htmlEncode($fileDataModel->getName()) . '</b> <button type="submit" name="' . FileField::MNF_PREFIX . '_removeAttachment" value="' . HtmlDocument::htmlEncode($hash) . '">löschen</button>';
 			}
-			$fileListBox->addText(new FormText($htmlContent, true));
+			$fileListBox->addText(new HtmlText($htmlContent, true));
 			$wrapper->addTag($fileListBox);
 		}
 
-		$wrapper->addTag(new FormTag('input', true, $attributes));
+		$inputTag = new HtmlTag('input', true);
+		$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('type', 'file', true));
+		$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('name', $fileField->getName() . '[]', true));
+		$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('id', $fileField->getId(), true));
+		if ($stillAllowedToUploadCount > 1) {
+			$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('multiple', null, true));
+		}
+		FormRenderer::addAriaAttributesToHtmlTag($fileField, $inputTag);
+		$wrapper->addTag($inputTag);
 
 		// Add the fileStore-Pointer-ID for the SESSION as hidden field
-		$wrapper->addTag(new FormTag('input', true, [
-			new FormTagAttribute('type', 'hidden'),
-			new FormTagAttribute('name', FileField::PREFIX),
-			new FormTagAttribute('value', $fileField->getUniqueSessFileStorePointer()),
+		$wrapper->addTag(new HtmlTag('input', true, [
+			new HtmlTagAttribute('type', 'hidden', true),
+			new HtmlTagAttribute('name', FileField::MNF_PREFIX, true),
+			new HtmlTagAttribute('value', $fileField->getUniqueSessFileStorePointer(), true),
 		]));
 
-		$this->setFormTag($wrapper);
+		$this->setHtmlTag($wrapper);
 	}
 }
-/* EOF */

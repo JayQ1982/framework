@@ -40,7 +40,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '(?:52[238]|8(?:79|9[689])|99[013-9])\\d{6}|(?:3\\d|5[689]|7[06-9]|8[1-68]|9[0-8])\\d{7}',
+	  'NationalNumberPattern' => '(?:5(?:2[238]|59)|89[689]|99[013-9])\\d{6}|(?:3\\d|5[689]|7[06-9]|8[1-8]|9[0-8])\\d{7}',
 	  'ExampleNumber' => '912345678',
 	  'PossibleLength' =>
     [
@@ -52,7 +52,7 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '1800\\d{4,6}|12(?:03|28)\\d{4}',
+	  'NationalNumberPattern' => '1800\\d{4,6}|12(?:0[13]|28)\\d{4}',
 	  'ExampleNumber' => '1800123456',
 	  'PossibleLength' =>
     [

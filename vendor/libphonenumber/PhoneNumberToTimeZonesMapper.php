@@ -43,7 +43,6 @@ class PhoneNumberToTimeZonesMapper
 			throw new InvalidArgumentException('Mapping file can not be found');
 		}
 
-		/** @noinspection PhpIncludeInspection */
 		$data = require $path;
 
 		return new PrefixTimeZonesMap($data);

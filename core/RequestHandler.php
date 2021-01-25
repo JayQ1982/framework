@@ -1,25 +1,27 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
 
 use Exception;
+use framework\exception\NotFoundException;
 use stdClass;
 
 class RequestHandler
 {
-	private ?array $pathParts;
+	private array $pathParts;
 	private int $countPathParts;
-	private ?string $fileName;
+	private string $fileName;
+	private array $defaultRoutes;
 	private ?string $route;
 	private ?string $fileGroup = null;
 	private array $routeVariables = [];
 	private ?string $area = null;
 	private ?string $areaDir = null;
-	private ?string $defaultFileName = 'home.html';
+	private string $defaultFileName = 'home.html';
 	private ?string $acceptedExtension = HttpResponse::TYPE_HTML;
 	private ?string $language = null;
 	private ?string $contentType = null;
@@ -33,22 +35,23 @@ class RequestHandler
 		$httpRequest = $core->getHttpRequest();
 		$environmentHandler = $core->getEnvironmentHandler();
 		$settingsHandler = $core->getSettingsHandler();
-		$errorHandler = $core->getErrorHandler();
 		$coreProperties = $core->getCoreProperties();
+		$sessionHandler = $core->getSessionHandler();
 
 		$this->checkDomain($httpRequest, $environmentHandler);
 		$this->pathParts = explode('/', $httpRequest->getPath());
 		$this->countPathParts = count($this->pathParts);
 		$this->fileName = trim($this->pathParts[$this->countPathParts - 1]);
 		$routeSettings = $settingsHandler->get('routes');
+		$this->defaultRoutes = $this->initDefaultRoutes($routeSettings, $environmentHandler);
 		$this->route = $this->initRoute($this->countPathParts, $httpRequest, $routeSettings, $core);
 		if (is_null($this->route)) {
-			$errorHandler->display_error(HttpStatusCodes::HTTP_NOT_FOUND, '', true);
+			throw new NotFoundException($core, true);
 		}
-		$this->checkRoute($routeSettings->routes->{$this->route}, $coreProperties, $environmentHandler);
+		$this->initPropertiesFromRouteSettings($routeSettings->routes->{$this->route}, $coreProperties, $environmentHandler, $sessionHandler);
 		$this->setFileProperties();
 		if ($this->fileExtension !== $this->acceptedExtension) {
-			$errorHandler->display_error(HttpStatusCodes::HTTP_NOT_FOUND, '', true);
+			throw new NotFoundException($core, true);
 		}
 	}
 
@@ -64,6 +67,24 @@ class RequestHandler
 		if (!in_array($host, $allowedDomains)) {
 			throw new Exception($host . ' is not set in envSettings->allowedDomains array');
 		}
+	}
+
+	private function initDefaultRoutes(stdClass $routeSettings, EnvironmentHandler $environmentHandler): array
+	{
+		$defaultRoutes = [];
+
+		foreach ((array)$routeSettings->default as $langCode => $defaultRoute) {
+			if (array_key_exists($langCode, $environmentHandler->getAvailableLanguages())) {
+				$defaultRoutes[$langCode] = $defaultRoute;
+			}
+		}
+
+		// Make sure there is at least one default route
+		if (count($defaultRoutes) === 0) {
+			throw new Exception('There must be at least one default route with a language that is allowed by this domain');
+		}
+
+		return $defaultRoutes;
 	}
 
 	private function initRoute(int $countPathParts, HttpRequest $httpRequest, stdClass $routeSettings, Core $core): ?string
@@ -91,7 +112,7 @@ class RequestHandler
 			foreach ($matches1[1] as $nr => $variableName) {
 				$nr = $nr + 1;
 				$val = isset($matches2[$nr]) ? $matches2[$nr] : '';
-				if ($variableName == 'fileName') {
+				if ($variableName === 'fileName') {
 					$this->fileName = $val;
 				} else if ($variableName == 'fileGroup') {
 					$this->fileGroup = $val;
@@ -103,20 +124,31 @@ class RequestHandler
 			return $dynamicRoute;
 		}
 
-		if ($route === '/') {
-			foreach ($httpRequest->getLanguages() as $priority => $code) {
-				if (isset($routeSettings->default->{$code})) {
-					$core->redirect($routeSettings->default->{$code});
+		if ($httpRequest->getURI() === '/') {
+			$defaultRoutes = (array)$routeSettings->default;
+			$preferredLanguage = $core->getSessionHandler()->getPreferredLanguage();
+			if (!is_null($preferredLanguage)) {
+				foreach ($defaultRoutes as $language => $defaultRoute) {
+					if ($language === $preferredLanguage) {
+						$core->redirect($defaultRoute);
+					}
 				}
 			}
+
+			foreach ($httpRequest->getLanguages() as $priority => $language) {
+				if (array_key_exists($language, $defaultRoutes)) {
+					$core->redirect($defaultRoutes[$language]);
+				}
+			}
+
 			// Redirect to first default route if none is available in accepted languages
-			$core->redirect(current((array)$routeSettings->default));
+			$core->redirect(current($defaultRoutes));
 		}
 
 		return null;
 	}
 
-	private function checkRoute(stdClass $routeSettings, CoreProperties $coreProperties, EnvironmentHandler $environmentHandler): void
+	private function initPropertiesFromRouteSettings(stdClass $routeSettings, CoreProperties $coreProperties, EnvironmentHandler $environmentHandler, SessionHandler $sessionHandler): void
 	{
 		// Force fileGroup if defined
 		if (isset($routeSettings->fileGroup) && $routeSettings->fileGroup !== '') {
@@ -129,10 +161,13 @@ class RequestHandler
 		}
 
 		$this->area = $routeSettings->area;
-		$this->areaDir = $coreProperties->getSiteContentDir() . $routeSettings->area . DIRECTORY_SEPARATOR;
+		$this->areaDir = $coreProperties->getSiteContentDir() . $routeSettings->area . '/';
 		$this->defaultFileName = $routeSettings->defaultFileName ?? $this->defaultFileName;
 		$this->acceptedExtension = $routeSettings->acceptedExtension ?? $this->acceptedExtension;
 		$this->language = $routeSettings->language ?? key($environmentHandler->getAvailableLanguages());
+		if ($sessionHandler->getPreferredLanguage() !== $this->language) {
+			$sessionHandler->setPreferredLanguage($this->language);
+		}
 		$this->contentType = $routeSettings->contentType ?? null;
 		$this->displayHelpContent = $routeSettings->displayHelpContent ?? ($routeSettings->area === 'api');
 	}
@@ -155,12 +190,7 @@ class RequestHandler
 		$this->fileExtension = $fileExtension;
 	}
 
-	public function getLanguage(): ?string
-	{
-		return $this->language;
-	}
-
-	public function getPathParts()
+	public function getPathParts(): array
 	{
 		return $this->pathParts;
 	}
@@ -170,9 +200,14 @@ class RequestHandler
 		return $this->countPathParts;
 	}
 
-	public function getFileName(): ?string
+	public function getFileName(): string
 	{
 		return $this->fileName;
+	}
+
+	public function getDefaultRoutes(): array
+	{
+		return $this->defaultRoutes;
 	}
 
 	public function getRoute(): ?string
@@ -200,7 +235,7 @@ class RequestHandler
 		return $this->areaDir;
 	}
 
-	public function getDefaultFileName(): ?string
+	public function getDefaultFileName(): string
 	{
 		return $this->defaultFileName;
 	}
@@ -208,6 +243,11 @@ class RequestHandler
 	public function getAcceptedExtension(): ?string
 	{
 		return $this->acceptedExtension;
+	}
+
+	public function getLanguage(): ?string
+	{
+		return $this->language;
 	}
 
 	public function getContentType(): ?string
@@ -235,4 +275,3 @@ class RequestHandler
 		return $this->displayHelpContent;
 	}
 }
-/* EOF */

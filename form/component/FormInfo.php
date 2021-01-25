@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\component;
@@ -9,21 +9,20 @@ namespace framework\form\component;
 use framework\form\FormComponent;
 use framework\form\FormRenderer;
 use framework\form\renderer\FormInfoRenderer;
+use framework\html\HtmlText;
 
 class FormInfo extends FormComponent
 {
-	private string $title;
-	private ?string $content;
-	private bool $contentIsHTML;
+	private HtmlText $title;
+	private HtmlText $content;
 	private string $dtClass;
 	private string $ddClass;
 	private bool $formInfoClass;
 
-	public function __construct(string $title, ?string $content, bool $contentIsHTML = false, string $dtClass = '', string $ddClass = '', bool $formInfoClass = false)
+	public function __construct(HtmlText $title, HtmlText $content, string $dtClass = '', string $ddClass = '', bool $formInfoClass = false)
 	{
 		$this->title = $title;
-		$this->content = trim($content);
-		$this->contentIsHTML = $contentIsHTML;
+		$this->content = $content;
 		$this->dtClass = trim($dtClass);
 		$this->ddClass = trim($ddClass);
 		$this->formInfoClass = $formInfoClass;
@@ -31,19 +30,14 @@ class FormInfo extends FormComponent
 		parent::__construct(uniqid());
 	}
 
-	public function getTitle(): string
+	public function getTitle(): HtmlText
 	{
 		return $this->title;
 	}
 
-	public function getContent(): string
+	public function getContent(): HtmlText
 	{
 		return $this->content;
-	}
-
-	public function isContentHTML(): bool
-	{
-		return $this->contentIsHTML;
 	}
 
 	public function getDtClass(): string
@@ -66,4 +60,3 @@ class FormInfo extends FormComponent
 		return new FormInfoRenderer($this);
 	}
 }
-/* EOF */

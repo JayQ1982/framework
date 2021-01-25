@@ -25,7 +25,7 @@ return [
   ],
 	'fixedLine' =>
   [
-	  'NationalNumberPattern' => '[1-5]\\d{8}',
+	  'NationalNumberPattern' => '(?:[1-35]\\d|4[1-9])\\d{7}',
 	  'ExampleNumber' => '123456789',
 	  'PossibleLength' =>
     [
@@ -36,7 +36,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '700\\d{6}|(?:6\\d|7[3-9])\\d{7}',
+	  'NationalNumberPattern' => '(?:6(?:[0-24-8]\\d|3[0-8]|9[589])|7(?:00|[3-9]\\d))\\d{6}',
 	  'ExampleNumber' => '612345678',
 	  'PossibleLength' =>
     [
@@ -58,7 +58,7 @@ return [
   ],
 	'premiumRate' =>
   [
-	  'NationalNumberPattern' => '8(?:1[2-9]|2[2-47-9]|9\\d)\\d{6}',
+	  'NationalNumberPattern' => '836(?:0[0-36-9]|[1-9]\\d)\\d{4}|8(?:1[2-9]|2[2-47-9]|3[0-57-9]|[569]\\d|8[0-35-9])\\d{6}',
 	  'ExampleNumber' => '891123456',
 	  'PossibleLength' =>
     [

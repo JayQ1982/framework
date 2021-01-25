@@ -1,11 +1,12 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\table\column;
 
+use framework\html\HtmlDocument;
 use framework\table\TableItemModel;
 
 class ActionsColumn extends AbstractTableColumn
@@ -14,10 +15,10 @@ class ActionsColumn extends AbstractTableColumn
 	private ?string $hideDeleteLinkField = null;
 	private ?string $hideDeleteLinkValue = null;
 
-	public function __construct(string $label = '')
+	public function __construct(string $label = '', string $cellCssClass = 'action')
 	{
-		parent::__construct('actions', $label, false);
-		$this->addCellCssClass('action');
+		parent::__construct('actions', $label);
+		$this->addCellCssClass($cellCssClass);
 	}
 
 	public function addIndividualActionLink(string $identifier, string $linkHTML): void
@@ -27,12 +28,12 @@ class ActionsColumn extends AbstractTableColumn
 
 	public function addEditActionLink(string $linkTarget, string $label = 'Bearbeiten'): void
 	{
-		$this->actionLinks['edit'] = '<a href="' . $linkTarget . '?edit" class="edit">' . $label . '</a>';
+		$this->actionLinks['edit'] = '<li><a href="' . $linkTarget . '" class="edit">' . $label . '</a></li>';
 	}
 
 	public function addDeleteLink(string $linkTarget, string $label = 'Löschen', ?string $hideField = null, ?string $hideValue = null): void
 	{
-		$this->actionLinks['delete'] = '<a href="' . $linkTarget . '" class="delete">' . $label . '</a>';
+		$this->actionLinks['delete'] = '<li><a href="' . $linkTarget . '" class="delete">' . $label . '</a></li>';
 		$this->hideDeleteLinkField = $hideField;
 		$this->hideDeleteLinkValue = $hideValue;
 	}
@@ -56,20 +57,13 @@ class ActionsColumn extends AbstractTableColumn
 		$rplArr = [];
 		foreach ($tableItemModel->getAllData() as $key => $val) {
 			$srcArr[] = '[' . $key . ']';
-			$rplArr[] = htmlspecialchars($val, ENT_QUOTES);
+			$rplArr[] = HtmlDocument::htmlEncode($val, false);
 		}
 
-		if (count($allActionLinks) === 1) {
-			return implode('', str_replace($srcArr, $rplArr, $allActionLinks));
-		}
-
-		$returnHTML = ['<ul>'];
-		foreach ($allActionLinks as $actionLink) {
-			$returnHTML[] = str_replace($srcArr, $rplArr, $actionLink);
-		}
-		$returnHTML[] = '</ul>';
-
-		return implode(PHP_EOL, $returnHTML);
+		return implode(PHP_EOL, [
+			'<ul>',
+			implode(str_replace($srcArr, $rplArr, $allActionLinks)),
+			'</ul>',
+		]);
 	}
 }
-/* EOF */

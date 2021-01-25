@@ -176,7 +176,6 @@ class PhoneNumberOfflineGeocoder
 		$regionCode = $this->phoneUtil->getRegionCodeForNumber($number);
 		if ($userRegion == null || $userRegion == $regionCode) {
 			$languageStr = Locale::getPrimaryLanguage($locale);
-			$scriptStr = '';
 			$regionStr = Locale::getRegion($locale);
 
 			$mobileToken = PhoneNumberUtil::getCountryMobileToken($number->getCountryCode());
@@ -188,13 +187,13 @@ class PhoneNumberOfflineGeocoder
 				$region = $this->phoneUtil->getRegionCodeForCountryCode($number->getCountryCode());
 				try {
 					$copiedNumber = $this->phoneUtil->parse($nationalNumber, $region);
-				} catch (NumberParseException $e) {
+				} catch (NumberParseException) {
 					// If this happens, just reuse what we had.
 					$copiedNumber = $number;
 				}
-				$areaDescription = $this->prefixFileReader->getDescriptionForNumber($copiedNumber, $languageStr, $scriptStr, $regionStr);
+				$areaDescription = $this->prefixFileReader->getDescriptionForNumber($copiedNumber, $languageStr, $regionStr);
 			} else {
-				$areaDescription = $this->prefixFileReader->getDescriptionForNumber($number, $languageStr, $scriptStr, $regionStr);
+				$areaDescription = $this->prefixFileReader->getDescriptionForNumber($number, $languageStr, $regionStr);
 			}
 
 			return (strlen($areaDescription) > 0) ? $areaDescription : $this->getCountryNameForNumber($number, $locale);
@@ -202,7 +201,6 @@ class PhoneNumberOfflineGeocoder
 
 		// Otherwise, we just show the region(country) name for now.
 		return $this->getRegionDisplayName($regionCode, $locale);
-		/** @noinspection TodoComment */
 		// TODO: Concatenate the lower-level and country-name information in an appropriate
 		// way for each language.
 	}

@@ -1,14 +1,13 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\db;
 
-use LogicException;
 use framework\core\EnvironmentHandler;
-use framework\core\RequestHandler;
+use LogicException;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -20,24 +19,25 @@ final class FrameworkDB extends PDO
 {
 	private bool $usedTransactions = false;
 	private static array $instances = [];
+	/** @var DbQueryLogItem[] */
+	private array $queryLog = [];
 
-	public static function getInstance(EnvironmentHandler $environmentHandler, RequestHandler $requestHandler, string $id = 'default'): FrameworkDB
+	public static function getInstance(EnvironmentHandler $environmentHandler, string $clientLanguage, string $id = 'default'): FrameworkDB
 	{
-		if (isset(self::$instances[$id])) {
-			return self::$instances[$id];
+		if (isset(FrameworkDB::$instances[$id])) {
+			return FrameworkDB::$instances[$id];
 		}
 
-		return self::$instances[$id] = new FrameworkDB($environmentHandler, $requestHandler, $id);
+		return FrameworkDB::$instances[$id] = new FrameworkDB($environmentHandler, $clientLanguage, $id);
 	}
 
-	private function __construct(EnvironmentHandler $environmentHandler, RequestHandler $requestHandler, string $id)
+	private function __construct(EnvironmentHandler $environmentHandler, string $clientLanguage, string $id)
 	{
 		$initSetCommands = [];
 		$availableLanguages = $environmentHandler->getAvailableLanguages();
-		$language = $requestHandler->getLanguage();
 
-		if (isset($availableLanguages[$language])) {
-			$initSetCommands[] = 'lc_time_names=' . $availableLanguages[$language];
+		if (isset($availableLanguages[$clientLanguage])) {
+			$initSetCommands[] = 'lc_time_names=' . $availableLanguages[$clientLanguage];
 		}
 
 		if ($environmentHandler->isDebug()) {
@@ -68,26 +68,27 @@ final class FrameworkDB extends PDO
 	/**
 	 * Prepares a statement for execution and returns a statement object
 	 *
-	 * @param string     $statement      : Valid SQL statement
-	 * @param array|null $driver_options : One or more key=>value pairs to set attribute values for the returned PDOStatement
+	 * @param string     $query   : Valid SQL statement
+	 * @param array|null $options : One or more key=>value pairs to set attribute values for the returned PDOStatement
 	 *
 	 * @return PDOStatement
+	 * @noinspection PhpMissingParamTypeInspection : Declaration is OKAY! Ignore PHPStorm warning (= bug in it's library files)!
 	 */
-	public function prepare($statement, $driver_options = null): PDOStatement
+	public function prepare($query, $options = null): PDOStatement
 	{
-		if (is_null($driver_options)) {
-			$driver_options = []; // Necessary circumventing of above mentioned library bug
+		if (is_null($options)) {
+			$options = []; // Necessary circumventing of above mentioned library bug
 		}
 		try {
 			// This (on error) either throws a PDOException OR returns "false", depending on configuration
-			$stmnt = parent::prepare($statement, $driver_options);
+			$stmnt = parent::prepare($query, $options);
 			if ($stmnt === false) {
 				throw new RuntimeException('Could not prepare query.');
 			}
 
 			return $stmnt;
 		} catch (Throwable $t) {
-			throw $this->getEnrichedException($t, $statement);
+			throw $this->getEnrichedException($t, $query);
 		}
 	}
 
@@ -101,15 +102,19 @@ final class FrameworkDB extends PDO
 	 * @return stdClass[]: Array with each row as an object of type stdClass
 	 * @throws RuntimeException
 	 */
-	public function select(string $sql, array $parameters = [])
+	public function select(string $sql, array $parameters = []): array
 	{
 		try {
+			$dbQueryLogItem = new DbQueryLogItem($sql, $parameters);
 			$stmnt = $this->prepare($sql);
 			if ($stmnt->execute($parameters) === false) {
 				throw new RuntimeException('PDOStatement->execute() returned false');
 			}
+			$res = $stmnt->fetchAll(PDO::FETCH_OBJ);
+			$dbQueryLogItem->confirmFinishedExecution();
+			$this->queryLog[] = $dbQueryLogItem;
 
-			return $stmnt->fetchAll(PDO::FETCH_OBJ);
+			return $res;
 		} catch (Throwable $t) {
 			throw $this->getEnrichedException($t, $sql, $parameters);
 		}
@@ -123,13 +128,17 @@ final class FrameworkDB extends PDO
 	 *
 	 * @return PDOStatement : The prepared statement after execution
 	 */
-	public function execute(string $sql, array $parameters = [])
+	public function execute(string $sql, array $parameters = []): PDOStatement
 	{
+		$dbQueryLogItem = new DbQueryLogItem($sql, $parameters);
 		$stmnt = $this->prepare($sql);
 		try {
 			if ($stmnt->execute($parameters) === false) {
 				throw new RuntimeException('PDOStatement->execute() returned false');
 			}
+
+			$dbQueryLogItem->confirmFinishedExecution();
+			$this->queryLog[] = $dbQueryLogItem;
 
 			return $stmnt;
 		} catch (Throwable $t) {
@@ -149,7 +158,7 @@ final class FrameworkDB extends PDO
 	 *
 	 * @return RuntimeException
 	 */
-	private function getEnrichedException(Throwable $t, string $sql, array $parameters = [])
+	private function getEnrichedException(Throwable $t, string $sql, array $parameters = []): RuntimeException
 	{
 		$realCode = $t->getCode();
 		if ($t instanceof PDOException) {
@@ -179,7 +188,7 @@ final class FrameworkDB extends PDO
 	 * @throws LogicException
 	 * @throws RuntimeException
 	 */
-	public function beginTransaction()
+	public function beginTransaction(): bool
 	{
 		// Some drivers are mocking about the transaction. We can't tolerate that!
 		if ($this->inTransaction()) {
@@ -201,7 +210,7 @@ final class FrameworkDB extends PDO
 	 * @throws LogicException
 	 * @throws RuntimeException
 	 */
-	public function commit()
+	public function commit(): bool
 	{
 		if (!$this->inTransaction()) {
 			throw new LogicException('There was no active transaction! Check program code.');
@@ -220,7 +229,7 @@ final class FrameworkDB extends PDO
 	 * @throws LogicException
 	 * @throws RuntimeException
 	 */
-	public function rollBack()
+	public function rollBack(): bool
 	{
 		if (!$this->inTransaction()) {
 			throw new LogicException('There was no active transaction! Check program code.');
@@ -239,9 +248,16 @@ final class FrameworkDB extends PDO
 	 *
 	 * @return string
 	 */
-	public function createInQuery($paramArr)
+	public function createInQuery(array $paramArr): string
 	{
 		return implode(',', array_fill(0, count($paramArr), '?'));
 	}
+
+	/**
+	 * @return DbQueryLogItem[]
+	 */
+	public function getQueryLog(): array
+	{
+		return $this->queryLog;
+	}
 }
-/* EOF */

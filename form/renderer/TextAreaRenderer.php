@@ -1,16 +1,17 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\renderer;
 
 use framework\form\component\field\TextAreaField;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
-use framework\form\FormText;
+use framework\html\HtmlDocument;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
+use framework\html\HtmlText;
 
 class TextAreaRenderer extends FormRenderer
 {
@@ -26,50 +27,37 @@ class TextAreaRenderer extends FormRenderer
 		$textAreaField = $this->textAreaField;
 
 		$attributes = [
-			new FormTagAttribute('name', $textAreaField->getName()),
-			new FormTagAttribute('id', $textAreaField->getId()),
-			new FormTagAttribute('rows', $textAreaField->getRows()),
-			new FormTagAttribute('cols', $textAreaField->getCols()),
+			new HtmlTagAttribute('name', $textAreaField->getName(), true),
+			new HtmlTagAttribute('id', $textAreaField->getId(), true),
+			new HtmlTagAttribute('rows', $textAreaField->getRows(), true),
+			new HtmlTagAttribute('cols', $textAreaField->getCols(), true),
 		];
 
 		$cssClassesForRenderer = $textAreaField->getCssClassesForRenderer();
 		if (count($cssClassesForRenderer) > 0) {
-			$attributes[] = new FormTagAttribute('class', implode(' ', $cssClassesForRenderer));
+			$attributes[] = new HtmlTagAttribute('class', implode(' ', $cssClassesForRenderer), true);
 		}
 
 		if (!is_null($textAreaField->getPlaceholder())) {
-			$attributes[] = new FormTagAttribute('placeholder', $textAreaField->getPlaceholder());
+			$attributes[] = new HtmlTagAttribute('placeholder', $textAreaField->getPlaceholder(), true);
 		}
 
-		$ariaDescribedBy = [];
+		$textareaTag = new HtmlTag('textarea', false, $attributes);
+		FormRenderer::addAriaAttributesToHtmlTag($textAreaField, $textareaTag);
 
-		if ($textAreaField->hasErrors()) {
-			$attributes[] = new FormTagAttribute('aria-invalid', 'true');
-			$ariaDescribedBy[] = $textAreaField->getName() . '-error';
-		}
-
-		if (!is_null($textAreaField->getFieldInfoAsHTML())) {
-			$ariaDescribedBy[] = $textAreaField->getName() . '-info';
-		}
-		if (count($ariaDescribedBy) > 0) {
-			$attributes[] = new FormTagAttribute('aria-describedby', implode(' ', $ariaDescribedBy));
-		}
-
-		$textareaTag = new FormTag('textarea', false, $attributes);
 		$value = $textAreaField->getRawValue();
 		if (is_array($value)) {
 			$rows = [];
 			foreach ($value as $row) {
-				$rows[] = FormRenderer::htmlEncode($row);
+				$rows[] = HtmlDocument::htmlEncode($row);
 			}
 			$html = implode(PHP_EOL, $rows);
 		} else {
-			$html = FormRenderer::htmlEncode($value);
+			$html = HtmlDocument::htmlEncode($value);
 		}
 
-		$textareaTag->addText(new FormText($html, true));
+		$textareaTag->addText(new HtmlText($html, true));
 
-		$this->setFormTag($textareaTag);
+		$this->setHtmlTag($textareaTag);
 	}
 }
-/* EOF */

@@ -1,24 +1,21 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form;
 
 use framework\form\component\FormField;
+use framework\html\HtmlText;
 
 abstract class FormRule
 {
-	/** @var string $errorMessage : The error message if validation fails */
-	protected string $errorMessage;
+	private HtmlText $validationErrorMessage;
 
-	/**
-	 * @param string $errorMessage : The error message to be set
-	 */
-	public function __construct(string $errorMessage)
+	public function __construct(HtmlText $defaultErrorMessage)
 	{
-		$this->errorMessage = $errorMessage;
+		$this->validationErrorMessage = $defaultErrorMessage;
 	}
 
 	/**
@@ -33,21 +30,15 @@ abstract class FormRule
 	/**
 	 * Overwrite the error message for this rule.
 	 *
-	 * @param string $errorMessage : The new error message for this rule
+	 * @param HtmlText $errorMessage : The new error message for this rule
 	 */
-	public function setErrorMessage(string $errorMessage): void
+	public function setErrorMessage(HtmlText $errorMessage): void
 	{
-		$this->errorMessage = $errorMessage;
+		$this->validationErrorMessage = $errorMessage;
 	}
 
-	/**
-	 * Get the error message specified for this rule
-	 *
-	 * @return string : The error message
-	 */
-	public function getErrorMessage(): string
+	public function getErrorMessage(): HtmlText
 	{
-		return $this->errorMessage;
+		return $this->validationErrorMessage;
 	}
 }
-/* EOF */

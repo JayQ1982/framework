@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
@@ -20,14 +20,12 @@ class LocaleHandler
 		$availableLanguages = $environmentHandler->getAvailableLanguages();
 		$activeLanguage = $requestHandler->getLanguage();
 
-		if (!isset($availableLanguages[$activeLanguage])) {
-			throw new Exception('Invalid language: ' . $activeLanguage);
+		if (!array_key_exists($activeLanguage, $availableLanguages)) {
+			throw new Exception('Language ' . $activeLanguage . ' is not available');
 		}
 
 		setlocale(LC_ALL, $availableLanguages[$activeLanguage]);
-		if (setlocale(LC_NUMERIC, 'en_US') === false) {
-			setlocale(LC_NUMERIC, 'en_US');
-		}
+		setlocale(LC_NUMERIC, 'en_US');
 	}
 
 	public function loadLanguageFile(string $filePath): void
@@ -55,7 +53,7 @@ class LocaleHandler
 		}
 	}
 
-	public function getText(string $key, array $vars = []): string
+	public function getText(string $key, array $replacements = []): string
 	{
 		if (!array_key_exists($key, $this->languageBlocks)) {
 			throw new Exception('Missing language fragment for ' . $key);
@@ -63,12 +61,12 @@ class LocaleHandler
 
 		$block = $this->languageBlocks[$key];
 
-		if (count($vars) > 0) {
+		if (count($replacements) > 0) {
 			$search = [];
 			$replace = [];
 
-			foreach ($vars as $k => $v) {
-				$search[] = "{{" . strtoupper($k) . "}}";
+			foreach ($replacements as $k => $v) {
+				$search[] = "[" . strtoupper($k) . "]";
 				$replace[] = $v;
 			}
 
@@ -77,5 +75,14 @@ class LocaleHandler
 
 		return $block;
 	}
+
+	public function getAllText(): array
+	{
+		return $this->languageBlocks;
+	}
+
+	public function getLoadedLangFiles(): array
+	{
+		return $this->loadedLangFiles;
+	}
 }
-/* EOF */

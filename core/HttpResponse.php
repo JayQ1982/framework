@@ -1,14 +1,14 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
 
-use LogicException;
 use framework\common\FileHandler;
 use framework\common\MimeTypeHandler;
+use LogicException;
 use stdClass;
 
 class HttpResponse
@@ -21,12 +21,12 @@ class HttpResponse
 	const TYPE_JS = 'js';
 
 	const CONTENT_TYPES_WITH_CHARSET = [
-		self::TYPE_HTML,
-		self::TYPE_JSON,
-		self::TYPE_XML,
-		self::TYPE_TXT,
-		self::TYPE_CSV,
-		self::TYPE_JS,
+		HttpResponse::TYPE_HTML,
+		HttpResponse::TYPE_JSON,
+		HttpResponse::TYPE_XML,
+		HttpResponse::TYPE_TXT,
+		HttpResponse::TYPE_CSV,
+		HttpResponse::TYPE_JS,
 	];
 	const defaultMaxAge = 31536000; // One year
 
@@ -46,21 +46,19 @@ class HttpResponse
 		?int $maxAge
 	) {
 		$this->httpStatusCode = $httpStatusCode;
-		$this->headers['Etag'] = $eTag;
-		$this->headers['Last-Modified'] = gmdate('r', $lastModifiedTimeStamp);
-		$this->headers['Cache-Control'] = 'private, must-revalidate';
+		$this->setHeader('Etag', $eTag);
+		$this->setHeader('Last-Modified', gmdate('r', $lastModifiedTimeStamp));
+		$this->setHeader('Cache-Control', 'private, must-revalidate');
 
 		if (!is_null($downloadFileName)) {
-			$this->headers['Content-Description'] = 'File Transfer';
-			$this->headers['Content-Disposition'] = 'attachment; filename="' . $downloadFileName . '"';
+			$this->setHeader('Content-Description', 'File Transfer');
+			$this->setHeader('Content-Disposition', 'attachment; filename="' . $downloadFileName . '"');
 		}
 
 		if ($this->notModifiedCheck($eTag, $lastModifiedTimeStamp)) {
 			$this->httpStatusCode = HttpStatusCodes::HTTP_NOT_MODIFIED;
-			$this->headers['Connection'] = 'Close'; // Prevent keep-alive
+			$this->setHeader('Connection', 'Close'); // Prevent keep-alive
 			$this->sendAndExit();
-
-			return;
 		}
 
 		if (!array_key_exists($this->httpStatusCode, HttpStatusCodes::getAllStatusCodes())) {
@@ -70,16 +68,20 @@ class HttpResponse
 
 		$responseType = mb_strtolower($responseType);
 		$contentType = MimeTypeHandler::mimeTypeByExtension($responseType);
-		if (in_array($responseType, self::CONTENT_TYPES_WITH_CHARSET)) {
+		if (in_array($responseType, HttpResponse::CONTENT_TYPES_WITH_CHARSET)) {
 			$contentType .= '; charset=UTF-8';
 		}
-		$this->headers['Content-Type'] = $contentType;
-		if ($responseType === self::TYPE_HTML) {
-			$this->headers['Content-Language'] = 'de';
+		$this->setHeader('Content-Type', $contentType);
+		if ($responseType === HttpResponse::TYPE_HTML) {
+			$this->setHeader('Content-Language', 'de');
 		}
 
-		$this->headers['Strict-Transport-Security'] = 'max-age=' . (is_null($maxAge) ? self::defaultMaxAge : $maxAge);
+		$this->setHeader('Strict-Transport-Security', 'max-age=' . (is_null($maxAge) ? HttpResponse::defaultMaxAge : $maxAge));
+		$this->setContentStringAndContentFilePath($contentString, $contentFilePath);
+	}
 
+	private function setContentStringAndContentFilePath(?string $contentString, ?string $contentFilePath): void
+	{
 		$this->contentString = $contentString;
 		$this->contentFilePath = $contentFilePath;
 	}
@@ -93,7 +95,7 @@ class HttpResponse
 
 	public static function createHtmlResponse(int $httpStatusCode, string $htmlContent, ?stdClass $cspPolicySettings, ?string $nonce): HttpResponse
 	{
-		$httpResponse = new HttpResponse(md5($htmlContent), time(), $httpStatusCode, null, self::TYPE_HTML, $htmlContent, null, null);
+		$httpResponse = new HttpResponse(md5($htmlContent), time(), $httpStatusCode, null, HttpResponse::TYPE_HTML, $htmlContent, null, null);
 		if (!is_null($cspPolicySettings)) {
 			$httpResponse->setContentSecurityPolicy($cspPolicySettings, $nonce);
 		}
@@ -104,7 +106,7 @@ class HttpResponse
 	public static function createResponseFromString(int $httpStatusCode, string $contentString, string $contentType): HttpResponse
 	{
 		$contentType = mb_strtolower($contentType);
-		if ($contentType === self::TYPE_HTML) {
+		if ($contentType === HttpResponse::TYPE_HTML) {
 			throw new LogicException('Use HttpResponse::createHtmlResponse() instead');
 		}
 
@@ -156,7 +158,7 @@ class HttpResponse
 
 	public function removeHeader(string $key): bool
 	{
-		if (isset($this->headers[$key])) {
+		if (array_key_exists($key, $this->headers)) {
 			unset($this->headers[$key]);
 
 			return true;
@@ -169,7 +171,7 @@ class HttpResponse
 	{
 		$csp = '';
 		foreach (get_object_vars($cspPolicySettings) as $key => $val) {
-			if ($key === 'script-src' && (strpos($val, "'none'") === false)) {
+			if ($key === 'script-src' && !str_contains($val, "'none'")) {
 				$val .= " 'nonce-" . $nonce . "'";
 			}
 			$csp .= $key . ' ' . $val . '; ';
@@ -205,4 +207,3 @@ class HttpResponse
 		return false;
 	}
 }
-/* EOF */

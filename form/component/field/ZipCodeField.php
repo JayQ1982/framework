@@ -1,24 +1,24 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\component\field;
 
 use framework\form\rule\ZipCodeRule;
+use framework\html\HtmlText;
 
 class ZipCodeField extends TextField
 {
-
 	private string $countryCode = 'CH';
 	private string $countryCodeFieldName = 'countryCode';
 
-	public function __construct(string $name, string $label, ?string $value = null, ?string $requiredError = null, ?string $individualInvalidError = null)
+	public function __construct(string $name, HtmlText $label, ?string $value = null, ?HtmlText $requiredError = null, ?HtmlText $individualInvalidError = null)
 	{
 		parent::__construct($name, $label, $value, $requiredError);
 
-		$invalidError = $individualInvalidError ?? 'Die eingegebene PLZ ist ungültig.';
+		$invalidError = is_null($individualInvalidError) ? new HtmlText('Die eingegebene PLZ ist ungültig.', true) : $individualInvalidError;
 		$this->addRule(new ZipCodeRule($invalidError));
 	}
 
@@ -50,4 +50,3 @@ class ZipCodeField extends TextField
 		return true;
 	}
 }
-/* EOF */

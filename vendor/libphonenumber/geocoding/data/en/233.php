@@ -64,6 +64,7 @@ return [
   233358 => 'Brong-Ahafo Region',
   2333620 => 'Ho',
   2333621 => 'Amedzofe',
+  2333622 => 'Hohoe',
   2333623 => 'Kpandu',
   2333624 => 'Kete-Krachi',
   2333625 => 'Denu/Aflao',

@@ -38,7 +38,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '8[2-7]\\d{7}',
+	  'NationalNumberPattern' => '8[2-79]\\d{7}',
 	  'ExampleNumber' => '821234567',
 	  'PossibleLength' =>
     [
@@ -152,7 +152,7 @@ return [
 	    'format' => '$1 $2 $3',
 	    'leadingDigitsPatterns' =>
       [
-        0 => '2|8[2-7]',
+        0 => '2|8[2-79]',
       ],
 	    'nationalPrefixFormattingRule' => '',
 	    'domesticCarrierCodeFormattingRule' => '',

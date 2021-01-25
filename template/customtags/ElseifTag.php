@@ -1,40 +1,40 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
 
+use Exception;
 use framework\template\htmlparser\ElementNode;
 use framework\template\htmlparser\TextNode;
 use framework\template\template\TagNode;
 use framework\template\template\TemplateEngine;
-use Exception;
 use framework\template\template\TemplateTag;
 
 class ElseifTag extends TemplateTag implements TagNode
 {
-	public static function getName()
+	public static function getName(): string
 	{
 		return 'elseif';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return true;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return false;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $tagNode)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$tplEngine->checkRequiredAttributes($tagNode, ['cond']);
+		$tplEngine->checkRequiredAttributes($elementNode, ['cond']);
 
-		$condAttr = $tagNode->getAttribute('cond')->value;
+		$condAttr = $elementNode->getAttribute('cond')->getValue();
 
 		$phpCode = '<?php ';
 
@@ -45,17 +45,16 @@ class ElseifTag extends TemplateTag implements TagNode
 
 				return '$this->getDataFromSelector(\'' . $m[1] . '\')';
 			}, $condAttr) . '): ?>';
-		$phpCode .= $tagNode->getInnerHtml();
+		$phpCode .= $elementNode->getInnerHtml();
 
-		if ($tplEngine->isFollowedBy($tagNode, ['else', 'elseif']) === false) {
+		if ($tplEngine->isFollowedBy($elementNode, ['else', 'elseif']) === false) {
 			$phpCode .= '<?php endif; ?>';
 		}
 
 		$textNode = new TextNode($tplEngine->getDomReader());
 		$textNode->content = $phpCode;
 
-		$tagNode->parentNode->replaceNode($tagNode, $textNode);
-		$tagNode->parentNode->removeNode($tagNode);
+		$elementNode->parentNode->replaceNode($elementNode, $textNode);
+		$elementNode->parentNode->removeNode($elementNode);
 	}
 }
-/* EOF */

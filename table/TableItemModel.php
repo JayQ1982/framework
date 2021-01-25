@@ -1,11 +1,12 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\table;
 
+use framework\html\HtmlDocument;
 use stdClass;
 
 class TableItemModel
@@ -24,11 +25,16 @@ class TableItemModel
 
 	public function renderValue(string $name, bool $renderNewLines = false): string
 	{
-		if ($renderNewLines) {
-			return nl2br(htmlspecialchars(str_replace('<br>', "\n", $this->data[$name]), ENT_NOQUOTES));
+		$value = $this->data[$name];
+		if (is_null($value)) {
+			return '';
 		}
 
-		return htmlspecialchars($this->data[$name], ENT_NOQUOTES);
+		if ($renderNewLines) {
+			return nl2br(HtmlDocument::htmlEncode(str_replace('<br>', "\n", $value), true));
+		}
+
+		return HtmlDocument::htmlEncode($value, true);
 	}
 
 	public function getAllData(): array
@@ -36,4 +42,3 @@ class TableItemModel
 		return $this->data;
 	}
 }
-/* EOF */

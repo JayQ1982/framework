@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\core;
@@ -20,10 +20,9 @@ class Core
 	private Logger $logger;
 	private ExceptionHandler $exceptionHandler;
 	private ErrorHandler $errorHandler;
+	private SessionHandler $sessionHandler;
 	private RequestHandler $requestHandler;
 	private LocaleHandler $localeHandler;
-	private SessionHandler $sessionHandler;
-	private Authenticator $authenticator;
 	private ?ContentHandler $contentHandler = null;
 
 	public function __construct(string $documentRoot, string $fwRoot, string $siteRoot, Autoloader $autoloader)
@@ -41,10 +40,10 @@ class Core
 		$this->logger = new Logger($this->environmentHandler, $this->coreProperties);
 		$this->exceptionHandler = new ExceptionHandler($this);
 		$this->errorHandler = new ErrorHandler($this);
-		$this->requestHandler = new RequestHandler($this);
-		$this->localeHandler = new LocaleHandler($this->environmentHandler, $this->requestHandler);
 		$this->sessionHandler = new SessionHandler($this->environmentHandler, $this->httpRequest);
 		$this->sessionHandler->start($this->httpRequest);
+		$this->requestHandler = new RequestHandler($this);
+		$this->localeHandler = new LocaleHandler($this->environmentHandler, $this->requestHandler);
 
 		if ($this->settingsHandler->exists('autoloader')) {
 			foreach ((array)$this->settingsHandler->get('autoloader') as $library => $settings) {
@@ -56,7 +55,6 @@ class Core
 				));
 			}
 		}
-		$this->authenticator = new Authenticator($this);
 		$this->contentHandler = new ContentHandler($this);
 		$this->contentHandler->setContent();
 	}
@@ -76,7 +74,7 @@ class Core
 		return $this->settingsHandler;
 	}
 
-	public function getEnvironmentHandler(): ?EnvironmentHandler
+	public function getEnvironmentHandler(): EnvironmentHandler
 	{
 		return $this->environmentHandler;
 	}
@@ -86,7 +84,7 @@ class Core
 		return $this->logger;
 	}
 
-	public function getExceptionHandler(): ?ExceptionHandler
+	public function getExceptionHandler(): ExceptionHandler
 	{
 		return $this->exceptionHandler;
 	}
@@ -94,6 +92,11 @@ class Core
 	public function getErrorHandler(): ErrorHandler
 	{
 		return $this->errorHandler;
+	}
+
+	public function getSessionHandler(): SessionHandler
+	{
+		return $this->sessionHandler;
 	}
 
 	public function getRequestHandler(): RequestHandler
@@ -104,16 +107,6 @@ class Core
 	public function getLocaleHandler(): LocaleHandler
 	{
 		return $this->localeHandler;
-	}
-
-	public function getSessionHandler(): SessionHandler
-	{
-		return $this->sessionHandler;
-	}
-
-	public function getAuthenticator(): Authenticator
-	{
-		return $this->authenticator;
 	}
 
 	public function getContentHandler(): ?ContentHandler
@@ -134,6 +127,8 @@ class Core
 
 			if (isset($relativeOrAbsoluteUri[0]) && $relativeOrAbsoluteUri[0] == '/') {
 				$directory = '';
+			} else if (!str_contains($relativeOrAbsoluteUri, '/')) {
+				$directory = $this->requestHandler->getRoute();
 			} else {
 				$directory = dirname($this->httpRequest->getURI());
 				$directory = ($directory === '/' || $directory === '\\') ? '/' : $directory . '/';
@@ -157,7 +152,7 @@ class Core
 		$content = $contentHandler->getContent();
 		$httpStatusCode = $contentHandler->getHttpStatusCode();
 		if ($contentType === HttpResponse::TYPE_HTML) {
-			$cspPolicySettings = $contentHandler->isSuppressCSPheader() ? null : $this->environmentHandler->getCspPolicySettings();
+			$cspPolicySettings = $contentHandler->isSuppressCspHeader() ? null : $this->environmentHandler->getCspPolicySettings();
 			$httpResponse = HttpResponse::createHtmlResponse($httpStatusCode, $content, $cspPolicySettings, CspNonce::get());
 		} else {
 			$httpResponse = HttpResponse::createResponseFromString($httpStatusCode, $content, $contentType);
@@ -165,4 +160,3 @@ class Core
 		$httpResponse->sendAndExit();
 	}
 }
-/* EOF */

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\rule;
@@ -9,13 +9,14 @@ namespace framework\form\rule;
 use ArrayObject;
 use framework\form\component\FormField;
 use framework\form\FormRule;
+use framework\html\HtmlText;
 use UnexpectedValueException;
 
 class MinLengthRule extends FormRule
 {
 	protected int $minLength;
 
-	function __construct(int $minLength, string $errorMessage)
+	function __construct(int $minLength, HtmlText $errorMessage)
 	{
 		$this->minLength = $minLength;
 
@@ -39,9 +40,8 @@ class MinLengthRule extends FormRule
 		throw new UnexpectedValueException('Could not handle field value for rule ' . __CLASS__);
 	}
 
-	private function checkValueLengthAgainst($valueLength)
+	private function checkValueLengthAgainst($valueLength): bool
 	{
 		return ($valueLength >= $this->minLength);
 	}
 }
-/* EOF */

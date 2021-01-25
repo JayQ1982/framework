@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
@@ -16,41 +16,41 @@ use framework\template\template\TemplateTag;
 
 class ForTag extends TemplateTag implements TagNode
 {
-	public static function getName()
+	public static function getName(): string
 	{
 		return 'for';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return false;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return false;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $node)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$tplEngine->checkRequiredAttributes($node, ['value', 'var']);
+		$tplEngine->checkRequiredAttributes($elementNode, ['value', 'var']);
 
-		$dataKeyAttr = $node->getAttribute('value')->value;
-		$asVarAttr = $node->getAttribute('var')->value;
-		$stepAttr = $node->getAttribute('groups');
+		$dataKeyAttr = $elementNode->getAttribute('value')->getValue();
+		$asVarAttr = $elementNode->getAttribute('var')->getValue();
+		$stepAttr = $elementNode->getAttribute('groups');
 
 		$dataKey = $dataKeyAttr;
 		$asVar = $asVarAttr;
-		$step = ($stepAttr->value === null) ? 1 : intval($stepAttr->value);
+		$step = ($stepAttr->getValue() === null) ? 1 : intval($stepAttr->getValue());
 
-		$firstClassAttr = $node->getAttribute('classfirst');
-		$firstClass = ($firstClassAttr !== null) ? $firstClassAttr->value : null;
+		$firstClassAttr = $elementNode->getAttribute('classfirst');
+		$firstClass = ($firstClassAttr !== null) ? $firstClassAttr->getValue() : null;
 
-		$lastClassAttr = $node->getAttribute('classlast');
-		$lastClass = ($lastClassAttr !== null) ? $lastClassAttr->value : null;
+		$lastClassAttr = $elementNode->getAttribute('classlast');
+		$lastClass = ($lastClassAttr !== null) ? $lastClassAttr->getValue() : null;
 		$forUID = str_replace('.', '', uniqid('', true));
 
-		$this->str_replace_node($node->childNodes);
+		$this->str_replace_node($elementNode->childNodes);
 
 		$nodeForStart = new TextNode($tplEngine->getDomReader());
 		$nodeForStart->content = "<?php\n";
@@ -78,10 +78,10 @@ class ForTag extends TemplateTag implements TagNode
 		$nodeForEnd = new TextNode($tplEngine->getDomReader());
 		$nodeForEnd->content = '<?php } $this->unsetData(\'' . $asVar . '\'); $this->unsetData(\'_count\'); /* for: end */ ?>';
 
-		$node->parentNode->insertBefore($nodeForStart, $node);
+		$elementNode->parentNode->insertBefore($nodeForStart, $elementNode);
 
 		$forPattern = '/(.*?)(\/\* for: start \*\/.*\/\* for: end \*\/ \?>)(.*)/ims';
-		$nodeInnerHtml = $node->getInnerHtml();
+		$nodeInnerHtml = $elementNode->getInnerHtml();
 
 		if (preg_match($forPattern, $nodeInnerHtml, $resVal)) {
 			$nodeInnerHtml = $resVal[1] . $resVal[2] . "<?php \$this->addData('_count', \$i_{$forUID}, true); ?>" . $resVal[3];
@@ -91,10 +91,10 @@ class ForTag extends TemplateTag implements TagNode
 		if ($firstClass === null && $lastClass === null) {
 			$txtForNode = new TextNode($tplEngine->getDomReader());
 			$txtForNode->content = $nodeInnerHtml;
-			$node->parentNode->insertBefore($txtForNode, $node);
+			$elementNode->parentNode->insertBefore($txtForNode, $elementNode);
 
-			$node->parentNode->insertBefore($nodeForEnd, $node);
-			$node->parentNode->removeNode($node);
+			$elementNode->parentNode->insertBefore($nodeForEnd, $elementNode);
+			$elementNode->parentNode->removeNode($elementNode);
 
 			return;
 		}
@@ -113,7 +113,7 @@ class ForTag extends TemplateTag implements TagNode
 
 			/** @var ElementNode $forNode */
 			$classAttr = $forNode->getAttribute('class');
-			$classVal = $classAttr->value;
+			$classVal = $classAttr->getValue();
 
 			if ($classVal === null) {
 				$firstClassStr = ($firstClass !== null) ? ' class="' . $firstClass . '"' : null;
@@ -137,10 +137,10 @@ class ForTag extends TemplateTag implements TagNode
 
 		$txtForNode = new TextNode($tplEngine->getDomReader());
 		$txtForNode->content = $forDOM->getHtml();
-		$node->parentNode->insertBefore($txtForNode, $node);
+		$elementNode->parentNode->insertBefore($txtForNode, $elementNode);
 
-		$node->parentNode->insertBefore($nodeForEnd, $node);
-		$node->parentNode->removeNode($node);
+		$elementNode->parentNode->insertBefore($nodeForEnd, $elementNode);
+		$elementNode->parentNode->removeNode($elementNode);
 	}
 
 	private function str_replace_node($nodeList)
@@ -172,16 +172,15 @@ class ForTag extends TemplateTag implements TagNode
 		return $nodeList;
 	}
 
-	public function replaceEcho($m)
+	public function replaceEcho($m): string
 	{
 		$further = isset($m[3]) ? '->' . str_replace('.', '->', $m[3]) : null;
 
 		return '<?php echo $' . $m[2] . ((is_numeric($m[1]) === true) ? $m[1] : null) . $further . '; ?>';
 	}
 
-	public function replaceVar($m)
+	public function replaceVar($m): string
 	{
 		return '$' . $m[2] . ((is_numeric($m[1]) === true) ? $m[1] : null) . '->' . str_replace('.', '->', $m[3]);
 	}
 }
-/* EOF */

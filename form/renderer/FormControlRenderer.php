@@ -1,16 +1,15 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\renderer;
 
 use framework\form\component\FormControl;
 use framework\form\FormRenderer;
-use framework\form\FormTag;
-use framework\form\FormTagAttribute;
-use framework\form\FormText;
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
 
 class FormControlRenderer extends FormRenderer
 {
@@ -25,25 +24,24 @@ class FormControlRenderer extends FormRenderer
 	{
 		$formControl = $this->formControl;
 
-		$buttonTag = new FormTag('button', false, [
-			new FormTagAttribute('type', 'submit'),
-			new FormTagAttribute('name', $formControl->getName()),
+		$buttonTag = new HtmlTag('button', false, [
+			new HtmlTagAttribute('type', 'submit', true),
+			new HtmlTagAttribute('name', $formControl->getName(), true),
 		]);
-		$buttonTag->addText(new FormText($formControl->getSubmitLabel()));
+		$buttonTag->addText($formControl->getSubmitLabel());
 
-		$divTag = new FormTag('div', false, [new FormTagAttribute('class', 'form-control')]);
+		$divTag = new HtmlTag('div', false, [new HtmlTagAttribute('class', 'form-control', true)]);
 		$divTag->addTag($buttonTag);
 
 		if (!is_null($formControl->getCancelLink())) {
-			$aTag = new FormTag('a', false, [
-				new FormTagAttribute('href', $formControl->getCancelLink()),
-				new FormTagAttribute('class', 'link-cancel'),
+			$aTag = new HtmlTag('a', false, [
+				new HtmlTagAttribute('href', $formControl->getCancelLink(), true),
+				new HtmlTagAttribute('class', 'link-cancel', true),
 			]);
-			$aTag->addText(new FormText($formControl->getCancelLabel()));
+			$aTag->addText($formControl->getCancelLabel());
 			$divTag->addTag($aTag);
 		}
 
-		$this->setFormTag($divTag);
+		$this->setHtmlTag($divTag);
 	}
 }
-/* EOF */

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\formHandler\rule;
@@ -11,14 +11,14 @@ namespace framework\form\rule;
 use framework\common\StringUtils;
 use framework\form\component\FormField;
 use framework\form\FormRule;
-use Throwable;
+use framework\html\HtmlText;
 
 class ValidEmailAddressRule extends FormRule
 {
 	private bool $dnsCheck;
 	private bool $trueOnDnsError;
 
-	function __construct(string $errorMessage, bool $dnsCheck = true, bool $trueOnDnsError = true)
+	function __construct(HtmlText $errorMessage, bool $dnsCheck = true, bool $trueOnDnsError = true)
 	{
 		$this->dnsCheck = $dnsCheck;
 		$this->trueOnDnsError = $trueOnDnsError;
@@ -34,16 +34,25 @@ class ValidEmailAddressRule extends FormRule
 
 		$fieldValue = $formField->getRawValue();
 
-		// An Email address has *never* spaces/tabs/newlines in it (they might get into that string by c&p error done by users)
-		// We purposely do NOT allow commas/semicolons (preventing "multiple email address entered, where NOT expected)
-		// ':' Will catch "mailto:" copy&paste errors from users, which also result in an invalid email address
-		$forbiddenChars = [' ', "\t", "\n", "\r", ',', ';', ':'];
-		$trimmedValue = trim($fieldValue);
-		if ($trimmedValue !== str_replace($forbiddenChars, '', $trimmedValue)) {
+		$hiddenCharactersToRemoveSilently = [
+			' ',
+			"\t",
+			"\n",
+			"\r",
+			"&#8203;", "\xE2\x80\x8C", "\xE2\x80\x8B", // https://stackoverflow.com/questions/22600235/remove-unicode-zero-width-space-php
+		];
+		$sanitizedValue = str_replace($hiddenCharactersToRemoveSilently, '', trim($fieldValue));
+
+		$forbiddenCharacters = [
+			',',
+			';',
+			':', // Catches mailto:
+		];
+		if ($sanitizedValue !== str_replace($forbiddenCharacters, '', $sanitizedValue)) {
 			return false;
 		}
 
-		$emailParts = explode('@', $fieldValue);
+		$emailParts = explode('@', $sanitizedValue);
 
 		if (!isset($emailParts[1])) {
 			return false;
@@ -89,11 +98,7 @@ class ValidEmailAddressRule extends FormRule
 			return false;
 		}
 
-		try {
-			$connection = @fsockopen($aRecords[0]['ip'], 25);
-		} catch(Throwable $t) {
-			return false;
-		}
+		$connection = @fsockopen($aRecords[0]['ip'], 25);
 
 		if (is_resource($connection) === true) {
 			fclose($connection);
@@ -104,4 +109,3 @@ class ValidEmailAddressRule extends FormRule
 		return false;
 	}
 }
-/* EOF */

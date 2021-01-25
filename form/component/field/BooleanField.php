@@ -1,16 +1,22 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\component\field;
 
+use framework\form\FormOptions;
+use framework\html\HtmlText;
+
 class BooleanField extends CheckboxOptionsField
 {
-	public function __construct(string $name, string $label, bool $labelIsHTML, $value)
+	public function __construct(string $name, HtmlText $label, bool $isCheckedByDefault)
 	{
-		parent::__construct($name, $label, [1 => $label], $labelIsHTML, (int)$value, null, self::LAYOUT_CHECKBOXITEM);
+		$formOptions = new FormOptions();
+		$formOptions->addItem('1', $label);
+
+		parent::__construct($name, $label, $formOptions, $isCheckedByDefault ? ['1'] : [], null, CheckboxOptionsField::LAYOUT_CHECKBOXITEM);
 	}
 
 	public function validate(array $inputData, bool $overwriteValue = true): bool
@@ -27,4 +33,3 @@ class BooleanField extends CheckboxOptionsField
 		return (int)parent::getRawValue($returnNullIfEmpty);
 	}
 }
-/* EOF */

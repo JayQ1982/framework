@@ -1,14 +1,72 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\common;
 
 class Pagination
 {
-	public static function render(int $totalAmount, int $currentPage, int $entriesPerPage = 25, int $beforeAfter = 2, int $startEnd = 1, string $linkParams = ''): string
+	protected const linkTarget = '[linkTarget]';
+	protected const pageNumber = '[pageNumber]';
+
+	private string $rootDivClass = 'pagination clearfix';
+	private string $ulClass = '';
+	private string $backDisabledHtml = '<li class="backdisabled">&laquo;</li>';
+	private string $backHtml = '<li class="back"><a href="' . Pagination::linkTarget . '">&laquo;</a></li>';
+	private string $multiplePagesHtml = '<li><span>…</span></li>';
+	private string $currentPageHtml = '<li class="currentpage"><strong>' . Pagination::pageNumber . '</strong></li>';
+	private string $availablePageHtml = '<li><a href="' . Pagination::linkTarget . '">' . Pagination::pageNumber . '</a></li>';
+	private string $nextDisabledHtml = '<li class="nextdisabled">&raquo;</li>';
+	private string $nextHtml = '<li class="next"><a href="' . Pagination::linkTarget . '">&raquo;</a></li>';
+
+	public function setRootDivClass(string $rootDivClass): void
+	{
+		$this->rootDivClass = $rootDivClass;
+	}
+
+	public function getRootDivClass(): string
+	{
+		return $this->rootDivClass;
+	}
+
+	public function setUlClass(string $ulClass): void
+	{
+		$this->ulClass = $ulClass;
+	}
+
+	public function setBackDisabledHtml(string $backDisabledHtml): void
+	{
+		$this->backDisabledHtml = $backDisabledHtml;
+	}
+
+	public function setBackHtml(string $backHtml): void
+	{
+		$this->backHtml = $backHtml;
+	}
+
+	public function setMultiplePagesHtml(string $multiplePagesHtml): void
+	{
+		$this->multiplePagesHtml = $multiplePagesHtml;
+	}
+
+	public function setCurrentPageHtml(string $currentPageHtml): void
+	{
+		$this->currentPageHtml = $currentPageHtml;
+	}
+
+	public function setAvailablePageHtml(string $availablePageHtml): void
+	{
+		$this->availablePageHtml = $availablePageHtml;
+	}
+
+	public function setNextDisabledHtml(string $nextDisabledHtml): void
+	{
+		$this->nextDisabledHtml = $nextDisabledHtml;
+	}
+
+	public function render(string $listIdentifier, int $totalAmount, int $currentPage, int $entriesPerPage = 25, int $beforeAfter = 2, int $startEnd = 1, array $additionalLinkParameters = []): string
 	{
 		if ($totalAmount <= $entriesPerPage) {
 			return '';
@@ -18,12 +76,14 @@ class Pagination
 		$modulo = ($totalAmount % $entriesPerPage);
 		$maxPage = (($totalAmount - ($modulo)) / $entriesPerPage) + ($modulo === 0 ? 0 : 1);
 
-		$pagenavi = '<div class="pagination clearfix">' . PHP_EOL . '<ul>' . PHP_EOL;
+		$html = ['<div class="' . $this->rootDivClass . '">'];
+		$html[] = ($this->ulClass === '') ? '<ul>' : '<ul class="' . $this->ulClass . '">';
+
 		if ($currentPage === $firstPage) {
-			$pagenavi .= '<li class="backdisabled">&laquo;</li>' . PHP_EOL;
+			$html[] = $this->backDisabledHtml;
 		} else {
 			$beforePage = $currentPage - $firstPage;
-			$pagenavi .= '<li class="back"><a href="?page=' . $beforePage . $linkParams . '">&laquo;</a></li>' . PHP_EOL;
+			$html[] = str_replace(Pagination::linkTarget, $this->getLinkTarget($listIdentifier, $beforePage, $additionalLinkParameters), $this->backHtml);
 		}
 
 		for ($page = $firstPage; $page <= $maxPage; $page++) {
@@ -37,28 +97,50 @@ class Pagination
 				|| ($page > $currentPage && $page <= ($currentPage + $beforeAfter))
 			) {
 				if ($page === ($maxPage - $startEnd) && $currentPage < $maxPage - ($beforeAfter + 1) - $startEnd) {
-					$pagenavi .= '<li><span>...</span></li>' . PHP_EOL;
+					$html[] = $this->multiplePagesHtml;
 				}
 				if ($page === $currentPage) {
-					$pagenavi .= '<li class="currentpage"><strong>' . $page . '</strong></li>' . PHP_EOL;
+					$html[] = str_replace([
+						Pagination::linkTarget,
+						Pagination::pageNumber,
+					], [
+						$this->getLinkTarget($listIdentifier, $page, $additionalLinkParameters),
+						$page,
+					], $this->currentPageHtml);
 				} else {
-					$pagenavi .= '<li><a href="?page=' . $page . $linkParams . '">' . $page . '</a></li>' . PHP_EOL;
+					$html[] = str_replace([
+						Pagination::linkTarget,
+						Pagination::pageNumber,
+					], [
+						$this->getLinkTarget($listIdentifier, $page, $additionalLinkParameters),
+						$page,
+					], $this->availablePageHtml);
 				}
 				if ($page === ($firstPage + $startEnd) && $currentPage > $firstPage + ($beforeAfter + 1) + $startEnd) {
-					$pagenavi .= '<li><span>...</span></li>' . PHP_EOL;
+					$html[] = $this->multiplePagesHtml;
 				}
 			}
 		}
 
 		if ($currentPage === $maxPage) {
-			$pagenavi .= '<li class="nextdisabled">&raquo;</li>' . PHP_EOL;
+			$html[] = $this->nextDisabledHtml;
 		} else {
 			$nextPage = $currentPage + 1;
-			$pagenavi .= '<li class="next"><a href="?page=' . $nextPage . $linkParams . '">&raquo;</a></li>' . PHP_EOL;
+			$html[] = str_replace(Pagination::linkTarget, $this->getLinkTarget($listIdentifier, $nextPage, $additionalLinkParameters), $this->nextHtml);
 		}
-		$pagenavi .= '</ul>' . PHP_EOL . '</div>' . PHP_EOL;
+		$html[] = '</ul>';
+		$html[] = '</div>';
 
-		return $pagenavi;
+		return implode(PHP_EOL, $html);
+	}
+
+	private function getLinkTarget(string $listIdentifier, int $pageNumber, array $additionalLinkParameters): string
+	{
+		$getAttributes = [];
+		foreach (array_merge(['page' => $pageNumber . '|' . $listIdentifier], $additionalLinkParameters) as $key => $val) {
+			$getAttributes[] = $key . '=' . $val;
+		}
+
+		return '?' . implode('&', $getAttributes);
 	}
 }
-/* EOF */

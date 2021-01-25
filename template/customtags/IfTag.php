@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
@@ -16,33 +16,40 @@ use framework\template\template\TemplateTag;
 
 class IfTag extends TemplateTag implements TagNode
 {
-	public static function getName()
+	public static function getName(): string
 	{
 		return 'if';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return true;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return false;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $tagNode)
+	/**
+	 * @param TemplateEngine $tplEngine
+	 * @param ElementNode    $elementNode
+	 *
+	 * @noinspection PhpStatementHasEmptyBodyInspection
+	 * @todo         Refactor so we can remove that inspection
+	 */
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$condAttr = $tagNode->getAttribute('cond')->value;
+		$condAttr = $elementNode->getAttribute('cond')->getValue();
 
 		$phpCode = '<?php ';
 
 		if ($condAttr === null) {
-			$tplEngine->checkRequiredAttributes($tagNode, ['compare', 'operator', 'against']);
+			$tplEngine->checkRequiredAttributes($elementNode, ['compare', 'operator', 'against']);
 
-			$compareAttr = $tagNode->getAttribute('compare')->value;
-			$operatorAttr = $tagNode->getAttribute('operator')->value;
-			$againstAttr = $tagNode->getAttribute('against')->value;
+			$compareAttr = $elementNode->getAttribute('compare')->getValue();
+			$operatorAttr = $elementNode->getAttribute('operator')->getValue();
+			$againstAttr = $elementNode->getAttribute('against')->getValue();
 
 			if (strlen($againstAttr) === 0) {
 				$againstAttr = "''";
@@ -51,9 +58,8 @@ class IfTag extends TemplateTag implements TagNode
 			} else if (is_float($againstAttr) === true) {
 				$againstAttr = floatval($againstAttr);
 			} else if (is_string($againstAttr) === true) {
-				/** @noinspection PhpStatementHasEmptyBodyInspection */
 				if (strtolower($againstAttr) === 'null') {
-				} else /** @noinspection PhpStatementHasEmptyBodyInspection */ if (strtolower($againstAttr) === 'true' || strtolower($againstAttr) === 'false') {
+				} else if (strtolower($againstAttr) === 'true' || strtolower($againstAttr) === 'false') {
 				} else if (StringUtils::startsWith($againstAttr, '{') && StringUtils::endsWith($againstAttr, '}')) {
 					$arr = explode(',', substr($againstAttr, 1, -1));
 					$againstAttr = [];
@@ -66,28 +72,14 @@ class IfTag extends TemplateTag implements TagNode
 				}
 			}
 
-			$operatorStr = '==';
-
-			switch (strtolower($operatorAttr)) {
-				case 'gt':
-					$operatorStr = '>';
-					break;
-				case 'ge':
-					$operatorStr = '>=';
-					break;
-				case 'lt':
-					$operatorStr = '<';
-					break;
-				case 'le':
-					$operatorStr = '<=';
-					break;
-				case 'eq':
-					$operatorStr = '==';
-					break;
-				case 'ne':
-					$operatorStr = '!=';
-					break;
-			}
+			$operatorStr = match (strtolower($operatorAttr)) {
+				'gt' => '>',
+				'ge' => '>=',
+				'lt' => '<',
+				'le' => '<=',
+				'ne' => '!=',
+				default => '=='
+			};
 
 			$phpCode .= 'if($this->getDataFromSelector(\'' . $compareAttr . '\') ' . $operatorStr . ' ' . $againstAttr . ') { ?>';
 		} else {
@@ -100,17 +92,16 @@ class IfTag extends TemplateTag implements TagNode
 				}, $condAttr) . ') { ?>';
 		}
 
-		$phpCode .= $tagNode->getInnerHtml();
+		$phpCode .= $elementNode->getInnerHtml();
 
-		if ($tplEngine->isFollowedBy($tagNode, ['else', 'elseif']) === false) {
+		if ($tplEngine->isFollowedBy($elementNode, ['else', 'elseif']) === false) {
 			$phpCode .= '<?php } ?>';
 		}
 
 		$textNode = new TextNode($tplEngine->getDomReader());
 		$textNode->content = $phpCode;
 
-		$tagNode->parentNode->replaceNode($tagNode, $textNode);
-		$tagNode->parentNode->removeNode($tagNode);
+		$elementNode->parentNode->replaceNode($elementNode, $textNode);
+		$elementNode->parentNode->removeNode($elementNode);
 	}
 }
-/* EOF */

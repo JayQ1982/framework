@@ -15,6 +15,7 @@ return [
   25671 => 'UTL',
   256720 => 'Smile',
   256726 => 'Tangerine',
+  25673 => 'Hamilton Telecom',
   25674 => 'Sure Telecom',
   25675 => 'Airtel',
   25677 => 'MTN',

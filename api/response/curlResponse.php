@@ -1,12 +1,15 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\api\response;
 
 use framework\api\curlRequest;
+use framework\common\SimpleXMLExtended;
+use SimpleXMLElement;
+use stdClass;
 use Throwable;
 
 abstract class curlResponse
@@ -14,17 +17,14 @@ abstract class curlResponse
 	const RESPONSE_RAW = 'raw';
 	const RESPONSE_XML = 'xml';
 	const RESPONSE_JSON = 'json';
-	const RESPONSE_ARRAY = 'array';
 	const RESPONSE_OBJECT = 'object';
 	const ALLOWED_RESPONSE_FORMATS = [
-		self::RESPONSE_RAW,
-		self::RESPONSE_XML,
-		self::RESPONSE_JSON,
-		self::RESPONSE_ARRAY,
-		self::RESPONSE_OBJECT,
+		curlResponse::RESPONSE_RAW,
+		curlResponse::RESPONSE_XML,
+		curlResponse::RESPONSE_JSON,
+		curlResponse::RESPONSE_OBJECT,
 	];
 
-	/** @var curlRequest */
 	private curlRequest $curlRequest;
 	private string $convertErrorMessage = '';
 
@@ -40,17 +40,11 @@ abstract class curlResponse
 		return is_string($originalRawResponseBody) ? $originalRawResponseBody : '';
 	}
 
-	/**
-	 * @return mixed
-	 */
-	abstract protected function convert();
+	abstract protected function convert(): array|stdClass|SimpleXMLExtended;
 
 	abstract protected function getFormat(): string;
 
-	/**
-	 * @return false|mixed
-	 */
-	public function get()
+	public function get(): false|array|stdClass|SimpleXMLElement
 	{
 		if (!$this->curlRequest->wasSuccessful()) {
 			return false;
@@ -75,4 +69,3 @@ abstract class curlResponse
 		return $this->convertErrorMessage;
 	}
 }
-/* EOF */

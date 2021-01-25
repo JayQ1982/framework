@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\common;
@@ -12,12 +12,24 @@ use Throwable;
 
 class SearchHelper
 {
-	private string $fn;
+	private string $sessionRootName = 'searchHelper';
+	private string $instanceName;
 	private HttpRequest $httpRequest;
+	/** @var SearchHelper[] */
+	private static array $instances = [];
 
-	public function __construct(string $fn, HttpRequest $httpRequest)
+	public static function getInstance(string $instanceName, HttpRequest $httpRequest): SearchHelper
 	{
-		$this->fn = $fn;
+		if (!array_key_exists($instanceName, SearchHelper::$instances)) {
+			SearchHelper::$instances[$instanceName] = new SearchHelper($instanceName, $httpRequest);
+		}
+
+		return SearchHelper::$instances[$instanceName];
+	}
+
+	private function __construct(string $instanceName, HttpRequest $httpRequest)
+	{
+		$this->instanceName = $instanceName;
 		$this->httpRequest = $httpRequest;
 	}
 
@@ -28,9 +40,8 @@ class SearchHelper
 		return "(" . $this->createQuery($clean_query_text, $splitFields, $spaceSeparatedFieldNames) . ")";
 	}
 
-	private function cleanQuery($string)
+	private function cleanQuery(string $string): string
 	{
-
 		$string = trim($string);
 		$string = strip_tags($string); // remove any html/javascript.
 		// prevents duplicate backslashes
@@ -123,7 +134,7 @@ class SearchHelper
 		return $output;
 	}
 
-	private function handleShorthand($text)
+	private function handleShorthand(string $text): string
 	{
 		$text = preg_replace("/ \+/", " and ", $text);
 		$text = preg_replace("/ -/", " not ", $text);
@@ -142,7 +153,7 @@ class SearchHelper
 	 *
 	 * @return array
 	 */
-	private function explodeRespectQuotes($line)
+	private function explodeRespectQuotes(string $line): array
 	{
 		$quote_level = 0; #keep track if we are in or out of quote-space
 		$buffer = "";
@@ -198,67 +209,70 @@ class SearchHelper
 		return $front . $text . $back;
 	}
 
-	public function checkSearchTerm($default = '', $fn = '')
+	private function resetField(string $fieldName, string $default = ''): void
 	{
-		return $this->checkString('searchterm', $default, $fn);
+		$sessionRootName = $this->sessionRootName;
+		$instanceName = $this->instanceName;
+		$httpRequest = $this->httpRequest;
+		if (
+			!isset($_SESSION[$sessionRootName][$instanceName][$fieldName])
+			|| !is_null($httpRequest->getInputString('reset'))
+			|| !is_null($httpRequest->getInputString('find'))
+		) {
+			$_SESSION[$sessionRootName][$instanceName][$fieldName] = $default;
+		}
 	}
 
-	public function checkString(string $fieldName, string $default = '', string $fn = ''): string
+	public function checkString(string $fieldName, string $default = ''): string
 	{
-		$fn = ($fn == '') ? $this->getFN() : $fn;
-		if (!isset($_SESSION['search_'.$fn][$fieldName]) || isset($_GET['reset']) || isset($_GET['find'])) {
-			$_SESSION['search_'.$fn][$fieldName] = $default;
-		}
+		$sessionRootName = $this->sessionRootName;
+		$instanceName = $this->instanceName;
+		$this->resetField($fieldName, $default);
 
 		$userInput = $this->httpRequest->getInputString($fieldName);
 		if (!is_null($userInput)) {
-			$_SESSION['search_'.$fn][$fieldName] = $userInput;
+			$_SESSION[$sessionRootName][$instanceName][$fieldName] = $userInput;
 		}
 
-		return $_SESSION['search_'.$fn][$fieldName];
+		return $_SESSION[$sessionRootName][$instanceName][$fieldName];
 	}
 
-	public function getFN()
+	public function checkFilter(array $array, string $fieldName, string $default = ''): string
 	{
-		return $this->fn;
-	}
+		$sessionRootName = $this->sessionRootName;
+		$instanceName = $this->instanceName;
+		$this->resetField($fieldName, $default);
 
-	public function checkFilter(array $array, string $fieldName, string $default = '', string $fn = ''): string
-	{
-		$fn = ($fn == '') ? $this->getFN() : $fn;
-		if (!isset($_SESSION['search_'.$fn][$fieldName]) || isset($_GET['reset']) || isset($_GET['find'])) {
-			$_SESSION['search_'.$fn][$fieldName] = $default;
-		}
 		$userInput = $this->httpRequest->getInputString($fieldName);
 		if (!is_null($userInput) && array_key_exists($userInput, $array)) {
-			$_SESSION['search_'.$fn][$fieldName] = $userInput;
+			$_SESSION[$sessionRootName][$instanceName][$fieldName] = $userInput;
 		}
 
-		return $_SESSION['search_'.$fn][$fieldName];
+		return $_SESSION[$sessionRootName][$instanceName][$fieldName];
 	}
 
-	public function checkMultiFilter(array $array, string $fieldName, array $default = [], string $fn = ''): array
+	public function checkMultiFilter(array $array, string $fieldName, array $default = []): array
 	{
-		$fn = ($fn == '') ? $this->getFN() : $fn;
-		if (!isset($_SESSION['search_'.$fn][$fieldName]) || isset($_GET['reset']) || isset($_GET['find'])) {
-			$_SESSION['search_'.$fn][$fieldName] = $default;
+		$instanceName = $this->instanceName;
+		if (!isset($_SESSION[$this->sessionRootName][$instanceName][$fieldName]) || isset($_GET['reset']) || isset($_GET['find'])) {
+			$_SESSION[$this->sessionRootName][$instanceName][$fieldName] = $default;
 		}
 
 		if (isset($_GET['reset']) || isset($_GET['find'])) {
 			foreach ($array as $key => $val) {
 				$userInput = $this->httpRequest->getInputArray($fieldName);
 				if (!is_null($userInput) && in_array($key, $userInput)) {
-					$_SESSION['search_'.$fn][$fieldName][] = $key;
+					$_SESSION[$this->sessionRootName][$instanceName][$fieldName][] = $key;
 				}
 			}
 			$requestedValue = $this->httpRequest->getInputString($fieldName . 'ID');
 
 			if (!is_null($requestedValue)) {
-				$_SESSION['search_'.$fn][$fieldName][] = $requestedValue;
+				$_SESSION[$this->sessionRootName][$instanceName][$fieldName][] = $requestedValue;
 			}
 		}
 
-		return $_SESSION['search_'.$fn][$fieldName];
+		return $_SESSION[$this->sessionRootName][$instanceName][$fieldName];
 	}
 
 	public function checkDate(string $date): ?DateTime
@@ -273,31 +287,30 @@ class SearchHelper
 			if ($dtErrors['warning_count'] > 0 || $dtErrors['error_count'] > 0) {
 				return null;
 			}
-		} catch (Throwable $e) {
+		} catch (Throwable) {
 			return null;
 		}
 
 		return $dateTime;
 	}
 
-	public function checkDateRangeFilter($dateRange, $fromField, $toField, $fn = '', $defaultFrom = null, $defaultTo = null)
+	public function checkDateRangeFilter(array $dateRange, string $fromField, string $toField, ?string $defaultFrom = null, ?string $defaultTo = null): array
 	{
+		$instanceName = $this->instanceName;
 
-		$fn = ($fn == '') ? $this->getFN() : $fn;
-
-		if (!isset($_SESSION['search_'.$fn][$fromField]) || isset($_GET['reset']) || isset($_GET['find'])) {
-			$_SESSION['search_'.$fn][$fromField] = ($defaultFrom === null) ? $dateRange['minDate'] : $defaultFrom;
+		if (!isset($_SESSION[$this->sessionRootName][$instanceName][$fromField]) || isset($_GET['reset']) || isset($_GET['find'])) {
+			$_SESSION[$this->sessionRootName][$instanceName][$fromField] = ($defaultFrom === null) ? $dateRange['minDate'] : $defaultFrom;
 		}
 
-		if (!isset($_SESSION['search_'.$fn][$toField]) || isset($_GET['reset']) || isset($_GET['find'])) {
-			$_SESSION['search_'.$fn][$toField] = ($defaultTo === null) ? $dateRange['maxDate'] : $defaultTo;
+		if (!isset($_SESSION[$this->sessionRootName][$instanceName][$toField]) || isset($_GET['reset']) || isset($_GET['find'])) {
+			$_SESSION[$this->sessionRootName][$instanceName][$toField] = ($defaultTo === null) ? $dateRange['maxDate'] : $defaultTo;
 		}
 
 		$inputFrom = $this->httpRequest->getInputString($fromField);
 		$inputTo = $this->httpRequest->getInputString($toField);
 
-		$dateFromStr = is_null($inputFrom) ? $_SESSION['search_'.$fn][$fromField] : $inputFrom;
-		$dateToStr = is_null($inputTo) ? $_SESSION['search_'.$fn][$toField] : $inputTo;
+		$dateFromStr = is_null($inputFrom) ? $_SESSION[$this->sessionRootName][$instanceName][$fromField] : $inputFrom;
+		$dateToStr = is_null($inputTo) ? $_SESSION[$this->sessionRootName][$instanceName][$toField] : $inputTo;
 
 		$dateFromObj = $this->checkDate($dateFromStr);
 		$dateToObj = $this->checkDate($dateToStr);
@@ -320,13 +333,13 @@ class SearchHelper
 			$dateToObj = $maxDateObj;
 		}
 
-		$_SESSION['search_'.$fn][$fromField] = $dateFromObj->format('d.m.Y');
-		$_SESSION['search_'.$fn][$toField] = $dateToObj->format('d.m.Y');
+		$_SESSION[$this->sessionRootName][$instanceName][$fromField] = $dateFromObj->format('d.m.Y');
+		$_SESSION[$this->sessionRootName][$instanceName][$toField] = $dateToObj->format('d.m.Y');
 
 		return ['dateFrom' => $dateFromObj, 'dateTo' => $dateToObj];
 	}
 
-	public function createSQLSearch($string, $columns)
+	public function createSQLSearch(string $string, array $columns): array
 	{
 		$searchWords = preg_split("/[\s,]*\"([^\"]+)\"[\s,]*|" . "[\s,]*'([^']+)'[\s,]*|" . "[\s,]+/", $string, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
 		$searchWordsQuery = [];
@@ -361,7 +374,7 @@ class SearchHelper
 	 *
 	 * @return array : indexed array [ 'sql' => *, 'params' => * ]
 	 */
-	public function createSQLFilters(array $filterArr)
+	public function createSQLFilters(array $filterArr): array
 	{
 		$filterConds = $params = [];
 
@@ -381,13 +394,13 @@ class SearchHelper
 
 				foreach ($searchWords as $word) {
 					$type = 'or';
-					if (strpos($word, '!') === 0 || strpos($word, '-') === 0) {
+					if (str_starts_with($word, '!') || str_starts_with($word, '-')) {
 						$type = 'not';
 						$word = substr($word, 1);
-					} else if (strpos($word, '+') === 0) {
+					} else if (str_starts_with($word, '+')) {
 						$type = 'and';
 						$word = substr($word, 1);
-					} else if (strpos($word, '"') === 0) {
+					} else if (str_starts_with($word, '"')) {
 						$type = 'equal';
 						$word = substr($word, 1, -1);
 						$wordsByType[$type][] = $word;
@@ -431,4 +444,3 @@ class SearchHelper
 		];
 	}
 }
-/* EOF */

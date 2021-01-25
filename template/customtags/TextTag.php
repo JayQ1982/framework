@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
@@ -20,34 +20,33 @@ class TextTag extends TemplateTag implements TagNode, TagInline
 		return 'text';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return false;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return true;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $node)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$replValue = $this->replace($node->getAttribute('value')->value);
+		$replValue = $this->replace($elementNode->getAttribute('value')->getValue());
 
 		$replNode = new TextNode($tplEngine->getDomReader());
 		$replNode->content = $replValue;
 
-		$node->parentNode->replaceNode($node, $replNode);
+		$elementNode->parentNode->replaceNode($elementNode, $replNode);
 	}
 
-	public function replaceInline(TemplateEngine $tplEngine, $params): string
+	public function replaceInline(TemplateEngine $tplEngine, $tagArr): string
 	{
-		return $this->replace($params['value']);
+		return $this->replace($tagArr['value']);
 	}
 
-	public function replace($params)
+	public function replace($params): string
 	{
 		return '<?php echo $this->getDataFromSelector(\'' . $params . '\'); ?>';
 	}
 }
-/* EOF */

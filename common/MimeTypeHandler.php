@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\common;
@@ -39,7 +39,7 @@ class MimeTypeHandler
 		return $arr[$fileType] ?? true;
 	}
 
-	public static function mimeTypeByExtension(string $extension)
+	public static function mimeTypeByExtension(string $extension): string
 	{
 		// original list from : Debian 9 /etc/mime.types, reworked
 		$mimeTypes = [
@@ -605,4 +605,3 @@ class MimeTypeHandler
 		return $mimeTypes[$extension] ?? 'application/octet-stream'; // Default for unknown file types
 	}
 }
-/* EOF */

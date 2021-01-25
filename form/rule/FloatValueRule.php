@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\rule;
@@ -11,11 +11,6 @@ use framework\form\FormRule;
 
 class FloatValueRule extends FormRule
 {
-	/**
-	 * @param FormField $formField The field instance to check against
-	 *
-	 * @return bool
-	 */
 	public function validate(FormField $formField): bool
 	{
 		if ($formField->isValueEmpty()) {
@@ -33,4 +28,3 @@ class FloatValueRule extends FormRule
 		);
 	}
 }
-/* EOF */

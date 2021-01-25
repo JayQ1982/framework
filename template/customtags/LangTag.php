@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\customtags;
@@ -21,43 +21,42 @@ class LangTag extends TemplateTag implements TagNode, TagInline
 		return 'lang';
 	}
 
-	public static function isElseCompatible()
+	public static function isElseCompatible(): bool
 	{
 		return false;
 	}
 
-	public static function isSelfClosing()
+	public static function isSelfClosing(): bool
 	{
 		return true;
 	}
 
-	public function replaceNode(TemplateEngine $tplEngine, ElementNode $node)
+	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$replValue = self::replace($node->getAttribute('key')->value, $node->getAttribute('vars')->value);
+		$replValue = LangTag::replace($elementNode->getAttribute('key')->getValue(), $elementNode->getAttribute('vars')->getValue());
 
 		$replNode = new TextNode($tplEngine->getDomReader());
 		$replNode->content = $replValue;
 
-		$node->parentNode->replaceNode($node, $replNode);
+		$elementNode->parentNode->replaceNode($elementNode, $replNode);
 	}
 
-	public function replaceInline(TemplateEngine $tplEngine, $params): string
+	public function replaceInline(TemplateEngine $tplEngine, $tagArr): string
 	{
-		$vars = (array_key_exists('vars', $params)) ? $params['vars'] : null;
+		$vars = (array_key_exists('vars', $tagArr)) ? $tagArr['vars'] : null;
 
-		return self::replace($params['key'], $vars);
+		return LangTag::replace($tagArr['key'], $vars);
 	}
 
-	public function replace($key, $vars = null)
+	public function replace($key, $vars = null): string
 	{
-
 		$phpVars = ', array()';
 		if ($vars !== null) {
 			$varsEx = explode(',', $vars);
 			$varsFull = [];
 
 			foreach ($varsEx as $v) {
-				$varsFull[] = '\'' . $v . '\' => self::getData(\'' . $v . '\')';
+				$varsFull[] = '\'' . $v . '\' => LangTag::getData(\'' . $v . '\')';
 			}
 
 			$phpVars = ',array(' . implode(', ', $varsFull) . ')';
@@ -66,7 +65,7 @@ class LangTag extends TemplateTag implements TagNode, TagInline
 		return '<?php echo ' . __CLASS__ . '::getText(\'' . $key . '\'' . $phpVars . ', $this); ?>';
 	}
 
-	public static function getText($key, array $phpVars, TemplateEngine $tplEngine)
+	public static function getText($key, array $phpVars, TemplateEngine $tplEngine): string
 	{
 		/** @var LocaleHandler $localeHandler */
 		$localeHandler = $tplEngine->getData('_localeHandler');
@@ -74,4 +73,3 @@ class LangTag extends TemplateTag implements TagNode, TagInline
 		return $localeHandler->getText($key, $phpVars);
 	}
 }
-/* EOF */

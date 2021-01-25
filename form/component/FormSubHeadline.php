@@ -1,21 +1,21 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\component;
 
 use framework\form\FormComponent;
-use framework\form\FormTag;
-use framework\form\FormText;
+use framework\html\HtmlTag;
+use framework\html\HtmlText;
 
 class FormSubHeadline extends FormComponent
 {
 	private int $headingLevel;
-	private string $content;
+	private HtmlText $content;
 
-	public function __construct(int $headingLevel, string $content)
+	public function __construct(int $headingLevel, HtmlText $content)
 	{
 		$this->headingLevel = $headingLevel;
 		$this->content = $content;
@@ -23,12 +23,11 @@ class FormSubHeadline extends FormComponent
 		parent::__construct(uniqid());
 	}
 
-	public function getFormTag(): FormTag
+	public function getHtmlTag(): HtmlTag
 	{
-		$headline = new FormTag('h' . $this->headingLevel, false, []);
-		$headline->addText(new FormText($this->content));
+		$headline = new HtmlTag('h' . $this->headingLevel, false, []);
+		$headline->addText($this->content);
 
 		return $headline;
 	}
 }
-/* EOF */

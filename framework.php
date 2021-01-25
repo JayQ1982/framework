@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 use framework\autoloader\Autoloader;
@@ -10,7 +10,7 @@ use framework\core\Core;
 
 // Make sure we display all errors that occur during initialization
 error_reporting(E_ALL);
-@ini_set('display_errors', 1);
+@ini_set('display_errors', '1');
 
 // Default timezone patch
 $defaultTimezone = 'Greenwich';
@@ -41,8 +41,12 @@ $autoloader = new Autoloader($siteRoot . 'cache' . DIRECTORY_SEPARATOR . 'cache.
 $autoloader->register();
 /** @noinspection PhpIncludeInspection */
 require_once($fwRoot . 'autoloader' . DIRECTORY_SEPARATOR . 'AutoloaderPathModel.php');
-$autoloader->addPath(new AutoloaderPathModel('fw-logic', $documentRoot, AutoloaderPathModel::MODE_NAMESPACE, ['.class.php', '.php', '.interface.php']));
+$autoloader->addPath(new AutoloaderPathModel(
+	'fw-logic',
+	$documentRoot,
+	AutoloaderPathModel::MODE_NAMESPACE,
+	['.class.php', '.php', '.interface.php']
+));
 
 $core = new Core($documentRoot, $fwRoot, $siteRoot, $autoloader);
 $core->sendResponse();
-/* EOF */

@@ -5,40 +5,54 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the "LICENSE.md"
- * file that was distributed with this source code.
+ * For the full copyright and license information, please view the LICENSE file
+ * that was distributed with this source code.
  */
+
+declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation;
 
 use framework\vendor\Respect\Validation\Exceptions\ValidationException;
 
 /** Interface for validation rules */
+
+/**
+ * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
+ * @author Henrique Moody <henriquemoody@gmail.com>
+ */
 interface Validatable
 {
 	/**
-	 * @param $input
-	 *
-	 * @return mixed
-	 * @throws ValidationException
+	 * @param mixed $input
 	 */
-    public function assert($input);
+	public function assert($input): void;
 
 	/**
-	 * @param $input
-	 *
-	 * @return mixed
-	 * @throws ValidationException
+	 * @param mixed $input
 	 */
-    public function check($input);
+	public function check($input): void;
 
-    public function getName();
+	public function getName(): ?string;
 
-    public function reportError($input, array $relatedExceptions = []);
+	/**
+	 * @param mixed   $input
+	 * @param mixed[] $extraParameters
+	 *
+	 * @return ValidationException
+	 * @return ValidationException
+	 */
+	public function reportError($input, array $extraParameters = []): ValidationException;
 
-    public function setName($name);
+	public function setName(string $name): Validatable;
 
-    public function setTemplate($template);
+	public function setTemplate(string $template): Validatable;
 
-    public function validate($input);
+	/**
+	 * @param mixed $input
+	 *
+	 * @return bool
+	 * @return bool
+	 */
+	public function validate($input): bool;
 }

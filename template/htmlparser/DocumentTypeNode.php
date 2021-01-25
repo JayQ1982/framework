@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\template\htmlparser;
@@ -13,4 +13,3 @@ class DocumentTypeNode extends HtmlNode
 		parent::__construct(HtmlNode::DOCUMENT_TYPE_NODE, $htmlDocument);
 	}
 }
-/* EOF */

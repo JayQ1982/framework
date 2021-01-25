@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2020, Actra AG
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\form\rule;
@@ -9,13 +9,14 @@ namespace framework\form\rule;
 use ArrayObject;
 use framework\form\component\FormField;
 use framework\form\FormRule;
+use framework\html\HtmlText;
 use UnexpectedValueException;
 
 class MaxLengthRule extends FormRule
 {
 	protected int $maxLength;
 
-	function __construct(int $maxLength, string $errorMessage)
+	function __construct(int $maxLength, HtmlText $errorMessage)
 	{
 		$this->maxLength = $maxLength;
 
@@ -30,18 +31,17 @@ class MaxLengthRule extends FormRule
 
 		$fieldValue = $formField->getRawValue();
 
-		if (is_scalar($fieldValue) === true) {
+		if (is_scalar($fieldValue)) {
 			return $this->checkValueLengthAgainst(mb_strlen($fieldValue));
 		}
-		if (is_array($fieldValue) === true || $fieldValue instanceof ArrayObject) {
+		if (is_array($fieldValue) || $fieldValue instanceof ArrayObject) {
 			return $this->checkValueLengthAgainst(count($fieldValue));
 		}
 		throw new UnexpectedValueException('Could not handle field value for rule ' . __CLASS__);
 	}
 
-	private function checkValueLengthAgainst($valueLength)
+	private function checkValueLengthAgainst($valueLength): bool
 	{
 		return ($valueLength <= $this->maxLength);
 	}
 }
-/* EOF */
