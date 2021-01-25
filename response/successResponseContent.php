@@ -34,4 +34,3 @@ class successResponseContent extends responseContent
 		}
 	}
 }
-/* EOF */

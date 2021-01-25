@@ -246,4 +246,3 @@ class HttpRequest
 		return $files;
 	}
 }
-/* EOF */
