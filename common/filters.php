@@ -4,7 +4,7 @@
  * @copyright Copyright (c) 2021, Actra AG
  */
 
-namespace metanet\common;
+namespace framework\common;
 
 use DateTime;
 use framework\common\SearchHelper;
