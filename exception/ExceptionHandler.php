@@ -100,7 +100,7 @@ class ExceptionHandler
 		Core $core,
 		int $httpStatusCode,
 		string $errorMessage,
-		int $errorCode,
+		string|int $errorCode,
 		string $htmlFileName,
 		array $placeholders
 	): void {

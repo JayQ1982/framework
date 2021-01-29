@@ -98,21 +98,26 @@ final class FrameworkDB extends PDO
 	 *
 	 * @param string $sql        : valid SQL statement
 	 * @param array  $parameters : list of parameter values to bind to the prepared sql statement in correct order
+	 * @param bool   $logQuery
 	 *
 	 * @return stdClass[]: Array with each row as an object of type stdClass
 	 * @throws RuntimeException
 	 */
-	public function select(string $sql, array $parameters = []): array
+	public function select(string $sql, array $parameters = [], bool $logQuery = true): array
 	{
 		try {
-			$dbQueryLogItem = new DbQueryLogItem($sql, $parameters);
+			if ($logQuery) {
+				$dbQueryLogItem = new DbQueryLogItem($sql, $parameters);
+			}
 			$stmnt = $this->prepare($sql);
 			if ($stmnt->execute($parameters) === false) {
 				throw new RuntimeException('PDOStatement->execute() returned false');
 			}
 			$res = $stmnt->fetchAll(PDO::FETCH_OBJ);
-			$dbQueryLogItem->confirmFinishedExecution();
-			$this->queryLog[] = $dbQueryLogItem;
+			if (isset($dbQueryLogItem)) {
+				$dbQueryLogItem->confirmFinishedExecution();
+				$this->queryLog[] = $dbQueryLogItem;
+			}
 
 			return $res;
 		} catch (Throwable $t) {
@@ -125,20 +130,25 @@ final class FrameworkDB extends PDO
 	 *
 	 * @param string $sql        : valid SQL statement
 	 * @param array  $parameters : list of parameter values to bind to the prepared sql statement in correct order
+	 * @param bool   $logQuery
 	 *
 	 * @return PDOStatement : The prepared statement after execution
 	 */
-	public function execute(string $sql, array $parameters = []): PDOStatement
+	public function execute(string $sql, array $parameters = [], bool $logQuery = true): PDOStatement
 	{
-		$dbQueryLogItem = new DbQueryLogItem($sql, $parameters);
+		if ($logQuery) {
+			$dbQueryLogItem = new DbQueryLogItem($sql, $parameters);
+		}
 		$stmnt = $this->prepare($sql);
 		try {
 			if ($stmnt->execute($parameters) === false) {
 				throw new RuntimeException('PDOStatement->execute() returned false');
 			}
 
-			$dbQueryLogItem->confirmFinishedExecution();
-			$this->queryLog[] = $dbQueryLogItem;
+			if (isset($dbQueryLogItem)) {
+				$dbQueryLogItem->confirmFinishedExecution();
+				$this->queryLog[] = $dbQueryLogItem;
+			}
 
 			return $stmnt;
 		} catch (Throwable $t) {
