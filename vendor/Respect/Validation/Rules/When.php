@@ -5,47 +5,26 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
 use framework\vendor\Respect\Validation\Exceptions\AlwaysInvalidException;
 use framework\vendor\Respect\Validation\Validatable;
 
-/**
- * A ternary validator that accepts three parameters.
- *
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Danilo Correa <danilosilva87@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Hugo Hamon <hugo.hamon@sensiolabs.com>
- */
-final class When extends AbstractRule
+class When extends AbstractRule
 {
-    /**
-     * @var Validatable
-     */
-    private $when;
+    public $when;
+    public $then;
+    public $else;
 
-    /**
-     * @var Validatable
-     */
-    private $then;
-
-    /**
-     * @var Validatable
-     */
-    private $else;
-
-    public function __construct(Validatable $when, Validatable $then, ?Validatable $else = null)
+    public function __construct(Validatable $when, Validatable $then, Validatable $else = null)
     {
         $this->when = $when;
         $this->then = $then;
-        if ($else === null) {
+        if (null === $else) {
             $else = new AlwaysInvalid();
             $else->setTemplate(AlwaysInvalidException::SIMPLE);
         }
@@ -53,10 +32,7 @@ final class When extends AbstractRule
         $this->else = $else;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
         if ($this->when->validate($input)) {
             return $this->then->validate($input);
@@ -65,31 +41,21 @@ final class When extends AbstractRule
         return $this->else->validate($input);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function assert($input): void
+    public function assert($input)
     {
         if ($this->when->validate($input)) {
-            $this->then->assert($input);
-
-            return;
+            return $this->then->assert($input);
         }
 
-        $this->else->assert($input);
+        return $this->else->assert($input);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function check($input): void
+    public function check($input)
     {
         if ($this->when->validate($input)) {
-            $this->then->check($input);
-
-            return;
+            return $this->then->check($input);
         }
 
-        $this->else->check($input);
+        return $this->else->check($input);
     }
 }

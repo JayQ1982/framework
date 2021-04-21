@@ -5,46 +5,33 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use function abs;
-use function is_integer;
-use function is_numeric;
+use framework\vendor\Respect\Validation\Exceptions\ComponentException;
+use framework\vendor\Respect\Validation\Exceptions\ValidationException;
 
 /**
- * Validates if the input is a factor of the defined dividend.
- *
- * @author Danilo Correa <danilosilva87@gmail.com>
  * @author David Meister <thedavidmeister@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
  */
-final class Factor extends AbstractRule
+class Factor extends AbstractRule
 {
-    /**
-     * @var int
-     */
-    private $dividend;
+    public $dividend;
 
-	/**
-	 * Initializes the rule.
-	 *
-	 * @param int $dividend
-	 */
-    public function __construct(int $dividend)
+    public function __construct($dividend)
     {
-        $this->dividend = $dividend;
+        if (!is_numeric($dividend) || (int) $dividend != $dividend) {
+            $message = 'Dividend %s must be an integer';
+            throw new ComponentException(sprintf($message, ValidationException::stringify($dividend)));
+        }
+
+        $this->dividend = (int) $dividend;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
         // Every integer is a factor of zero, and zero is the only integer that
         // has zero for a factor.
@@ -57,7 +44,7 @@ final class Factor extends AbstractRule
             return false;
         }
 
-        $input = (int) abs((int) $input);
+        $input = (int) abs($input);
         $dividend = (int) abs($this->dividend);
 
         // The dividend divided by the input must be an integer if input is a

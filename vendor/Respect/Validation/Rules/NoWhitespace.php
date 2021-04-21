@@ -5,41 +5,24 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use function is_null;
-use function is_scalar;
-use function preg_match;
-
-/**
- * Validates whether a string contains no whitespace (spaces, tabs and line breaks).
- *
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Augusto Pascutti <augusto@phpsp.org.br>
- * @author Danilo Benevides <danilobenevides01@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class NoWhitespace extends AbstractRule
+class NoWhitespace extends AbstractRule
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
         if (is_null($input)) {
             return true;
         }
 
-        if (is_scalar($input) === false) {
+        if (false === is_scalar($input)) {
             return false;
         }
 
-        return !preg_match('#\s#', (string) $input);
+        return !preg_match('#\s#', $input);
     }
 }

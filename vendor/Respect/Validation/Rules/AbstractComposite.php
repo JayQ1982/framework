@@ -5,49 +5,28 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
 use framework\vendor\Respect\Validation\Exceptions\NestedValidationException;
 use framework\vendor\Respect\Validation\Exceptions\ValidationException;
 use framework\vendor\Respect\Validation\Validatable;
+use framework\vendor\Respect\Validation\Validator;
 
-use function array_filter;
-use function array_map;
-
-/**
- * Abstract class for rules that are composed by other rules.
- *
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Wojciech Frącz <fraczwojciech@gmail.com>
- */
 abstract class AbstractComposite extends AbstractRule
 {
-    /**
-     * @var Validatable[]
-     */
-    private $rules;
+	/** @var Validatable[] */
+    protected $rules = [];
 
-	/**
-	 * Initializes the rule adding other rules to the stack.
-	 *
-	 * @param Validatable ...$rules
-	 */
-    public function __construct(Validatable ...$rules)
+    public function __construct()
     {
-        $this->rules = $rules;
+        $this->addRules(func_get_args());
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setName(string $name): Validatable
+    public function setName($name)
     {
         $parentName = $this->getName();
         foreach ($this->rules as $rule) {
@@ -62,84 +41,107 @@ abstract class AbstractComposite extends AbstractRule
         return parent::setName($name);
     }
 
-	/**
-	 * Append a rule into the stack of rules.
-	 *
-	 * @param Validatable $rule
-	 * @return AbstractComposite
-	 */
-    public function addRule(Validatable $rule): self
+    public function addRule($validator, $arguments = [])
     {
-        if ($this->shouldHaveNameOverwritten($rule) && $this->getName() !== null) {
-            $rule->setName($this->getName());
+        if (!$validator instanceof Validatable) {
+            $this->appendRule(Validator::buildRule($validator, $arguments));
+        } else {
+            $this->appendRule($validator);
         }
-
-        $this->rules[] = $rule;
 
         return $this;
     }
 
-    /**
-     * Returns all the rules in the stack.
-     *
-     * @return Validatable[]
-     */
-    public function getRules(): array
+    public function removeRules()
+    {
+        $this->rules = [];
+    }
+
+    public function addRules(array $validators)
+    {
+        foreach ($validators as $key => $spec) {
+            if ($spec instanceof Validatable) {
+                $this->appendRule($spec);
+            } elseif (is_numeric($key) && is_array($spec)) {
+                $this->addRules($spec);
+            } elseif (is_array($spec)) {
+                $this->addRule($key, $spec);
+            } else {
+                $this->addRule($spec);
+            }
+        }
+
+        return $this;
+    }
+
+	/**
+	 * @return Validatable[]|AbstractRelated[]
+	 */
+    public function getRules()
     {
         return $this->rules;
     }
 
-    /**
-     * Returns all the exceptions throw when asserting all rules.
-     *
-     * @param mixed $input
-     *
-     * @return ValidationException[]
-     */
-    protected function getAllThrownExceptions($input): array
+    public function hasRule($validator)
     {
-        return array_filter(
-            array_map(
-                function (Validatable $rule) use ($input): ?ValidationException {
-                    try {
-                        $rule->assert($input);
-                    } catch (ValidationException $exception) {
-                        $this->updateExceptionTemplate($exception);
+        if (empty($this->rules)) {
+            return false;
+        }
 
-                        return $exception;
-                    }
+        if ($validator instanceof Validatable) {
+            return isset($this->rules[spl_object_hash($validator)]);
+        }
 
-                    return null;
-                },
-                $this->getRules()
-            )
-        );
+        if (is_string($validator)) {
+            foreach ($this->rules as $rule) {
+                if (get_class($rule) == __NAMESPACE__.'\\'.$validator) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
-    private function shouldHaveNameOverwritten(Validatable $rule): bool
+    protected function appendRule(Validatable $validator)
     {
-        return $this->hasName($this) && !$this->hasName($rule);
+        if (!$validator->getName() && $this->getName()) {
+            $validator->setName($this->getName());
+        }
+
+        $this->rules[spl_object_hash($validator)] = $validator;
     }
 
-    private function hasName(Validatable $rule): bool
+    protected function validateRules($input)
     {
-        return $rule->getName() !== null;
+        $exceptions = [];
+        foreach ($this->getRules() as $rule) {
+            try {
+                $rule->assert($input);
+            } catch (ValidationException $exception) {
+                $exceptions[] = $exception;
+                $this->setExceptionTemplate($exception);
+            }
+        }
+
+        return $exceptions;
     }
 
-    private function updateExceptionTemplate(ValidationException $exception): void
+    private function setExceptionTemplate(ValidationException $exception)
     {
-        if ($this->template === null || $exception->hasCustomTemplate()) {
+        if (null === $this->template || $exception->hasCustomTemplate()) {
             return;
         }
 
-        $exception->updateTemplate($this->template);
+        $exception->setTemplate($this->template);
 
         if (!$exception instanceof NestedValidationException) {
             return;
         }
 
-        foreach ($exception->getChildren() as $childException) {
-            $this->updateExceptionTemplate($childException);
+        /** @var ValidationException $relatedException */
+	    foreach ($exception->getRelated() as $relatedException) {
+            $this->setExceptionTemplate($relatedException);
         }
     }
 }

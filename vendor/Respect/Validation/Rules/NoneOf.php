@@ -5,45 +5,27 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use framework\vendor\Respect\Validation\Exceptions\NoneOfException;
-
-use function count;
-
-/**
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class NoneOf extends AbstractComposite
+class NoneOf extends AbstractComposite
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function assert($input): void
+    public function assert($input)
     {
-        $exceptions = $this->getAllThrownExceptions($input);
+        $exceptions = $this->validateRules($input);
         $numRules = count($this->getRules());
         $numExceptions = count($exceptions);
         if ($numRules !== $numExceptions) {
-            /** @var NoneOfException $noneOfException */
-            $noneOfException = $this->reportError($input);
-            $noneOfException->addChildren($exceptions);
-
-            throw $noneOfException;
+            throw $this->reportError($input)->setRelated($exceptions);
         }
+
+        return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
         foreach ($this->getRules() as $rule) {
             if ($rule->validate($input)) {

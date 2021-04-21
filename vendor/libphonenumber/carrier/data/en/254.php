@@ -13,9 +13,6 @@
 return [
   25410 => 'Airtel',
   25411 => 'Safaricom',
-  254120 => 'Telkom',
-  254121 => 'Infura',
-  254124 => 'Finserve',
   25470 => 'Safaricom',
   25471 => 'Safaricom',
   25472 => 'Safaricom',

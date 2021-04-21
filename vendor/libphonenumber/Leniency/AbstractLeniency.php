@@ -2,6 +2,9 @@
 
 namespace framework\vendor\libphonenumber\Leniency;
 
+use BadMethodCallException;
+use framework\vendor\libphonenumber\PhoneNumber;
+use framework\vendor\libphonenumber\PhoneNumberUtil;
 use RuntimeException;
 
 abstract class AbstractLeniency
@@ -12,6 +15,23 @@ abstract class AbstractLeniency
 	 * @var int
 	 */
 	protected static $level;
+
+	/**
+	 * Returns true if $number is a verified number according to this leniency
+	 *
+	 * @param PhoneNumber     $number
+	 * @param string          $candidate
+	 * @param PhoneNumberUtil $util
+	 *
+	 * @return bool
+	 * @codeCoverageIgnore
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public static function verify(PhoneNumber $number, $candidate, PhoneNumberUtil $util): bool
+	{
+		// This can not be called directly
+		throw new BadMethodCallException;
+	}
 
 	/**
 	 * Compare against another Leniency

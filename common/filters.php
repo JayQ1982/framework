@@ -7,7 +7,6 @@
 namespace framework\common;
 
 use DateTime;
-use framework\common\SearchHelper;
 use framework\core\Core;
 use framework\security\CsrfToken;
 use Throwable;
@@ -15,7 +14,6 @@ use Throwable;
 class filters
 {
 	private SearchHelper $searchHelper;
-	private string $name;
 	private Core $core;
 	private array $chosenEnhancedDropdowns = [];
 	private array $filters = [];
@@ -23,7 +21,6 @@ class filters
 	public function __construct(Core $core, string $name)
 	{
 		$this->core = $core;
-		$this->name = $name;
 		$this->searchHelper = SearchHelper::getInstance($name, $core->getHttpRequest());
 	}
 

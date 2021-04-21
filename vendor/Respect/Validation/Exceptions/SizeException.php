@@ -5,11 +5,9 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Exceptions;
 
@@ -18,16 +16,12 @@ namespace framework\vendor\Respect\Validation\Exceptions;
  *
  * @author Henrique Moody <henriquemoody@gmail.com>
  */
-final class SizeException extends NestedValidationException
+class SizeException extends BetweenException
 {
-    public const BOTH = 'both';
-    public const LOWER = 'lower';
-    public const GREATER = 'greater';
-
     /**
-     * {@inheritDoc}
+     * @var array
      */
-    protected $defaultTemplates = [
+    public static $defaultTemplates = [
         self::MODE_DEFAULT => [
             self::BOTH => '{{name}} must be between {{minSize}} and {{maxSize}}',
             self::LOWER => '{{name}} must be greater than {{minSize}}',
@@ -39,20 +33,4 @@ final class SizeException extends NestedValidationException
             self::GREATER => '{{name}} must not be lower than {{maxSize}}',
         ],
     ];
-
-    /**
-     * {}
-     */
-    protected function chooseTemplate(): string
-    {
-        if (!$this->getParam('minValue')) {
-            return self::GREATER;
-        }
-
-        if (!$this->getParam('maxValue')) {
-            return self::LOWER;
-        }
-
-        return self::BOTH;
-    }
 }

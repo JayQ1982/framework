@@ -68,7 +68,7 @@ class Matcher
 			foreach ($groups as $group) {
 				$positions[] = [
 					$group[0],
-					$offset + mb_strlen(substr($search, 0, $group[1])),
+					$offset + mb_strlen(mb_strcut($search, 0, $group[1])),
 				];
 			}
 

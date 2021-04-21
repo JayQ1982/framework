@@ -5,110 +5,21 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use framework\vendor\Respect\Validation\Exceptions\ValidationException;
-use framework\vendor\Respect\Validation\Validatable;
-use Throwable;
-
-use function call_user_func;
-use function restore_error_handler;
-use function set_error_handler;
-
-/**
- * Validates the return of a callable for a given input.
- *
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Emmerson Siqueira <emmersonsiqueira@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class Call extends AbstractRule
+class Call extends AbstractRelated
 {
-    /**
-     * @var callable
-     */
-    private $callable;
-
-    /**
-     * @var Validatable
-     */
-    private $rule;
-
-	/**
-	 * Initializes the rule with the callable to be executed after the input is passed.
-	 *
-	 * @param callable    $callable
-	 * @param Validatable $rule
-	 */
-    public function __construct(callable $callable, Validatable $rule)
+    public function getReferenceValue($input)
     {
-        $this->callable = $callable;
-        $this->rule = $rule;
+        return call_user_func_array($this->reference, [&$input]);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function assert($input): void
+    public function hasReference($input)
     {
-        $this->setErrorHandler($input);
-
-        try {
-            $this->rule->assert(call_user_func($this->callable, $input));
-        } catch (ValidationException $exception) {
-            throw $exception;
-        } catch (Throwable) {
-            throw $this->reportError($input);
-        } finally {
-            restore_error_handler();
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function check($input): void
-    {
-        $this->setErrorHandler($input);
-
-        try {
-            $this->rule->check(call_user_func($this->callable, $input));
-        } catch (ValidationException $exception) {
-            throw $exception;
-        } catch (Throwable) {
-            throw $this->reportError($input);
-        } finally {
-            restore_error_handler();
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
-    {
-        try {
-            $this->check($input);
-        } catch (ValidationException) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * @param mixed $input
-     */
-    private function setErrorHandler($input): void
-    {
-        set_error_handler(function () use ($input): void {
-            throw $this->reportError($input);
-        });
+        return is_callable($this->reference);
     }
 }

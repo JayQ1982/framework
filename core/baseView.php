@@ -10,7 +10,6 @@ use framework\auth\Authenticator;
 use framework\common\CSVFile;
 use framework\common\SimpleXMLExtended;
 use framework\common\StringUtils;
-use framework\db\FrameworkDB;
 use framework\exception\NotFoundException;
 use framework\exception\UnauthorizedException;
 use framework\html\HtmlDocument;
@@ -176,13 +175,6 @@ abstract class baseView
 	protected function getCore(): Core
 	{
 		return $this->core;
-	}
-
-	protected function getDB(string $name = 'default'): FrameworkDB
-	{
-		$core = $this->getCore();
-
-		return FrameworkDB::getInstance($core->getEnvironmentHandler(), $core->getRequestHandler()->getLanguage(), $name);
 	}
 
 	protected function getPathVar(int $nr): ?string

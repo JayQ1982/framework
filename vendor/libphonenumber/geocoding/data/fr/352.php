@@ -220,6 +220,7 @@ return [
   35257 => 'Esch-sur-Alzette/Schifflange',
   35258 => 'Differdange',
   35259 => 'Soleuvre',
+  35267 => 'Dudelange',
   35271 => 'Betzdorf',
   35272 => 'Echternach',
   35273 => 'Rosport',

@@ -11,7 +11,6 @@
  */
 
 return [
-  223200 => 'Orange',
   2232079 => 'Sotelma',
   223217 => 'Sotelma',
   2235 => 'Atel',

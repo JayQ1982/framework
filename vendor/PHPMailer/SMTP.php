@@ -19,8 +19,6 @@
 
 namespace framework\vendor\PHPMailer;
 
-use Psr\Log\LoggerInterface;
-
 /**
  * PHPMailer RFC821 SMTP email transport class.
  * Implements RFC 821 SMTP commands and provides some utility methods for sending mail to an SMTP server.
@@ -133,7 +131,7 @@ class SMTP
 	 * $mail->Debugoutput = new myPsr3Logger;
 	 * ```
 	 *
-	 * @var string|callable|LoggerInterface
+	 * @var string|callable|\Psr\Log\LoggerInterface
 	 */
 	public $Debugoutput = 'echo';
 
@@ -250,7 +248,7 @@ class SMTP
 			return;
 		}
 		//Is this a PSR-3 logger?
-		if ($this->Debugoutput instanceof LoggerInterface) {
+		if ($this->Debugoutput instanceof \Psr\Log\LoggerInterface) {
 			$this->Debugoutput->debug($str);
 
 			return;
@@ -425,7 +423,7 @@ class SMTP
 		if (strpos(PHP_OS, 'WIN') !== 0) {
 			$max = (int)ini_get('max_execution_time');
 			// Don't bother if unlimited, or if set_time_limit is disabled
-			if (0 !== $max && $timeout > $max && !str_contains(ini_get('disable_functions'), 'set_time_limit')) {
+			if (0 !== $max && $timeout > $max && strpos(ini_get('disable_functions'), 'set_time_limit') === false) {
 				@set_time_limit($timeout);
 			}
 			stream_set_timeout($connection, $timeout, 0);
@@ -720,7 +718,7 @@ class SMTP
 
 		$field = substr($lines[0], 0, strpos($lines[0], ':'));
 		$in_headers = false;
-		if (!empty($field) && !str_contains($field, ' ')) {
+		if (!empty($field) && strpos($field, ' ') === false) {
 			$in_headers = true;
 		}
 
@@ -931,11 +929,11 @@ class SMTP
 			$dsn = strtoupper($dsn);
 			$notify = [];
 
-			if (str_contains($dsn, 'NEVER')) {
+			if (strpos($dsn, 'NEVER') !== false) {
 				$notify[] = 'NEVER';
 			} else {
 				foreach (['SUCCESS', 'FAILURE', 'DELAY'] as $value) {
-					if (str_contains($dsn, $value)) {
+					if (strpos($dsn, $value) !== false) {
 						$notify[] = $value;
 					}
 				}
@@ -980,7 +978,7 @@ class SMTP
 			return false;
 		}
 		//Reject line breaks in all commands
-		if ((str_contains($commandstring, "\n")) || (str_contains($commandstring, "\r"))) {
+		if ((strpos($commandstring, "\n") !== false) || (strpos($commandstring, "\r") !== false)) {
 			$this->setError("Command '$command' contained line breaks");
 
 			return false;
@@ -1155,7 +1153,7 @@ class SMTP
 		if (!$this->server_caps) {
 			$this->setError('No HELO/EHLO was sent');
 
-			return '';
+			return;
 		}
 
 		if (!array_key_exists($name, $this->server_caps)) {
@@ -1167,7 +1165,7 @@ class SMTP
 			}
 			$this->setError('HELO handshake was used; No information about server extensions available');
 
-			return '';
+			return;
 		}
 
 		return $this->server_caps[$name];

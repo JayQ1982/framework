@@ -5,59 +5,49 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
 use finfo;
 use SplFileInfo;
 
-use function is_file;
-use function is_string;
-
-use const FILEINFO_MIME_TYPE;
-
 /**
- * Validates if the input is a file and if its MIME type matches the expected one.
+ * Validate file mimetypes.
  *
- * @author Danilo Correa <danilosilva87@gmail.com>
  * @author Henrique Moody <henriquemoody@gmail.com>
  */
-final class Mimetype extends AbstractRule
+class Mimetype extends AbstractRule
 {
     /**
      * @var string
      */
-    private $mimetype;
+    public $mimetype;
 
     /**
      * @var finfo
      */
     private $fileInfo;
 
-	/**
-	 * Initializes the rule by defining the expected mimetype from the input.
-	 *
-	 * @param string     $mimetype
-	 * @param finfo|null $fileInfo
-	 */
-    public function __construct(string $mimetype, ?finfo $fileInfo = null)
+    /**
+     * @param string $mimetype
+     * @param finfo  $fileInfo
+     */
+    public function __construct($mimetype, finfo $fileInfo = null)
     {
         $this->mimetype = $mimetype;
-        $this->fileInfo = $fileInfo ?: new finfo();
+        $this->fileInfo = $fileInfo ?: new finfo(FILEINFO_MIME_TYPE);
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    public function validate($input): bool
+    public function validate($input)
     {
         if ($input instanceof SplFileInfo) {
-            return $this->validate($input->getPathname());
+            $input = $input->getPathname();
         }
 
         if (!is_string($input)) {
@@ -68,6 +58,6 @@ final class Mimetype extends AbstractRule
             return false;
         }
 
-        return $this->mimetype === $this->fileInfo->file($input, FILEINFO_MIME_TYPE);
+        return ($this->fileInfo->file($input) == $this->mimetype);
     }
 }

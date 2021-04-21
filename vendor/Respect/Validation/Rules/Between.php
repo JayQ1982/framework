@@ -5,50 +5,34 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
 use framework\vendor\Respect\Validation\Exceptions\ComponentException;
-use framework\vendor\Respect\Validation\Helpers\CanCompareValues;
 
-/**
- * Validates whether the input is between two other values.
- *
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class Between extends AbstractEnvelope
+class Between extends AllOf
 {
-    use CanCompareValues;
+    public $minValue;
+    public $maxValue;
 
-    /**
-     * Initializes the rule.
-     *
-     * @param mixed $minValue
-     * @param mixed $maxValue
-     *
-     * @throws ComponentException
-     */
-    public function __construct($minValue, $maxValue)
+	/** @noinspection PhpMissingParentConstructorInspection */
+    public function __construct($min = null, $max = null, $inclusive = true)
     {
-        if ($this->toComparable($minValue) >= $this->toComparable($maxValue)) {
-            throw new ComponentException('Minimum cannot be less than or equals to maximum');
+        $this->minValue = $min;
+        $this->maxValue = $max;
+        if (!is_null($min) && !is_null($max) && $min > $max) {
+            throw new ComponentException(sprintf('%s cannot be less than  %s for validation', $min, $max));
         }
 
-        parent::__construct(
-            new AllOf(
-                new Min($minValue),
-                new Max($maxValue)
-            ),
-            [
-                'minValue' => $minValue,
-                'maxValue' => $maxValue,
-            ]
-        );
+        if (!is_null($min)) {
+            $this->addRule(new Min($min, $inclusive));
+        }
+
+        if (!is_null($max)) {
+            $this->addRule(new Max($max, $inclusive));
+        }
     }
 }

@@ -14,7 +14,7 @@
 return [
 	'generalDesc' =>
   [
-	  'NationalNumberPattern' => '[14]\\d\\d',
+	  'NationalNumberPattern' => '1\\d\\d',
 	  'PossibleLength' =>
     [
       0 => 3,
@@ -25,8 +25,8 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '11[1245]',
-	  'ExampleNumber' => '111',
+	  'NationalNumberPattern' => '112',
+	  'ExampleNumber' => '112',
 	  'PossibleLength' =>
     [
     ],
@@ -46,8 +46,8 @@ return [
   ],
 	'emergency' =>
   [
-	  'NationalNumberPattern' => '11[12]',
-	  'ExampleNumber' => '111',
+	  'NationalNumberPattern' => '112',
+	  'ExampleNumber' => '112',
 	  'PossibleLength' =>
     [
     ],
@@ -57,8 +57,8 @@ return [
   ],
 	'shortCode' =>
   [
-	  'NationalNumberPattern' => '1(?:0[0-2]|1[0-24-6]|2[13]|70|99)|456',
-	  'ExampleNumber' => '100',
+	  'NationalNumberPattern' => '112',
+	  'ExampleNumber' => '112',
 	  'PossibleLength' =>
     [
     ],

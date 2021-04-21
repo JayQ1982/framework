@@ -7,11 +7,16 @@
 namespace framework\core;
 
 use Exception;
+use LogicException;
 use framework\exception\NotFoundException;
+use framework\session\AbstractSessionHandler;
 use stdClass;
 
 class RequestHandler
 {
+	private static ?RequestHandler $instance = null;
+	private bool $isInitialized = false;
+
 	private array $pathParts;
 	private int $countPathParts;
 	private string $fileName;
@@ -30,51 +35,65 @@ class RequestHandler
 	private ?string $fileExtension = null;
 	private bool $displayHelpContent = false;
 
-	public function __construct(Core $core)
+	public static function getInstance(): RequestHandler
 	{
+		if (is_null(RequestHandler::$instance)) {
+			RequestHandler::$instance = new RequestHandler();
+		}
+
+		return RequestHandler::$instance;
+	}
+
+	private function __construct() { }
+
+	public function init(Core $core)
+	{
+		if ($this->isInitialized) {
+			throw new LogicException('RequestHandler is already initialized');
+		}
+		$this->isInitialized = true;
 		$httpRequest = $core->getHttpRequest();
-		$environmentHandler = $core->getEnvironmentHandler();
+		$environmentSettingsModel = $core->getEnvironmentSettingsModel();
 		$settingsHandler = $core->getSettingsHandler();
 		$coreProperties = $core->getCoreProperties();
 		$sessionHandler = $core->getSessionHandler();
 
-		$this->checkDomain($httpRequest, $environmentHandler);
+		$this->checkDomain($httpRequest, $environmentSettingsModel->getAllowedDomains());
 		$this->pathParts = explode('/', $httpRequest->getPath());
 		$this->countPathParts = count($this->pathParts);
 		$this->fileName = trim($this->pathParts[$this->countPathParts - 1]);
 		$routeSettings = $settingsHandler->get('routes');
-		$this->defaultRoutes = $this->initDefaultRoutes($routeSettings, $environmentHandler);
+		$this->defaultRoutes = $this->initDefaultRoutes($routeSettings, $environmentSettingsModel);
 		$this->route = $this->initRoute($this->countPathParts, $httpRequest, $routeSettings, $core);
 		if (is_null($this->route)) {
 			throw new NotFoundException($core, true);
 		}
-		$this->initPropertiesFromRouteSettings($routeSettings->routes->{$this->route}, $coreProperties, $environmentHandler, $sessionHandler);
+		$this->initPropertiesFromRouteSettings($routeSettings->routes->{$this->route}, $coreProperties, $environmentSettingsModel, $sessionHandler);
 		$this->setFileProperties();
 		if ($this->fileExtension !== $this->acceptedExtension) {
 			throw new NotFoundException($core, true);
 		}
 	}
 
-	private function checkDomain(HttpRequest $httpRequest, EnvironmentHandler $environmentHandler): void
+	private function checkDomain(HttpRequest $httpRequest, array $allowedDomains): void
 	{
 		$host = $httpRequest->getHost();
-		$allowedDomains = $environmentHandler->getAllowedDomains();
 
 		if (count($allowedDomains) === 0) {
-			throw new Exception('Please define allowedDomains (as array) in envSettings.json');
+			throw new Exception('Please define at least one allowed domain');
 		}
 
 		if (!in_array($host, $allowedDomains)) {
-			throw new Exception($host . ' is not set in envSettings->allowedDomains array');
+			throw new Exception($host . ' is not set as allowed domain');
 		}
 	}
 
-	private function initDefaultRoutes(stdClass $routeSettings, EnvironmentHandler $environmentHandler): array
+	private function initDefaultRoutes(stdClass $routeSettings, EnvironmentSettingsModel $environmentSettingsModel): array
 	{
 		$defaultRoutes = [];
 
 		foreach ((array)$routeSettings->default as $langCode => $defaultRoute) {
-			if (array_key_exists($langCode, $environmentHandler->getAvailableLanguages())) {
+			if (array_key_exists($langCode, $environmentSettingsModel->getAvailableLanguages())) {
 				$defaultRoutes[$langCode] = $defaultRoute;
 			}
 		}
@@ -135,7 +154,7 @@ class RequestHandler
 				}
 			}
 
-			foreach ($httpRequest->getLanguages() as $priority => $language) {
+			foreach ($httpRequest->getLanguages() as $language) {
 				if (array_key_exists($language, $defaultRoutes)) {
 					$core->redirect($defaultRoutes[$language]);
 				}
@@ -148,7 +167,7 @@ class RequestHandler
 		return null;
 	}
 
-	private function initPropertiesFromRouteSettings(stdClass $routeSettings, CoreProperties $coreProperties, EnvironmentHandler $environmentHandler, SessionHandler $sessionHandler): void
+	private function initPropertiesFromRouteSettings(stdClass $routeSettings, CoreProperties $coreProperties, EnvironmentSettingsModel $environmentSettingsModel, AbstractSessionHandler $sessionHandler): void
 	{
 		// Force fileGroup if defined
 		if (isset($routeSettings->fileGroup) && $routeSettings->fileGroup !== '') {
@@ -156,15 +175,15 @@ class RequestHandler
 		}
 
 		// Force filename if defined
-		if (isset($routeSettings->forceFileName) && $routeSettings->forceFileName !== '') {
-			$this->fileName = $routeSettings->forceFileName;
+		if (isset($routeSettings->forceFilename) && $routeSettings->forceFilename !== '') {
+			$this->fileName = $routeSettings->forceFilename;
 		}
 
 		$this->area = $routeSettings->area;
 		$this->areaDir = $coreProperties->getSiteContentDir() . $routeSettings->area . '/';
 		$this->defaultFileName = $routeSettings->defaultFileName ?? $this->defaultFileName;
 		$this->acceptedExtension = $routeSettings->acceptedExtension ?? $this->acceptedExtension;
-		$this->language = $routeSettings->language ?? key($environmentHandler->getAvailableLanguages());
+		$this->language = $routeSettings->language ?? key($environmentSettingsModel->getAvailableLanguages());
 		if ($sessionHandler->getPreferredLanguage() !== $this->language) {
 			$sessionHandler->setPreferredLanguage($this->language);
 		}

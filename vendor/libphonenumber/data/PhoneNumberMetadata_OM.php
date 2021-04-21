@@ -14,7 +14,7 @@
 return [
 	'generalDesc' =>
   [
-	  'NationalNumberPattern' => '(?:1505|[279]\\d{3}|500)\\d{4}|800\\d{5,6}',
+	  'NationalNumberPattern' => '(?:[279]\\d{3}|500)\\d{4}|8007\\d{4,5}',
 	  'PossibleLength' =>
     [
       0 => 7,
@@ -39,7 +39,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '(?:1505|90[1-9]\\d)\\d{4}|(?:7[1289]|9[1-9])\\d{6}',
+	  'NationalNumberPattern' => '90[1-9]\\d{5}|(?:7[1289]|9[1-9])\\d{6}',
 	  'ExampleNumber' => '92123456',
 	  'PossibleLength' =>
     [
@@ -51,7 +51,7 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '8007\\d{4,5}|(?:500|800[05])\\d{4}',
+	  'NationalNumberPattern' => '500\\d{4}|8007\\d{4,5}',
 	  'ExampleNumber' => '80071234',
 	  'PossibleLength' =>
     [
@@ -178,7 +178,7 @@ return [
 	    'format' => '$1 $2',
 	    'leadingDigitsPatterns' =>
       [
-        0 => '[179]',
+        0 => '[79]',
       ],
 	    'nationalPrefixFormattingRule' => '',
 	    'domesticCarrierCodeFormattingRule' => '',

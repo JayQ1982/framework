@@ -5,30 +5,15 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Exceptions;
 
-/**
- * Exceptions to be thrown by the Attribute Rule.
- *
- * @author Emmerson Siqueira <emmersonsiqueira@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Ivan Zinovyev <vanyazin@gmail.com>
- */
-final class KeyNestedException extends NestedValidationException implements NonOmissibleException
+class KeyNestedException extends AttributeException
 {
-    public const NOT_PRESENT = 'not_present';
-    public const INVALID = 'invalid';
-
-    /**
-     * {@inheritDoc}
-     */
-    protected $defaultTemplates = [
+    public static $defaultTemplates = [
         self::MODE_DEFAULT => [
             self::NOT_PRESENT => 'No items were found for key chain {{name}}',
             self::INVALID => 'Key chain {{name}} is not valid',
@@ -38,12 +23,4 @@ final class KeyNestedException extends NestedValidationException implements NonO
             self::INVALID => 'Key chain {{name}} must not be valid',
         ],
     ];
-
-    /**
-     * {}
-     */
-    protected function chooseTemplate(): string
-    {
-        return $this->getParam('hasReference') ? self::INVALID : self::NOT_PRESENT;
-    }
 }

@@ -5,55 +5,24 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use function end;
-use function is_array;
-use function mb_detect_encoding;
-use function mb_strlen;
-use function mb_strripos;
-use function mb_strrpos;
-
-/**
- * Validates only if the value is at the end of the input.
- *
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Hugo Hamon <hugo.hamon@sensiolabs.com>
- * @author William Espindola <oi@williamespindola.com.br>
- */
-final class EndsWith extends AbstractRule
+class EndsWith extends AbstractRule
 {
-    /**
-     * @var mixed
-     */
-    private $endValue;
+    public $endValue;
+    public $identical;
 
-    /**
-     * @var bool
-     */
-    private $identical;
-
-	/**
-	 * @param mixed $endValue
-	 * @param bool  $identical
-	 */
-    public function __construct($endValue, bool $identical = false)
+    public function __construct($endValue, $identical = false)
     {
         $this->endValue = $endValue;
         $this->identical = $identical;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
         if ($this->identical) {
             return $this->validateIdentical($input);
@@ -62,39 +31,23 @@ final class EndsWith extends AbstractRule
         return $this->validateEquals($input);
     }
 
-	/**
-	 * @param mixed $input
-	 *
-	 * @return bool
-	 * @return bool
-	 */
-    private function validateEquals($input): bool
+    protected function validateEquals($input)
     {
         if (is_array($input)) {
             return end($input) == $this->endValue;
         }
 
-        $encoding = (string) mb_detect_encoding($input);
-        $endPosition = mb_strlen($input, $encoding) - mb_strlen($this->endValue, $encoding);
-
-        return mb_strripos($input, $this->endValue, 0, $encoding) === $endPosition;
+        return mb_strripos($input, $this->endValue, -1, $enc = mb_detect_encoding($input))
+            === mb_strlen($input, $enc) - mb_strlen($this->endValue, $enc);
     }
 
-	/**
-	 * @param mixed $input
-	 *
-	 * @return bool
-	 * @return bool
-	 */
-    private function validateIdentical($input): bool
+    protected function validateIdentical($input)
     {
         if (is_array($input)) {
             return end($input) === $this->endValue;
         }
 
-        $encoding = (string) mb_detect_encoding($input);
-        $endPosition = mb_strlen($input, $encoding) - mb_strlen($this->endValue, $encoding);
-
-        return mb_strrpos($input, $this->endValue, 0, $encoding) === $endPosition;
+        return mb_strrpos($input, $this->endValue, 0, $enc = mb_detect_encoding($input))
+            === mb_strlen($input, $enc) - mb_strlen($this->endValue, $enc);
     }
 }

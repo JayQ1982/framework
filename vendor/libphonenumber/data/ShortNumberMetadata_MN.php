@@ -25,7 +25,7 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '10[0-35]',
+	  'NationalNumberPattern' => '10[0-3]',
 	  'ExampleNumber' => '100',
 	  'PossibleLength' =>
     [
@@ -46,7 +46,7 @@ return [
   ],
 	'emergency' =>
   [
-	  'NationalNumberPattern' => '10[0-35]',
+	  'NationalNumberPattern' => '10[0-3]',
 	  'ExampleNumber' => '100',
 	  'PossibleLength' =>
     [
@@ -57,7 +57,7 @@ return [
   ],
 	'shortCode' =>
   [
-	  'NationalNumberPattern' => '10[0-35]',
+	  'NationalNumberPattern' => '10[0-3]',
 	  'ExampleNumber' => '100',
 	  'PossibleLength' =>
     [

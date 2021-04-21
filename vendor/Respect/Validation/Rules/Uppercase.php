@@ -5,37 +5,16 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use function is_string;
-use function mb_detect_encoding;
-use function mb_strtoupper;
-
-/**
- * Validates whether the characters in the input are uppercase.
- *
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Danilo Benevides <danilobenevides01@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Jean Pimentel <jeanfap@gmail.com>
- */
-final class Uppercase extends AbstractRule
+class Uppercase extends AbstractRule
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
-        if (!is_string($input)) {
-            return false;
-        }
-
-        return $input === mb_strtoupper($input, (string) mb_detect_encoding($input));
+        return $input === mb_strtoupper($input, mb_detect_encoding($input));
     }
 }

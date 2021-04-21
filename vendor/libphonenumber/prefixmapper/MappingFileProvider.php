@@ -20,7 +20,7 @@ class MappingFileProvider
 		$this->map = $map;
 	}
 
-	public function getFileName($countryCallingCode, $language, $region)
+	public function getFileName($countryCallingCode, $language, /** @noinspection PhpUnusedParameterInspection */ $script, $region)
 	{
 		if (strlen($language) == 0) {
 			return '';

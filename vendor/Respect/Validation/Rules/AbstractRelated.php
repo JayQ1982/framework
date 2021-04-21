@@ -5,159 +5,102 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use framework\vendor\Respect\Validation\Exceptions\NestedValidationException;
 use framework\vendor\Respect\Validation\Exceptions\ValidationException;
 use framework\vendor\Respect\Validation\Validatable;
 
-use function is_scalar;
-
-/**
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Emmerson Siqueira <emmersonsiqueira@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Nick Lombard <github@jigsoft.co.za>
- */
 abstract class AbstractRelated extends AbstractRule
 {
-    /**
-     * @var bool
-     */
-    private $mandatory;
+	public $mandatory = true;
+	public $reference = '';
+	public $validator;
 
-    /**
-     * @var mixed
-     */
-    private $reference;
-
-    /**
-     * @var Validatable|null
-     */
-    private $rule;
+	abstract public function hasReference($input);
 
 	/**
-	 * @param mixed $input
+	 * @param $input
+	 *
+	 * @return mixed
+	 * @throws ValidationException
+	 */
+	abstract public function getReferenceValue($input);
+
+	public function __construct($reference, Validatable $validator = null, $mandatory = true)
+	{
+		$this->setName($reference);
+		if ($validator && !$validator->getName()) {
+			$validator->setName($reference);
+		}
+
+		$this->reference = $reference;
+		$this->validator = $validator;
+		$this->mandatory = $mandatory;
+	}
+
+	public function setName($name)
+	{
+		parent::setName($name);
+
+		if ($this->validator instanceof Validatable) {
+			$this->validator->setName($name);
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @param $type
+	 * @param $hasReference
+	 * @param $input
 	 *
 	 * @return bool
-	 * @return bool
+	 * @throws ValidationException
 	 */
-    abstract public function hasReference($input): bool;
+	private function decision($type, $hasReference, $input)
+	{
+		return (!$this->mandatory && !$hasReference)
+			|| (is_null($this->validator)
+				|| $this->validator->$type($this->getReferenceValue($input)));
+	}
 
-    /**
-     * @param mixed $input
-     *
-     * @return mixed
-     */
-    abstract public function getReferenceValue($input);
+	public function assert($input)
+	{
+		$hasReference = $this->hasReference($input);
+		if ($this->mandatory && !$hasReference) {
+			throw $this->reportError($input, ['hasReference' => false]);
+		}
 
-	/**
-	 * @param mixed            $reference
-	 * @param Validatable|null $rule
-	 * @param bool             $mandatory
-	 */
-    public function __construct($reference, ?Validatable $rule = null, bool $mandatory = true)
-    {
-        $this->reference = $reference;
-        $this->rule = $rule;
-        $this->mandatory = $mandatory;
+		try {
+			return $this->decision('assert', $hasReference, $input);
+		} catch (ValidationException $e) {
+			throw $this
+				->reportError($this->reference, ['hasReference' => true])
+				->addRelated($e);
+		}
+	}
 
-        if ($rule && $rule->getName() !== null) {
-            $this->setName($rule->getName());
-        } elseif (is_scalar($reference)) {
-            $this->setName((string) $reference);
-        }
-    }
+	public function check($input)
+	{
+		$hasReference = $this->hasReference($input);
+		if ($this->mandatory && !$hasReference) {
+			throw $this->reportError($input, ['hasReference' => false]);
+		}
 
-    /**
-     * @return mixed
-     */
-    public function getReference()
-    {
-        return $this->reference;
-    }
+		return $this->decision('check', $hasReference, $input);
+	}
 
-    public function isMandatory(): bool
-    {
-        return $this->mandatory;
-    }
+	public function validate($input)
+	{
+		$hasReference = $this->hasReference($input);
+		if ($this->mandatory && !$hasReference) {
+			return false;
+		}
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setName(string $name): Validatable
-    {
-        parent::setName($name);
-
-        if ($this->rule instanceof Validatable) {
-            $this->rule->setName($name);
-        }
-
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function assert($input): void
-    {
-        $hasReference = $this->hasReference($input);
-        if ($this->mandatory && !$hasReference) {
-            throw $this->reportError($input, ['hasReference' => false]);
-        }
-
-        if ($this->rule === null || !$hasReference) {
-            return;
-        }
-
-        try {
-            $this->rule->assert($this->getReferenceValue($input));
-        } catch (ValidationException $validationException) {
-            /** @var NestedValidationException $nestedValidationException */
-            $nestedValidationException = $this->reportError($this->reference, ['hasReference' => true]);
-            $nestedValidationException->addChild($validationException);
-
-            throw $nestedValidationException;
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function check($input): void
-    {
-        $hasReference = $this->hasReference($input);
-        if ($this->mandatory && !$hasReference) {
-            throw $this->reportError($input, ['hasReference' => false]);
-        }
-
-        if ($this->rule === null || !$hasReference) {
-            return;
-        }
-
-        $this->rule->check($this->getReferenceValue($input));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
-    {
-        $hasReference = $this->hasReference($input);
-        if ($this->mandatory && !$hasReference) {
-            return false;
-        }
-
-        if ($this->rule === null || !$hasReference) {
-            return true;
-        }
-
-        return $this->rule->validate($this->getReferenceValue($input));
-    }
+		return $this->decision('validate', $hasReference, $input);
+	}
 }

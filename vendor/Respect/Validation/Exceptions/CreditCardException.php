@@ -5,29 +5,17 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Exceptions;
 
-use framework\vendor\Respect\Validation\Rules\CreditCard;
-
-/**
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Jean Pimentel <jeanfap@gmail.com>
- * @author William Espindola <oi@williamespindola.com.br>
- */
-final class CreditCardException extends ValidationException
+class CreditCardException extends ValidationException
 {
-    public const BRANDED = 'branded';
+    const BRANDED = 1;
 
-    /**
-     * {@inheritDoc}
-     */
-    protected $defaultTemplates = [
+    public static $defaultTemplates = [
         self::MODE_DEFAULT => [
             self::STANDARD => '{{name}} must be a valid Credit Card number',
             self::BRANDED => '{{name}} must be a valid {{brand}} Credit Card number',
@@ -38,15 +26,12 @@ final class CreditCardException extends ValidationException
         ],
     ];
 
-    /**
-     * {}
-     */
-    protected function chooseTemplate(): string
+    public function chooseTemplate()
     {
-        if ($this->getParam('brand') === CreditCard::ANY) {
-            return self::STANDARD;
+        if (!$this->getParam('brand')) {
+            return static::STANDARD;
         }
 
-        return self::BRANDED;
+        return static::BRANDED;
     }
 }

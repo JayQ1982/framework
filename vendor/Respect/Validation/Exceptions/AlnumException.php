@@ -5,24 +5,15 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Exceptions;
 
-/**
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class AlnumException extends FilteredValidationException
+class AlnumException extends AlphaException
 {
-    /**
-     * {@inheritDoc}
-     */
-    protected $defaultTemplates = [
+    public static $defaultTemplates = [
         self::MODE_DEFAULT => [
             self::STANDARD => '{{name}} must contain only letters (a-z) and digits (0-9)',
             self::EXTRA => '{{name}} must contain only letters (a-z), digits (0-9) and {{additionalChars}}',

@@ -5,69 +5,46 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
+use framework\vendor\Respect\Validation\Exceptions\ComponentException;
 use framework\vendor\Respect\Validation\Validatable;
 
-/**
- * Abstract class to help on creating rules that wrap rules.
- *
- * @author Alasdair North <alasdair@runway.io>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
 abstract class AbstractWrapper extends AbstractRule
 {
-    /**
-     * @var Validatable
-     */
-    private $validatable;
+    protected $validatable;
 
-	/**
-	 * Initializes the rule.
-	 *
-	 * @param Validatable $validatable
-	 */
-    public function __construct(Validatable $validatable)
+    public function getValidatable()
     {
-        $this->validatable = $validatable;
+        if (!$this->validatable instanceof Validatable) {
+            throw new ComponentException('There is no defined validatable');
+        }
+
+        return $this->validatable;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function assert($input): void
+    public function assert($input)
     {
-        $this->validatable->assert($input);
+        return $this->getValidatable()->assert($input);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function check($input): void
+    public function check($input)
     {
-        $this->validatable->check($input);
+        return $this->getValidatable()->check($input);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
-        return $this->validatable->validate($input);
+        return $this->getValidatable()->validate($input);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setName(string $name): Validatable
+    public function setName($name)
     {
-        $this->validatable->setName($name);
+        $this->getValidatable()->setName($name);
 
         return parent::setName($name);
     }

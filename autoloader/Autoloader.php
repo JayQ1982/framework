@@ -7,16 +7,31 @@
 namespace framework\autoloader;
 
 use Exception;
+use LogicException;
 
 class Autoloader
 {
+	private static ?Autoloader $instance = null;
+
 	private ?string $cacheFilePath;
 	private array $cachedClasses = [];
 	/** @var AutoloaderPathModel[] */
 	private array $paths = [];
 	private bool $cachedClassesChanged = false;
 
-	public function __construct(?string $cacheFilePath = null)
+	public static function register(?string $cacheFilePath = null): Autoloader
+	{
+		if (!is_null(Autoloader::$instance)) {
+			throw new LogicException('Autoloader is already registered');
+		}
+
+		Autoloader::$instance = new Autoloader($cacheFilePath);
+		spl_autoload_register([Autoloader::$instance, 'doAutoload']);
+
+		return Autoloader::$instance;
+	}
+
+	private function __construct(?string $cacheFilePath = null)
 	{
 		$this->cacheFilePath = $cacheFilePath;
 		if (!$this->checkIfCacheDirectoryExists($cacheFilePath)) {
@@ -49,11 +64,6 @@ class Autoloader
 		return json_decode($serialized, true);
 	}
 
-	public function register(): void
-	{
-		spl_autoload_register([$this, 'doAutoload']);
-	}
-
 	public function addPath(AutoloaderPathModel $autoloaderPathModel): void
 	{
 		$this->paths[] = $autoloaderPathModel;
@@ -70,8 +80,6 @@ class Autoloader
 		}
 
 		foreach ($this->paths as $autoloaderPathModel) {
-			$delimiter = null;
-
 			$path = $autoloaderPathModel->getPath();
 			$mode = $autoloaderPathModel->getMode();
 

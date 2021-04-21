@@ -5,82 +5,56 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use framework\vendor\Respect\Validation\Exceptions\OneOfException;
-use framework\vendor\Respect\Validation\Exceptions\ValidationException;
-
-use function array_shift;
-use function count;
-
-/**
- * @author Bradyn Poulsen <bradyn@bradynpoulsen.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class OneOf extends AbstractComposite
+class OneOf extends AbstractComposite
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function assert($input): void
-    {
-        $validators = $this->getRules();
-        $exceptions = $this->getAllThrownExceptions($input);
-        $numRules = count($validators);
-        $numExceptions = count($exceptions);
-        if ($numExceptions !== $numRules - 1) {
-            /** @var OneOfException $oneOfException */
-            $oneOfException = $this->reportError($input);
-            $oneOfException->addChildren($exceptions);
+	public function assert($input)
+	{
+		$validators = $this->getRules();
+		$exceptions = $this->validateRules($input);
+		$numRules = count($validators);
+		$numExceptions = count($exceptions);
+		if ($numExceptions === $numRules) {
+			throw $this->reportError($input)->setRelated($exceptions);
+		}
 
-            throw $oneOfException;
-        }
-    }
+		return true;
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
-    {
-        $rulesPassedCount = 0;
-        foreach ($this->getRules() as $rule) {
-            if (!$rule->validate($input)) {
-                continue;
-            }
+	public function validate($input)
+	{
+		foreach ($this->getRules() as $v) {
+			if ($v->validate($input)) {
+				return true;
+			}
+		}
 
-            ++$rulesPassedCount;
-        }
+		return false;
+	}
 
-        return $rulesPassedCount === 1;
-    }
+	public function check($input)
+	{
+		foreach ($this->getRules() as $v) {
+			try {
+				if ($v->check($input)) {
+					return true;
+				}
+			} catch (\Throwable $e) {
+				if (!isset($firstException)) {
+					$firstException = $e;
+				}
+			}
+		}
 
-    /**
-     * {@inheritDoc}
-     */
-    public function check($input): void
-    {
-        $exceptions = [];
-        $rulesPassedCount = 0;
-        foreach ($this->getRules() as $rule) {
-            try {
-                $rule->check($input);
+		if (isset($firstException)) {
+			throw $firstException;
+		}
 
-                ++$rulesPassedCount;
-            } catch (ValidationException $exception) {
-                $exceptions[] = $exception;
-            }
-        }
-
-        if ($rulesPassedCount === 1) {
-            return;
-        }
-
-        throw array_shift($exceptions) ?: $this->reportError($input);
-    }
+		return false;
+	}
 }

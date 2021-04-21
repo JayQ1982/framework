@@ -6,8 +6,11 @@
 
 namespace framework\auth;
 
+use framework\db\DbSettingsModel;
+
 class AuthSettings
 {
+	private ?DbSettingsModel $authDbSettingsModel;
 	private string $checkLoginQuery;
 	private ?string $wrongPasswordQuery;
 	private ?string $loadRightsQuery;
@@ -15,16 +18,21 @@ class AuthSettings
 	private int $saltLength = 16;
 	private int $maxAllowedWrongPasswordAttempts = 5;
 	private int $maxIdleSeconds = 7200;
-	private string $authDbName = 'default';
 	private string $hashAlgorithm = 'sha256';
 	private string $loginPage = 'login.html';
 
-	public function __construct(string $checkLoginQuery, ?string $wrongPasswordQuery, ?string $loadRightsQuery, ?string $confirmLoginQuery)
+	public function __construct(?DbSettingsModel $authDbSettingsModel, string $checkLoginQuery, ?string $wrongPasswordQuery, ?string $loadRightsQuery, ?string $confirmLoginQuery)
 	{
+		$this->authDbSettingsModel = $authDbSettingsModel;
 		$this->checkLoginQuery = $checkLoginQuery;
 		$this->wrongPasswordQuery = $wrongPasswordQuery;
 		$this->loadRightsQuery = $loadRightsQuery;
 		$this->confirmLoginQuery = $confirmLoginQuery;
+	}
+
+	public function getAuthDbSettingsModel(): ?DbSettingsModel
+	{
+		return $this->authDbSettingsModel;
 	}
 
 	public function getCheckLoginQuery(): string
@@ -60,11 +68,6 @@ class AuthSettings
 	public function getMaxIdleSeconds(): int
 	{
 		return $this->maxIdleSeconds;
-	}
-
-	public function getAuthDbName(): string
-	{
-		return $this->authDbName;
 	}
 
 	public function getHashAlgorithm(): string

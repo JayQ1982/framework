@@ -7,7 +7,7 @@
 namespace framework\html;
 
 use framework\core\CoreProperties;
-use framework\core\EnvironmentHandler;
+use framework\core\EnvironmentSettingsModel;
 use framework\core\LocaleHandler;
 use framework\core\RequestHandler;
 use framework\security\CspNonce;
@@ -22,7 +22,7 @@ class HtmlDocument
 	private array $replacements = [];
 	private array $activeHtmlIds = [];
 
-	public function __construct(RequestHandler $requestHandler, LocaleHandler $localeHandler, EnvironmentHandler $environmentHandler)
+	public function __construct(RequestHandler $requestHandler, LocaleHandler $localeHandler, EnvironmentSettingsModel $environmentSettingsModel)
 	{
 		$fileTitle = trim($requestHandler->getFileTitle());
 		$this->contentFileName = $fileTitle;
@@ -30,12 +30,12 @@ class HtmlDocument
 		$this->replacements['_fileTitle'] = $fileTitle;
 		$this->replacements['_localeHandler'] = $localeHandler;
 
-		$copyright = $environmentHandler->getCopyrightYear();
+		$copyright = $environmentSettingsModel->getCopyrightYear();
 		$this->addText('bodyid', 'body_' . $fileTitle, true);
 		$this->addText('language', $requestHandler->getLanguage(), true);
 		$this->addText('charset', 'UTF-8', true);
 		$this->addText('copyright', ($copyright < date('Y')) ? $copyright . '-' . date('Y') : $copyright, true);
-		$this->addText('robots', $environmentHandler->getRobots(), true);
+		$this->addText('robots', $environmentSettingsModel->getRobots(), true);
 		$this->addText('scripts', '', true);
 		$this->addText('cspNonce', CspNonce::get(), true);
 		$this->addText('csrfField', CsrfToken::renderAsHiddenPostField(), true);

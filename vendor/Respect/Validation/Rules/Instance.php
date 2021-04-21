@@ -5,42 +5,27 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-/**
- * Validates if the input is an instance of the given class or interface.
- *
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Danilo Benevides <danilobenevides01@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class Instance extends AbstractRule
+class Instance extends AbstractRule
 {
-    /**
-     * @var string
-     */
-    private $instanceName;
+    public $instanceName;
 
-	/**
-	 * Initializes the rule with the expected instance name.
-	 *
-	 * @param string $instanceName
-	 */
-    public function __construct(string $instanceName)
+    public function __construct($instanceName)
     {
         $this->instanceName = $instanceName;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function reportError($input, array $extraParams = [])
+    {
+        return parent::reportError($input, $extraParams);
+    }
+
+    public function validate($input)
     {
         return $input instanceof $this->instanceName;
     }

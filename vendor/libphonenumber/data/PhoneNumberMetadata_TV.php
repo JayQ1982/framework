@@ -146,42 +146,6 @@ return [
 	'sameMobileAndFixedLinePattern' => false,
 	'numberFormat' =>
   [
-	  0 =>
-    [
-	    'pattern' => '(\\d{2})(\\d{3})',
-	    'format' => '$1 $2',
-	    'leadingDigitsPatterns' =>
-      [
-        0 => '2',
-      ],
-	    'nationalPrefixFormattingRule' => '',
-	    'domesticCarrierCodeFormattingRule' => '',
-	    'nationalPrefixOptionalWhenFormatting' => false,
-    ],
-	  1 =>
-    [
-	    'pattern' => '(\\d{2})(\\d{4})',
-	    'format' => '$1 $2',
-	    'leadingDigitsPatterns' =>
-      [
-        0 => '90',
-      ],
-	    'nationalPrefixFormattingRule' => '',
-	    'domesticCarrierCodeFormattingRule' => '',
-	    'nationalPrefixOptionalWhenFormatting' => false,
-    ],
-	  2 =>
-    [
-	    'pattern' => '(\\d{2})(\\d{5})',
-	    'format' => '$1 $2',
-	    'leadingDigitsPatterns' =>
-      [
-        0 => '7',
-      ],
-	    'nationalPrefixFormattingRule' => '',
-	    'domesticCarrierCodeFormattingRule' => '',
-	    'nationalPrefixOptionalWhenFormatting' => false,
-    ],
   ],
 	'intlNumberFormat' =>
   [

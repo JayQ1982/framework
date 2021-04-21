@@ -14,7 +14,7 @@ return [
   68025 => 'Sonsorol State and Hatohobei State',
   68027 => 'Angaur State',
   6803 => 'Peleliu State',
-  68048 => 'Koror State',
+  6804 => 'Koror State',
   68053 => 'Ngatpang State',
   68054 => 'Aimeliik State',
   68058 => 'Airai State',

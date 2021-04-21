@@ -6,51 +6,60 @@
 
 namespace framework\db;
 
-use framework\core\EnvironmentHandler;
-use RuntimeException;
+use LogicException;
 
 class DbSettingsModel
 {
-	private string $charset;
+	private static array $instances = [];
+
+	public const IDX_IDENTIFIER = 'identifier';
+	public const IDX_HOSTNAME = 'hostname';
+	public const IDX_DATABASE = 'database';
+	public const IDX_USERNAME = 'username';
+	public const IDX_PASSWORD = 'password';
+
+	private string $identifier;
 	private string $hostName;
 	private string $databaseName;
 	private string $userName;
 	private string $password;
+	private string $charset;
+	private ?string $timeNamesLanguage;
+	private bool $sqlSafeUpdates;
 
-	public static function getByID(EnvironmentHandler $environmentHandler, string $id): DbSettingsModel
-	{
-		$dbList = $environmentHandler->getDbCredentials();
-		$data = $dbList->{$id};
+	public function __construct(
+		string $identifier,
+		string $hostName,
+		string $databaseName,
+		string $userName,
+		string $password,
+		?string $charset,
+		?string $timeNamesLanguage,
+		bool $sqlSafeUpdates
+	) {
+		if (array_key_exists($identifier, DbSettingsModel::$instances)) {
+			throw new LogicException('There is already an instance with the identifier ' . $identifier);
+		}
+		DbSettingsModel::$instances[$identifier] = $this;
 
-		return new DbSettingsModel(
-			$data->host,
-			$data->database,
-			$data->username,
-			$data->password,
-			$data->charset ?? null
-		);
-	}
-
-	private function __construct(string $hostName, string $databaseName, string $userName, string $password, ?string $charset)
-	{
-		$charset = trim($charset);
-
-		if (empty($charset)) {
-			$charset = 'utf8'; // UTF-8 is default
-		} else if (strtolower($charset) === 'utf-8') {
-			throw new RuntimeException('Faulty charset setting string "utf-8". Must be "utf8" for PDO driver.');
+		$charset = trim($charset ?? 'utf8');
+		if (strtolower($charset) === 'utf-8') {
+			throw new LogicException('Faulty charset setting string "utf-8". Must be "utf8" for PDO driver.');
 		}
 
-		$this->charset = $charset;
+		$this->identifier = $identifier;
 		$this->hostName = $hostName;
 		$this->databaseName = $databaseName;
 		$this->userName = $userName;
 		$this->password = $password;
+		$this->charset = $charset;
+		$this->timeNamesLanguage = $timeNamesLanguage;
+		$this->sqlSafeUpdates = $sqlSafeUpdates;
 	}
 
-	public function getCharset(): string
+	public function getIdentifier(): string
 	{
-		return $this->charset;
+		return $this->identifier;
 	}
 
 	public function getHostName(): string
@@ -71,5 +80,20 @@ class DbSettingsModel
 	public function getPassword(): string
 	{
 		return $this->password;
+	}
+
+	public function getCharset(): string
+	{
+		return $this->charset;
+	}
+
+	public function getTimeNamesLanguage(): ?string
+	{
+		return $this->timeNamesLanguage;
+	}
+
+	public function isSqlSafeUpdates(): bool
+	{
+		return $this->sqlSafeUpdates;
 	}
 }

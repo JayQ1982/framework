@@ -24,13 +24,13 @@ class ContentHandler
 		$this->core = $core;
 		$requestHandler = $core->getRequestHandler();
 		$localeHandler = $core->getLocaleHandler();
-		$environmentHandler = $core->getEnvironmentHandler();
+		$environmentSettingsModel = $core->getEnvironmentSettingsModel();
 
 		$defaultContentType = trim($requestHandler->getContentType());
 		if ($defaultContentType !== '') {
 			$this->contentType = $defaultContentType;
 		}
-		$this->htmlDocument = ($this->contentType === HttpResponse::TYPE_HTML) ? new HtmlDocument($requestHandler, $localeHandler, $environmentHandler) : null;
+		$this->htmlDocument = ($this->contentType === HttpResponse::TYPE_HTML) ? new HtmlDocument($requestHandler, $localeHandler, $environmentSettingsModel) : null;
 	}
 
 	public function setContentType(string $contentType): void

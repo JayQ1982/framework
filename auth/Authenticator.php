@@ -253,9 +253,7 @@ class Authenticator
 	protected function getAuthDb(): FrameworkDB
 	{
 		if (is_null($this->authDb)) {
-			$authDbName = $this->authSettings->getAuthDbName();
-			$core = $this->core;
-			$this->authDb = FrameworkDB::getInstance($core->getEnvironmentHandler(), $core->getRequestHandler()->getLanguage(), $authDbName);
+			$this->authDb = FrameworkDB::getInstance($this->authSettings->getAuthDbSettingsModel());
 		}
 
 		return $this->authDb;

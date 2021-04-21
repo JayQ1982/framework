@@ -5,30 +5,15 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use function ctype_space;
-
-/**
- * Validates whether the input contains only whitespaces characters.
- *
- * @author Andre Ramaciotti <andre@ramaciotti.com>
- * @author Danilo Correa <danilosilva87@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Nick Lombard <github@jigsoft.co.za>
- */
-final class Space extends AbstractFilterRule
+class Space extends AbstractCtypeRule
 {
-    /**
-     * {}
-     */
-    protected function validateFilteredInput(string $input): bool
+    protected function ctypeFunction($input)
     {
         return ctype_space($input);
     }

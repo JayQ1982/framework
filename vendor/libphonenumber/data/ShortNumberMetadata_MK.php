@@ -14,12 +14,10 @@
 return [
 	'generalDesc' =>
   [
-	  'NationalNumberPattern' => '1\\d\\d(?:\\d(?:\\d{2})?)?',
+	  'NationalNumberPattern' => '1\\d\\d',
 	  'PossibleLength' =>
     [
       0 => 3,
-      1 => 4,
-      2 => 6,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -27,12 +25,10 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '1(?:1(?:2|6\\d{3})|9[2-4])',
+	  'NationalNumberPattern' => '1(?:12|9[2-4])',
 	  'ExampleNumber' => '112',
 	  'PossibleLength' =>
     [
-      0 => 3,
-      1 => 6,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -54,7 +50,6 @@ return [
 	  'ExampleNumber' => '112',
 	  'PossibleLength' =>
     [
-      0 => 3,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -62,7 +57,7 @@ return [
   ],
 	'shortCode' =>
   [
-	  'NationalNumberPattern' => '1(?:1(?:2|8\\d)|3\\d|9[2-4])|1(?:16|2\\d)\\d{3}',
+	  'NationalNumberPattern' => '1(?:12|9[2-4])',
 	  'ExampleNumber' => '112',
 	  'PossibleLength' =>
     [

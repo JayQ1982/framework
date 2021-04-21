@@ -5,69 +5,83 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use framework\vendor\Respect\Validation\Exceptions\ComponentException;
-use framework\vendor\Respect\Validation\Helpers\CanValidateDateTime;
+use DateTime;
+use DateTimeInterface;
 
-use function date;
-use function is_scalar;
-use function preg_match;
-use function sprintf;
-use function strtotime;
-
-/**
- * Validates if input is a date.
- *
- * @author Bruno Luiz da Silva <contato@brunoluiz.net>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class Date extends AbstractRule
+class Date extends AbstractRule
 {
-    use CanValidateDateTime;
+    public $format = null;
 
-    /**
-     * @var string
-     */
-    private $format;
-
-    /**
-     * @var string
-     */
-    private $sample;
-
-	/**
-	 * Initializes the rule.
-	 *
-	 * @param string $format
-	 *
-	 * @throws ComponentException
-	 */
-    public function __construct(string $format = 'Y-m-d')
+    public function __construct($format = null)
     {
-        if (!preg_match('/^[djSFmMnYy\W]+$/', $format)) {
-            throw new ComponentException(sprintf('"%s" is not a valid date format', $format));
-        }
-
         $this->format = $format;
-        $this->sample = date($format, strtotime('2005-12-30'));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
+        if ($input instanceof DateTimeInterface
+            || $input instanceof DateTime) {
+            return true;
+        }
+
         if (!is_scalar($input)) {
             return false;
         }
 
-        return $this->isDateTime($this->format, (string) $input);
+        $inputString = (string) $input;
+
+        if (is_null($this->format)) {
+            return false !== strtotime($inputString);
+        }
+
+        $exceptionalFormats = [
+            'c' => 'Y-m-d\TH:i:sP',
+            'r' => 'D, d M Y H:i:s O',
+        ];
+
+        if (in_array($this->format, array_keys($exceptionalFormats))) {
+            $this->format = $exceptionalFormats[$this->format];
+        }
+
+        return $this->isValidForFormatProvided($input);
+    }
+
+    private function isValidForFormatProvided($input)
+    {
+        $info = date_parse_from_format($this->format, $input);
+        if (!$this->isParsable($info)) {
+            return false;
+        }
+
+        if ($this->hasDateFormat()) {
+            return $this->hasValidDate($info);
+        }
+
+        return true;
+    }
+
+    private function isParsable(array $info)
+    {
+        return ($info['error_count'] === 0 && $info['warning_count'] === 0);
+    }
+
+    private function hasDateFormat()
+    {
+        return preg_match('/[djSFmMnYy]/', $this->format) > 0;
+    }
+
+    private function hasValidDate(array $info)
+    {
+        if ($info['day']) {
+            return checkdate((int) $info['month'], $info['day'], (int) $info['year']);
+        }
+
+        return checkdate($info['month'] ?: 1, $info['day'] ?: 1, $info['year'] ?: 1);
     }
 }

@@ -42,6 +42,7 @@ class PrefixFileReader
 			throw new InvalidArgumentException("Invalid data directory: $mapPath");
 		}
 
+		/** @noinspection PhpIncludeInspection */
 		$map = require $mapPath;
 
 		$this->mappingFileProvider = new MappingFileProvider($map);
@@ -50,13 +51,14 @@ class PrefixFileReader
 	/**
 	 * @param $prefixMapKey
 	 * @param $language
+	 * @param $script
 	 * @param $region
 	 *
 	 * @return PhonePrefixMap|null
 	 */
-	public function getPhonePrefixDescriptions($prefixMapKey, $language, $region)
+	public function getPhonePrefixDescriptions($prefixMapKey, $language, $script, $region)
 	{
-		$fileName = $this->mappingFileProvider->getFileName($prefixMapKey, $language, $region);
+		$fileName = $this->mappingFileProvider->getFileName($prefixMapKey, $language, $script, $region);
 		if (strlen($fileName) == 0) {
 			return null;
 		}
@@ -75,6 +77,7 @@ class PrefixFileReader
 			throw new InvalidArgumentException('Data does not exist');
 		}
 
+		/** @noinspection PhpIncludeInspection */
 		$map = require $path;
 		$areaCodeMap = new PhonePrefixMap($map);
 
@@ -95,21 +98,23 @@ class PrefixFileReader
 	 *
 	 * @param PhoneNumber $number   the phone number for which we want to get a text description
 	 * @param string      $language two or three-letter lowercase ISO language as defined by ISO 639
+	 * @param string      $script   four-letter titlecase (the first letter is uppercase and the rest of the letters
+	 *                              are lowercase) ISO script code as defined in ISO 15924
 	 * @param string      $region   two-letter uppercase ISO country code as defined by ISO 3166-1
 	 *
 	 * @return string a text description for the given language code for the given phone number, or empty
 	 *     string if the number passed in is invalid or could belong to multiple countries
 	 */
-	public function getDescriptionForNumber(PhoneNumber $number, $language, $region)
+	public function getDescriptionForNumber(PhoneNumber $number, $language, $script, $region)
 	{
 		$phonePrefix = $number->getCountryCode() . PhoneNumberUtil::getInstance()->getNationalSignificantNumber($number);
 
-		$phonePrefixDescriptions = $this->getPhonePrefixDescriptions($phonePrefix, $language, $region);
+		$phonePrefixDescriptions = $this->getPhonePrefixDescriptions($phonePrefix, $language, $script, $region);
 
 		$description = ($phonePrefixDescriptions !== null) ? $phonePrefixDescriptions->lookup($number) : null;
 		// When a location is not available in the requested language, fall back to English.
 		if (($description === null || strlen($description) === 0) && $this->mayFallBackToEnglish($language)) {
-			$defaultMap = $this->getPhonePrefixDescriptions($phonePrefix, 'en', '');
+			$defaultMap = $this->getPhonePrefixDescriptions($phonePrefix, 'en', '', '');
 			if ($defaultMap === null) {
 				return '';
 			}

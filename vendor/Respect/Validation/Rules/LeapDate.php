@@ -5,56 +5,34 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use DateTimeImmutable;
-use DateTimeInterface;
+use DateTime;
 
-use function is_scalar;
-
-/**
- * Validates if a date is leap.
- *
- * @author Danilo Benevides <danilobenevides01@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Jayson Reis <santosdosreis@gmail.com>
- */
-final class LeapDate extends AbstractRule
+class LeapDate extends AbstractRule
 {
-    /**
-     * @var string
-     */
-    private $format;
+    public $format = null;
 
-	/**
-	 * Initializes the rule with the expected format.
-	 *
-	 * @param string $format
-	 */
-    public function __construct(string $format)
+    public function __construct($format)
     {
         $this->format = $format;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
-        if ($input instanceof DateTimeInterface) {
-            return $input->format('m-d') === '02-29';
+        if (is_string($input)) {
+            $date = DateTime::createFromFormat($this->format, $input);
+        } elseif ($input instanceof DateTime) {
+            $date = $input;
+        } else {
+            return false;
         }
 
-        if (is_scalar($input)) {
-            return $this->validate(DateTimeImmutable::createFromFormat($this->format, (string) $input));
-        }
-
-        return false;
+        // Dates that aren't leap will aways be rounded
+        return $date->format('m-d') == '02-29';
     }
 }

@@ -31,7 +31,6 @@ return [
   5939629 => 'Movistar',
   593963 => 'Movistar',
   593964 => 'Movistar',
-  593966 => 'CNT',
   593967 => 'Claro',
   593968 => 'Claro',
   593969 => 'Claro',

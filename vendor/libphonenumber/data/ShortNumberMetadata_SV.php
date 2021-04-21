@@ -14,12 +14,11 @@
 return [
 	'generalDesc' =>
   [
-	  'NationalNumberPattern' => '[149]\\d\\d(?:\\d{2,3})?',
+	  'NationalNumberPattern' => '[49]\\d\\d(?:\\d{2})?',
 	  'PossibleLength' =>
     [
       0 => 3,
       1 => 5,
-      2 => 6,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -27,12 +26,11 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '116\\d{3}|911',
+	  'NationalNumberPattern' => '911',
 	  'ExampleNumber' => '911',
 	  'PossibleLength' =>
     [
       0 => 3,
-      1 => 6,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -50,7 +48,7 @@ return [
   ],
 	'emergency' =>
   [
-	  'NationalNumberPattern' => '91[13]',
+	  'NationalNumberPattern' => '911',
 	  'ExampleNumber' => '911',
 	  'PossibleLength' =>
     [
@@ -62,8 +60,8 @@ return [
   ],
 	'shortCode' =>
   [
-	  'NationalNumberPattern' => '1(?:1(?:2|6111)|2[136-8]|3[0-6]|9[05])|40404|9(?:1\\d|29)',
-	  'ExampleNumber' => '112',
+	  'NationalNumberPattern' => '40404|911',
+	  'ExampleNumber' => '911',
 	  'PossibleLength' =>
     [
     ],

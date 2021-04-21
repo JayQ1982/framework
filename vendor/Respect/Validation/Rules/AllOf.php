@@ -5,31 +5,20 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use framework\vendor\Respect\Validation\Exceptions\AllOfException;
+use framework\vendor\Respect\Validation\Exceptions\ValidationException;
 
-use function count;
-
-/**
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
 class AllOf extends AbstractComposite
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function assert($input): void
+    public function assert($input)
     {
-        $exceptions = $this->getAllThrownExceptions($input);
-        $numRules = count($this->getRules());
+        $exceptions = $this->validateRules($input);
+        $numRules = count($this->rules);
         $numExceptions = count($exceptions);
         $summary = [
             'total' => $numRules,
@@ -37,28 +26,28 @@ class AllOf extends AbstractComposite
             'passed' => $numRules - $numExceptions,
         ];
         if (!empty($exceptions)) {
-            /** @var AllOfException $allOfException */
-            $allOfException = $this->reportError($input, $summary);
-            $allOfException->addChildren($exceptions);
-
-            throw $allOfException;
+            throw $this->reportError($input, $summary)->setRelated($exceptions);
         }
+
+        return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function check($input): void
+	/**
+	 * @param $input
+	 *
+	 * @return bool|mixed
+	 * @throws ValidationException
+	 */
+    public function check($input)
     {
         foreach ($this->getRules() as $rule) {
             $rule->check($input);
         }
+
+        return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
         foreach ($this->getRules() as $rule) {
             if (!$rule->validate($input)) {

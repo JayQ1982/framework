@@ -37,7 +37,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '77(?:3[1-9]|[5-9]\\d)\\d{4}|(?:7[0-689]|8[18])\\d{6}',
+	  'NationalNumberPattern' => '775\\d{5}|(?:7[0-689]|81)\\d{6}',
 	  'ExampleNumber' => '70123456',
 	  'PossibleLength' =>
     [
@@ -103,11 +103,9 @@ return [
   ],
 	'pager' =>
   [
-	  'NationalNumberPattern' => '27[01]\\d{4}',
-	  'ExampleNumber' => '2700123',
 	  'PossibleLength' =>
     [
-      0 => 7,
+      0 => -1,
     ],
 	  'PossibleLengthLocalOnly' =>
     [

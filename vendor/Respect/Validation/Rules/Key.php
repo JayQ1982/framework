@@ -5,57 +5,32 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
 use framework\vendor\Respect\Validation\Exceptions\ComponentException;
 use framework\vendor\Respect\Validation\Validatable;
 
-use function array_key_exists;
-use function is_array;
-use function is_scalar;
-
-/**
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Emmerson Siqueira <emmersonsiqueira@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class Key extends AbstractRelated
+class Key extends AbstractRelated
 {
-	/**
-	 * @param mixed            $reference
-	 * @param Validatable|null $rule
-	 * @param bool             $mandatory
-	 *
-	 * @throws ComponentException
-	 */
-    public function __construct($reference, ?Validatable $rule = null, bool $mandatory = true)
+    public function __construct($reference, Validatable $referenceValidator = null, $mandatory = true)
     {
-        if (!is_scalar($reference) || $reference === '') {
+        if (!is_scalar($reference) || '' === $reference) {
             throw new ComponentException('Invalid array key name');
         }
-
-        parent::__construct($reference, $rule, $mandatory);
+        parent::__construct($reference, $referenceValidator, $mandatory);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getReferenceValue($input)
     {
-        return $input[$this->getReference()];
+        return $input[$this->reference];
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function hasReference($input): bool
+    public function hasReference($input)
     {
-        return is_array($input) && array_key_exists($this->getReference(), $input);
+        return is_array($input) && array_key_exists($this->reference, $input);
     }
 }

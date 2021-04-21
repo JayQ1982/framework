@@ -21,50 +21,33 @@ class ExceptionHandler
 	public function __construct(Core $core)
 	{
 		$this->core = $core;
-		set_exception_handler([$this, 'handleException']);
 	}
 
-	public function handleException(Throwable $throwable): void
+	protected function getCore(): Core
+	{
+		return $this->core;
+	}
+
+	final public function handleException(Throwable $throwable): void
 	{
 		$core = $this->core;
-		if ($core->getEnvironmentHandler()->isDebug()) {
+		if ($core->getEnvironmentSettingsModel()->isDebug()) {
 			$this->sendDebugHttpResponseAndExit($throwable);
 		}
 
 		if ($throwable instanceof NotFoundException) {
-			$this->sendHttpResponseAndExit(
-				$core,
-				HttpStatusCodes::HTTP_NOT_FOUND,
-				$throwable->getMessage(),
-				$throwable->getCode(),
-				'notFound.html',
-				$throwable->getIndividualPlaceholders()
-			);
+			$this->sendNotFoundHttpResponseAndExit($throwable);
 		}
 
 		if ($throwable instanceof UnauthorizedException) {
-			$this->sendHttpResponseAndExit(
-				$core,
-				HttpStatusCodes::HTTP_UNAUTHORIZED,
-				$throwable->getMessage(),
-				$throwable->getCode(),
-				'unauthorized.html',
-				$throwable->getIndividualPlaceholders()
-			);
+			$this->sendUnauthorizedHttpResponseAndExit($throwable);
 		}
 
 		$this->core->getLogger()->log('', $throwable);
-		$this->sendHttpResponseAndExit(
-			$core,
-			HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR,
-			'Internal Server Error',
-			$throwable->getCode(),
-			'default.html',
-			[]
-		);
+		$this->sendDefaultHttpResponseAndExit($throwable);
 	}
 
-	private function sendDebugHttpResponseAndExit(Throwable $throwable): void
+	protected function sendDebugHttpResponseAndExit(Throwable $throwable): void
 	{
 		$core = $this->core;
 
@@ -74,10 +57,10 @@ class ExceptionHandler
 
 		if ($throwable instanceof NotFoundException) {
 			$httpStatusCode = HttpStatusCodes::HTTP_NOT_FOUND;
-			$placeholders = $throwable->getIndividualPlaceholders();
+			$placeholders = ['title' => 'Page not found'];
 		} else if ($throwable instanceof UnauthorizedException) {
 			$httpStatusCode = HttpStatusCodes::HTTP_UNAUTHORIZED;
-			$placeholders = $throwable->getIndividualPlaceholders();
+			$placeholders = ['title' => 'Unauthorized'];
 		} else {
 			$httpStatusCode = HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR;
 			$placeholders = ['title' => 'Internal Server Error'];
@@ -96,7 +79,43 @@ class ExceptionHandler
 		$this->sendHttpResponseAndExit($core, $httpStatusCode, $errorMessage, $errorCode, 'debug.html', $placeholders);
 	}
 
-	private function sendHttpResponseAndExit(
+	protected function sendNotFoundHttpResponseAndExit(Throwable $throwable): void
+	{
+		$this->sendHttpResponseAndExit(
+			$this->core,
+			HttpStatusCodes::HTTP_NOT_FOUND,
+			$throwable->getMessage(),
+			$throwable->getCode(),
+			'notFound.html',
+			['title' => 'Page not found']
+		);
+	}
+
+	protected function sendUnauthorizedHttpResponseAndExit(Throwable $throwable): void
+	{
+		$this->sendHttpResponseAndExit(
+			$this->core,
+			HttpStatusCodes::HTTP_UNAUTHORIZED,
+			$throwable->getMessage(),
+			$throwable->getCode(),
+			'unauthorized.html',
+			['title' => 'Unauthorized']
+		);
+	}
+
+	protected function sendDefaultHttpResponseAndExit(Throwable $throwable): void
+	{
+		$this->sendHttpResponseAndExit(
+			$this->core,
+			HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR,
+			'Internal Server Error',
+			$throwable->getCode(),
+			'default.html',
+			['title' => 'Internal Server Error']
+		);
+	}
+
+	final protected function sendHttpResponseAndExit(
 		Core $core,
 		int $httpStatusCode,
 		string $errorMessage,
@@ -111,7 +130,7 @@ class ExceptionHandler
 			$httpResponse = HttpResponse::createHtmlResponse(
 				$httpStatusCode,
 				$this->getHtmlContent($core, $htmlFileName, $placeholders),
-				$core->getEnvironmentHandler()->getCspPolicySettings(),
+				$core->getEnvironmentSettingsModel()->getCspPolicySettingsModel(),
 				CspNonce::get()
 			);
 			$httpResponse->sendAndExit();

@@ -288,7 +288,7 @@ class StringUtils
 
 	public static function sanitizeDomain(string $domain): ?string
 	{
-		$domain = trim($domain);
+		$domain = mb_strtolower(trim($domain));
 		if ($domain === '') {
 			return '';
 		}

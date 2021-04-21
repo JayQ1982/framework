@@ -209,6 +209,11 @@ class SearchHelper
 		return $front . $text . $back;
 	}
 
+	public function checkSearchTerm(string $default = ''): string
+	{
+		return $this->checkString('searchterm', $default);
+	}
+
 	private function resetField(string $fieldName, string $default = ''): void
 	{
 		$sessionRootName = $this->sessionRootName;
@@ -351,7 +356,7 @@ class SearchHelper
 
 		$conds = $params = [];
 		foreach ($searchWordsQuery as $sw) {
-			$condsCol = $paramsArr = [];
+			$condsCol = [];
 
 			foreach ($columns as $cs) {
 				$condsCol[] = "`" . $cs . "` LIKE ?";

@@ -41,7 +41,7 @@ class HttpRequest
 		$this->protocol = $this->initProtocol();
 		$this->query = $_SERVER['QUERY_STRING'];
 		$this->requestTime = new DateTime();
-		$this->requestTime->setTimestamp(REQUEST_TIME);
+		$this->requestTime->setTimestamp($_SERVER['REQUEST_TIME']);
 		$this->requestMethod = $_SERVER['REQUEST_METHOD'];
 		$this->userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 		$this->languages = $this->initLanguages();

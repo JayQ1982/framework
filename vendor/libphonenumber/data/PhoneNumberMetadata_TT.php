@@ -26,7 +26,7 @@ return [
   ],
 	'fixedLine' =>
   [
-	  'NationalNumberPattern' => '868(?:2(?:0[13]|1[89]|[23]\\d|4[0-2])|6(?:0[7-9]|1[02-8]|2[1-9]|[3-69]\\d|7[0-79])|82[124])\\d{4}',
+	  'NationalNumberPattern' => '868(?:2(?:01|1[89]|[23]\\d|4[0-2])|6(?:0[7-9]|1[02-8]|2[1-9]|[3-69]\\d|7[0-79])|82[124])\\d{4}',
 	  'ExampleNumber' => '8682211234',
 	  'PossibleLength' =>
     [
@@ -38,7 +38,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '868(?:2(?:6[3-9]|[7-9]\\d)|(?:3\\d|4[6-9])\\d|6(?:20|78|8\\d)|7(?:0[1-9]|1[02-9]|[2-9]\\d))\\d{4}',
+	  'NationalNumberPattern' => '868(?:2(?:6[6-9]|[7-9]\\d)|[37](?:0[1-9]|1[02-9]|[2-9]\\d)|4[6-9]\\d|6(?:20|78|8\\d))\\d{4}',
 	  'ExampleNumber' => '8682911234',
 	  'PossibleLength' =>
     [
@@ -82,7 +82,7 @@ return [
   ],
 	'personalNumber' =>
   [
-	  'NationalNumberPattern' => '52(?:3(?:[2-46-9][02-9]\\d|5(?:[02-46-9]\\d|5[0-46-9]))|4(?:[2-478][02-9]\\d|5(?:[034]\\d|2[024-9]|5[0-46-9])|6(?:0[1-9]|[2-9]\\d)|9(?:[05-9]\\d|2[0-5]|49)))\\d{4}|52[34][2-9]1[02-9]\\d{4}|5(?:00|2[12]|33|44|66|77|88)[2-9]\\d{6}',
+	  'NationalNumberPattern' => '5(?:00|2[12]|33|44|66|77|88)[2-9]\\d{6}',
 	  'ExampleNumber' => '5002345678',
 	  'PossibleLength' =>
     [
@@ -159,5 +159,5 @@ return [
 	'mainCountryForCode' => false,
 	'leadingDigits' => '868',
 	'leadingZeroPossible' => false,
-	'mobileNumberPortableRegion' => true,
+	'mobileNumberPortableRegion' => false,
 ];

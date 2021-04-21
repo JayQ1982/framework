@@ -57,6 +57,11 @@ class LoadSubTplTag extends TemplateTag implements TagNode
 	 */
 	public static function requireFile(string $file, TemplateEngine $tplEngine): void
 	{
+		if ($file === '') {
+			echo '';
+
+			return;
+		}
 		echo $tplEngine->getResultAsHtml($file, (array)$tplEngine->getAllData());
 	}
 }

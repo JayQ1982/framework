@@ -14,15 +14,14 @@ use framework\table\TableItemModel;
 // Can be extended or used directly to render a table with data from different sources
 class SmartTable
 {
-	protected const totalAmount = '[totalAmount]';
-	protected const table = '[table]';
-	protected const tableHeader = '[tableHeader]';
-	protected const tableBody = '[tableBody]';
-	protected const cells = '[cells]';
+	public const totalAmount = '[totalAmount]';
+	public const table = '[table]';
+	public const tableHeader = '[tableHeader]';
+	public const tableBody = '[tableBody]';
+	public const cells = '[cells]';
 
-	protected const noEntryMessagePlaceholder = '[NO_ENTRY]';
-	protected const totalAmountMessagePlaceholder = '[TOTAL_AMOUNT_MESSAGE]';
-	protected const amount = '[AMOUNT]';
+	public const totalAmountMessagePlaceholder = '[TOTAL_AMOUNT_MESSAGE]';
+	public const amount = '[AMOUNT]';
 
 	private string $noDataHtml = '<p class="no-entry">Es wurden keine Einträge gefunden.</p>';
 	private string $totalAmountHtml = '<p class="search-result">' . SmartTable::totalAmountMessagePlaceholder . '</p>';

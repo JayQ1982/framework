@@ -5,100 +5,87 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
 use framework\vendor\Respect\Validation\Exceptions\ValidationException;
-use framework\vendor\Respect\Validation\Factory;
 use framework\vendor\Respect\Validation\Validatable;
 
-/**
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Nick Lombard <github@jigsoft.co.za>
- * @author Vicente Mendoza <vicentemmor@yahoo.com.mx>
- */
 abstract class AbstractRule implements Validatable
 {
-    /**
-     * @var string|null
-     */
     protected $name;
-
-    /**
-     * @var string|null
-     */
     protected $template;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function assert($input): void
+    public function __invoke($input)
+    {
+        return $this->validate($input);
+    }
+
+    public function assert($input)
     {
         if ($this->validate($input)) {
-            return;
+            return true;
         }
-
         throw $this->reportError($input);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function check($input): void
+    public function check($input)
     {
-        $this->assert($input);
+        return $this->assert($input);
     }
 
-    /**
-     * {}
-     */
-    public function getName(): ?string
+    public function getName()
     {
         return $this->name;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function reportError($input, array $extraParameters = []): ValidationException
+	/**
+	 * @param       $input
+	 * @param array $extraParams
+	 *
+	 * @return mixed
+	 */
+    public function reportError($input, array $extraParams = [])
     {
-        return Factory::getDefaultInstance()->exception($this, $input, $extraParameters);
+        $exception = $this->createException();
+        $name = $this->name ?: ValidationException::stringify($input);
+        $params = array_merge(
+            get_class_vars(__CLASS__),
+            get_object_vars($this),
+            $extraParams,
+            compact('input')
+        );
+        $exception->configure($name, $params);
+        if (!is_null($this->template)) {
+            $exception->setTemplate($this->template);
+        }
+
+        return $exception;
     }
 
-    /**
-     * {}
-     */
-    public function setName(string $name): Validatable
+    public function setName($name)
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * {}
-     */
-    public function setTemplate(string $template): Validatable
+    public function setTemplate($template)
     {
         $this->template = $template;
 
         return $this;
     }
 
-	/**
-	 * @param mixed $input
-	 *
-	 * @return bool
-	 * @return bool
-	 */
-    public function __invoke($input): bool
+    protected function createException()
     {
-        return $this->validate($input);
+        $currentFqn = get_called_class();
+        $exceptionFqn = str_replace('\\Rules\\', '\\Exceptions\\', $currentFqn);
+        $exceptionFqn .= 'Exception';
+
+        return new $exceptionFqn();
     }
 }

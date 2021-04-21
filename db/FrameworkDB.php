@@ -6,7 +6,6 @@
 
 namespace framework\db;
 
-use framework\core\EnvironmentHandler;
 use LogicException;
 use PDO;
 use PDOException;
@@ -15,37 +14,41 @@ use RuntimeException;
 use stdClass;
 use Throwable;
 
-final class FrameworkDB extends PDO
+class FrameworkDB extends PDO
 {
 	private bool $usedTransactions = false;
 	private static array $instances = [];
 	/** @var DbQueryLogItem[] */
 	private array $queryLog = [];
 
-	public static function getInstance(EnvironmentHandler $environmentHandler, string $clientLanguage, string $id = 'default'): FrameworkDB
+	public static function getInstance(DbSettingsModel $dbSettingsModel): FrameworkDB
 	{
-		if (isset(FrameworkDB::$instances[$id])) {
-			return FrameworkDB::$instances[$id];
+		$identifier = $dbSettingsModel->getIdentifier();
+		if (isset(FrameworkDB::$instances[$identifier])) {
+			return FrameworkDB::$instances[$identifier];
 		}
 
-		return FrameworkDB::$instances[$id] = new FrameworkDB($environmentHandler, $clientLanguage, $id);
+		return FrameworkDB::$instances[$identifier] = new FrameworkDB($dbSettingsModel);
 	}
 
-	private function __construct(EnvironmentHandler $environmentHandler, string $clientLanguage, string $id)
+	protected function __construct(DbSettingsModel $dbSettingsModel)
 	{
-		$initSetCommands = [];
-		$availableLanguages = $environmentHandler->getAvailableLanguages();
+		$identifier = $dbSettingsModel->getIdentifier();
+		if (array_key_exists($identifier, FrameworkDB::$instances)) {
+			throw new LogicException('It is not allowed to instantiate this class multiple times with the same identifier ' . $identifier);
+		}
+		FrameworkDB::$instances[$identifier] = $this;
 
-		if (isset($availableLanguages[$clientLanguage])) {
-			$initSetCommands[] = 'lc_time_names=' . $availableLanguages[$clientLanguage];
+		$initSetCommands = [];
+		$timeNamesLanguage = $dbSettingsModel->getTimeNamesLanguage();
+		if (!is_null($timeNamesLanguage)) {
+			$initSetCommands[] = 'lc_time_names=' . $timeNamesLanguage;
 		}
 
-		if ($environmentHandler->isDebug()) {
+		if ($dbSettingsModel->isSqlSafeUpdates()) {
 			// see: https://dev.mysql.com/doc/refman/8.0/en/mysql-tips.html
 			$initSetCommands[] = 'sql_safe_updates=1';
 		}
-
-		$dbSettingsModel = DbSettingsModel::getByID($environmentHandler, $id);
 
 		$dsn = implode(';', [
 			'mysql:host=' . $dbSettingsModel->getHostName(),
@@ -72,7 +75,6 @@ final class FrameworkDB extends PDO
 	 * @param array|null $options : One or more key=>value pairs to set attribute values for the returned PDOStatement
 	 *
 	 * @return PDOStatement
-	 * @noinspection PhpMissingParamTypeInspection : Declaration is OKAY! Ignore PHPStorm warning (= bug in it's library files)!
 	 */
 	public function prepare($query, $options = null): PDOStatement
 	{

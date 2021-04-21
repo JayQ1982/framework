@@ -25,7 +25,7 @@ return [
   ],
 	'fixedLine' =>
   [
-	  'NationalNumberPattern' => '1[89]\\d{7}',
+	  'NationalNumberPattern' => '18\\d{7}',
 	  'ExampleNumber' => '181234567',
 	  'PossibleLength' =>
     [
@@ -36,7 +36,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '(?:12|9[12579])\\d{7}',
+	  'NationalNumberPattern' => '(?:12|9[1257])\\d{7}',
 	  'ExampleNumber' => '977123456',
 	  'PossibleLength' =>
     [

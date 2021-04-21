@@ -5,82 +5,64 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Exceptions;
 
-use ArrayIterator;
 use Countable;
 use RecursiveIterator;
-use UnexpectedValueException;
 
-/**
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class RecursiveExceptionIterator implements RecursiveIterator, Countable
+class RecursiveExceptionIterator implements RecursiveIterator, Countable
 {
-    /**
-     * @var ArrayIterator<int, ValidationException>
-     */
     private $exceptions;
 
     public function __construct(NestedValidationException $parent)
     {
-        $this->exceptions = new ArrayIterator($parent->getChildren());
+        $this->exceptions = $parent->getRelated();
     }
 
-    public function count(): int
+    public function count()
     {
         return $this->exceptions->count();
     }
 
-    public function hasChildren(): bool
+    public function hasChildren()
     {
         if (!$this->valid()) {
             return false;
         }
 
-        return $this->current() instanceof NestedValidationException;
+        return ($this->current() instanceof NestedValidationException);
     }
 
-    public function getChildren(): self
+    public function getChildren()
     {
-        $exception = $this->current();
-        if (!$exception instanceof NestedValidationException) {
-            throw new UnexpectedValueException();
-        }
-
-        return new RecursiveExceptionIterator($exception);
+        return new static($this->current());
     }
 
-	/**
-	 * @return ValidationException
-	 */
-    public function current(): ValidationException
+    public function current()
     {
         return $this->exceptions->current();
     }
 
-    public function key(): int
+    public function key()
     {
-        return (int) $this->exceptions->key();
+        return $this->exceptions->key();
     }
 
-    public function next(): void
+    public function next()
     {
         $this->exceptions->next();
     }
 
-    public function rewind(): void
+    public function rewind()
     {
         $this->exceptions->rewind();
     }
 
-    public function valid(): bool
+    public function valid()
     {
         return $this->exceptions->valid();
     }

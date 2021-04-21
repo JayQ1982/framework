@@ -14,7 +14,7 @@
 return [
 	'generalDesc' =>
   [
-	  'NationalNumberPattern' => '[2-9]\\d{5}',
+	  'NationalNumberPattern' => '(?:[2-8]\\d|90)\\d{4}',
 	  'PossibleLength' =>
     [
       0 => 6,
@@ -36,7 +36,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '(?:[27][1-9]|5\\d|91)\\d{4}',
+	  'NationalNumberPattern' => '(?:[27][1-9]|5\\d)\\d{4}',
 	  'ExampleNumber' => '211234',
 	  'PossibleLength' =>
     [
@@ -58,7 +58,7 @@ return [
   ],
 	'premiumRate' =>
   [
-	  'NationalNumberPattern' => '90(?:[13-5][15-7]|2[125-7]|9\\d)\\d\\d',
+	  'NationalNumberPattern' => '90(?:[13-5][15-7]|2[125-7]|99)\\d\\d',
 	  'ExampleNumber' => '901123',
 	  'PossibleLength' =>
     [

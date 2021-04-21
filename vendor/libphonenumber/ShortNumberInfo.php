@@ -37,7 +37,7 @@ class ShortNumberInfo
 	protected function __construct(MatcherAPIInterface $matcherAPI)
 	{
 		$this->matcherAPI = $matcherAPI;
-
+		/** @noinspection TodoComment */
 		// TODO: Create ShortNumberInfo for a given map
 		$this->countryCallingCodeToRegionCodeMap = CountryCodeToRegionCodeMap::$countryCodeToRegionCodeMap;
 
@@ -256,8 +256,7 @@ class ShortNumberInfo
 		$normalizedNumber = PhoneNumberUtil::normalizeDigitsOnly($number);
 		$emergencyDesc = $metadata->getEmergency();
 
-		$allowPrefixMatchForRegion = (
-			$allowPrefixMatch
+		$allowPrefixMatchForRegion = ($allowPrefixMatch
 			&& !in_array($regionCode, static::$regionsWhereEmergencyNumbersMustBeExact)
 		);
 
@@ -660,8 +659,7 @@ class ShortNumberInfo
 	}
 
 	/**
-	 * TODO: Once we have benchmarked ShortnumberInfo, consider if it is worth keeping
-	 * this performance optimization.
+	 * TODO: Once we have benchmarked ShortnumberInfo, consider if it is worth keeping this performance optimization.
 	 *
 	 * @param string          $number
 	 * @param PhoneNumberDesc $numberDesc

@@ -69,9 +69,10 @@ class PhoneNumberToCarrierMapper
 	public function getNameForValidNumber(PhoneNumber $number, $languageCode)
 	{
 		$languageStr = Locale::getPrimaryLanguage($languageCode);
+		$scriptStr = '';
 		$regionStr = Locale::getRegion($languageCode);
 
-		return $this->prefixFileReader->getDescriptionForNumber($number, $languageStr, $regionStr);
+		return $this->prefixFileReader->getDescriptionForNumber($number, $languageStr, $scriptStr, $regionStr);
 	}
 
 	/**

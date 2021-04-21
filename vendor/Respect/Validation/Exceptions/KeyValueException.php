@@ -5,25 +5,17 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Exceptions;
 
-/**
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class KeyValueException extends ValidationException
+class KeyValueException extends ValidationException
 {
-    public const COMPONENT = 'component';
+    const COMPONENT = 1;
 
-    /**
-     * {@inheritDoc}
-     */
-    protected $defaultTemplates = [
+    public static $defaultTemplates = [
         self::MODE_DEFAULT => [
             self::STANDARD => 'Key {{name}} must be present',
             self::COMPONENT => '{{baseKey}} must be valid to validate {{comparedKey}}',
@@ -34,8 +26,8 @@ final class KeyValueException extends ValidationException
         ],
     ];
 
-    protected function chooseTemplate(): string
+    public function chooseTemplate()
     {
-        return $this->getParam('component') ? self::COMPONENT : self::STANDARD;
+        return $this->getParam('component') ? static::COMPONENT : static::STANDARD;
     }
 }

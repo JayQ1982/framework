@@ -16,9 +16,9 @@ class Logger
 	private ?string $logEmailRecipient;
 	private string $logdir;
 
-	public function __construct(EnvironmentHandler $environmentHandler, CoreProperties $coreProperties)
+	public function __construct(EnvironmentSettingsModel $environmentSettingsModel, CoreProperties $coreProperties)
 	{
-		$this->logEmailRecipient = $environmentHandler->getLogRecipientEmail();
+		$this->logEmailRecipient = $environmentSettingsModel->getLogRecipientEmail();
 		$this->logdir = $coreProperties->getSiteLogsDir();
 		if (!is_dir($this->logdir)) {
 			throw new Exception('Log directory does not exist: ' . $this->logdir);

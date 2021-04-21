@@ -17,9 +17,9 @@ use framework\table\TableItemModel;
 
 class DbResultTable extends SmartTable
 {
-	private const sessionDataType = 'table';
-	protected const filter = '[filter]';
-	protected const pagination = '[pagination]';
+	public const sessionDataType = 'table';
+	public const filter = '[filter]';
+	public const pagination = '[pagination]';
 
 	private FrameworkDB $db;
 	private HttpRequest $httpRequest;

@@ -5,28 +5,18 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Exceptions;
 
-/**
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Danilo Benevides <danilobenevides01@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Luís Otávio Cobucci Oblonczyk <lcobucci@gmail.com>
- */
-final class IpException extends ValidationException
+class IpException extends ValidationException
 {
-    public const NETWORK_RANGE = 'network_range';
+    const STANDARD = 0;
+    const NETWORK_RANGE = 1;
 
-    /**
-     * {@inheritDoc}
-     */
-    protected $defaultTemplates = [
+    public static $defaultTemplates = [
         self::MODE_DEFAULT => [
             self::STANDARD => '{{name}} must be an IP address',
             self::NETWORK_RANGE => '{{name}} must be an IP address in the {{range}} range',
@@ -37,15 +27,31 @@ final class IpException extends ValidationException
         ],
     ];
 
-    /**
-     * {}
-     */
-    protected function chooseTemplate(): string
+    public function configure($name, array $params = [])
     {
-        if (!$this->getParam('range')) {
-            return self::STANDARD;
+        $params += ['networkRange' => null, 'min' => null];
+        if ($params['networkRange']) {
+            $range = $params['networkRange'];
+            $message = $range['min'];
+
+            if (isset($range['max'])) {
+                $message .= '-'.$range['max'];
+            } else {
+                $message .= '/'.long2ip((int) $range['mask']);
+            }
+
+            $params['range'] = $message;
         }
 
-        return self::NETWORK_RANGE;
+        return parent::configure($name, $params);
+    }
+
+    public function chooseTemplate()
+    {
+        if (!$this->getParam('networkRange')) {
+            return static::STANDARD;
+        } else {
+            return static::NETWORK_RANGE;
+        }
     }
 }

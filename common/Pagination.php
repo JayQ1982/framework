@@ -6,6 +6,10 @@
 
 namespace framework\common;
 
+/**
+ * Provides a Pagination function for usage on the whole project
+ * Like: << 1 2 ... 5 6 7 8 ... 23 24 25 >>
+ */
 class Pagination
 {
 	protected const linkTarget = '[linkTarget]';

@@ -5,58 +5,71 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
 use framework\vendor\Respect\Validation\Exceptions\ComponentException;
 use framework\vendor\Respect\Validation\Exceptions\ValidationException;
-use framework\vendor\Respect\Validation\Factory;
-use framework\vendor\Respect\Validation\Validatable;
+use framework\vendor\Respect\Validation\Validator;
 
-use function array_keys;
-use function in_array;
-
-/**
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class KeyValue extends AbstractRule
+class KeyValue extends AbstractRule
 {
-    /**
-     * @var int|string
-     */
-    private $comparedKey;
+    public $comparedKey;
+    public $ruleName;
+    public $baseKey;
 
-    /**
-     * @var string
-     */
-    private $ruleName;
-
-    /**
-     * @var int|string
-     */
-    private $baseKey;
-
-	/**
-	 * @param int|string $comparedKey
-	 * @param string     $ruleName
-	 * @param int|string $baseKey
-	 */
-    public function __construct($comparedKey, string $ruleName, $baseKey)
+    public function __construct($comparedKey, $ruleName, $baseKey)
     {
         $this->comparedKey = $comparedKey;
         $this->ruleName = $ruleName;
         $this->baseKey = $baseKey;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function assert($input): void
+	/**
+	 * @param $input
+	 *
+	 * @return Validator
+	 */
+    private function getRule($input)
+    {
+        if (!isset($input[$this->comparedKey])) {
+            throw $this->reportError($this->comparedKey);
+        }
+
+        if (!isset($input[$this->baseKey])) {
+            throw $this->reportError($this->baseKey);
+        }
+
+        try {
+            $rule = Validator::__callStatic($this->ruleName, [$input[$this->baseKey]]);
+            $rule->setName($this->comparedKey);
+        } catch (ComponentException $exception) {
+            throw $this->reportError($input, ['component' => true]);
+        }
+
+        return $rule;
+    }
+
+    private function overwriteExceptionParams(ValidationException $exception)
+    {
+        $params = [];
+        foreach ($exception->getParams() as $key => $value) {
+            if (in_array($key, ['template', 'translator'])) {
+                continue;
+            }
+
+            $params[$key] = $this->baseKey;
+        }
+
+        $exception->configure($this->comparedKey, $params);
+
+        return $exception;
+    }
+
+    public function assert($input)
     {
         $rule = $this->getRule($input);
 
@@ -65,12 +78,11 @@ final class KeyValue extends AbstractRule
         } catch (ValidationException $exception) {
             throw $this->overwriteExceptionParams($exception);
         }
+
+        return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function check($input): void
+    public function check($input)
     {
         $rule = $this->getRule($input);
 
@@ -79,74 +91,18 @@ final class KeyValue extends AbstractRule
         } catch (ValidationException $exception) {
             throw $this->overwriteExceptionParams($exception);
         }
+
+        return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
         try {
             $rule = $this->getRule($input);
-        } catch (ValidationException) {
+        } catch (\Throwable $e) {
             return false;
         }
 
         return $rule->validate($input[$this->comparedKey]);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function reportError($input, array $extraParameters = []): ValidationException
-    {
-        try {
-            return $this->overwriteExceptionParams($this->getRule($input)->reportError($input));
-        } catch (ValidationException $exception) {
-            return $this->overwriteExceptionParams($exception);
-        }
-    }
-
-	/**
-	 * @param mixed $input
-	 *
-	 * @return Validatable
-	 * @return Validatable
-	 */
-    private function getRule($input): Validatable
-    {
-        if (!isset($input[$this->comparedKey])) {
-            throw parent::reportError($this->comparedKey);
-        }
-
-        if (!isset($input[$this->baseKey])) {
-            throw parent::reportError($this->baseKey);
-        }
-
-        try {
-            $rule = Factory::getDefaultInstance()->rule($this->ruleName, [$input[$this->baseKey]]);
-            $rule->setName((string) $this->comparedKey);
-        } catch (ComponentException) {
-            throw parent::reportError($input, ['component' => true]);
-        }
-
-        return $rule;
-    }
-
-    private function overwriteExceptionParams(ValidationException $exception): ValidationException
-    {
-        $params = [];
-        foreach (array_keys($exception->getParams()) as $key) {
-            if (in_array($key, ['template', 'translator'])) {
-                continue;
-            }
-
-            $params[$key] = $this->baseKey;
-        }
-        $params['name'] = $this->comparedKey;
-
-        $exception->updateParams($params);
-
-        return $exception;
     }
 }

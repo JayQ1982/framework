@@ -14,13 +14,11 @@
 return [
 	'generalDesc' =>
   [
-	  'NationalNumberPattern' => '4\\d{6}|8\\d{11,12}|(?:[2-58]\\d\\d|900)\\d{7}',
+	  'NationalNumberPattern' => '(?:[2-58]\\d\\d|900)\\d{7}|4\\d{6}',
 	  'PossibleLength' =>
     [
       0 => 7,
       1 => 10,
-      2 => 12,
-      3 => 13,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -52,13 +50,11 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '800\\d{7}(?:\\d{2,3})?',
+	  'NationalNumberPattern' => '800\\d{7}',
 	  'ExampleNumber' => '8001234567',
 	  'PossibleLength' =>
     [
       0 => 10,
-      1 => 12,
-      2 => 13,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -100,11 +96,9 @@ return [
   ],
 	'voip' =>
   [
-	  'NationalNumberPattern' => '850\\d{7}',
-	  'ExampleNumber' => '8500123456',
 	  'PossibleLength' =>
     [
-      0 => 10,
+      0 => -1,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -124,11 +118,10 @@ return [
   ],
 	'uan' =>
   [
-	  'NationalNumberPattern' => '444\\d{4}',
+	  'NationalNumberPattern' => '(?:444|850\\d{3})\\d{4}',
 	  'ExampleNumber' => '4441444',
 	  'PossibleLength' =>
     [
-      0 => 7,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -213,18 +206,6 @@ return [
 	    'domesticCarrierCodeFormattingRule' => '',
 	    'nationalPrefixOptionalWhenFormatting' => true,
     ],
-	  4 =>
-    [
-	    'pattern' => '(\\d{3})(\\d{3})(\\d{6,7})',
-	    'format' => '$1 $2 $3',
-	    'leadingDigitsPatterns' =>
-      [
-        0 => '80',
-      ],
-	    'nationalPrefixFormattingRule' => '0$1',
-	    'domesticCarrierCodeFormattingRule' => '',
-	    'nationalPrefixOptionalWhenFormatting' => true,
-    ],
   ],
 	'intlNumberFormat' =>
   [
@@ -263,18 +244,6 @@ return [
         0 => '[24][1-8]|3[1-9]',
       ],
 	    'nationalPrefixFormattingRule' => '(0$1)',
-	    'domesticCarrierCodeFormattingRule' => '',
-	    'nationalPrefixOptionalWhenFormatting' => true,
-    ],
-	  3 =>
-    [
-	    'pattern' => '(\\d{3})(\\d{3})(\\d{6,7})',
-	    'format' => '$1 $2 $3',
-	    'leadingDigitsPatterns' =>
-      [
-        0 => '80',
-      ],
-	    'nationalPrefixFormattingRule' => '0$1',
 	    'domesticCarrierCodeFormattingRule' => '',
 	    'nationalPrefixOptionalWhenFormatting' => true,
     ],

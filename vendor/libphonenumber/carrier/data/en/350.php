@@ -12,5 +12,6 @@
 
 return [
   3505 => 'GibTel',
-  3506 => 'GibTel',
+  35060 => 'GibTel',
+  35062 => 'Limba',
 ];

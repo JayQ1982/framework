@@ -5,57 +5,47 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
 use SplFileInfo;
 
-use function is_string;
-use function pathinfo;
-
-use const PATHINFO_EXTENSION;
-
 /**
  * Validate file extensions.
  *
- * @author Danilo Correa <danilosilva87@gmail.com>
  * @author Henrique Moody <henriquemoody@gmail.com>
  */
-final class Extension extends AbstractRule
+class Extension extends AbstractRule
 {
     /**
      * @var string
      */
-    private $extension;
+    public $extension;
 
-	/**
-	 * Initializes the rule.
-	 *
-	 * @param string $extension
-	 */
-    public function __construct(string $extension)
+    /**
+     * @param string $extension
+     */
+    public function __construct($extension)
     {
         $this->extension = $extension;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    public function validate($input): bool
+    public function validate($input)
     {
         if ($input instanceof SplFileInfo) {
-            return $this->extension === $input->getExtension();
+            return ($input->getExtension() == $this->extension);
         }
 
         if (!is_string($input)) {
             return false;
         }
 
-        return $this->extension === pathinfo($input, PATHINFO_EXTENSION);
+        return (pathinfo($input, PATHINFO_EXTENSION) == $this->extension);
     }
 }

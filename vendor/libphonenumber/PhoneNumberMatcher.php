@@ -179,6 +179,7 @@ class PhoneNumberMatcher implements Iterator
 		static::$leadClass = $leadClass;
 
 		// Init extension patterns from PhoneNumberUtil
+		PhoneNumberUtil::initCapturingExtnDigits();
 		PhoneNumberUtil::initExtnPatterns();
 
 		// Phone number pattern allowing optional punctuation.
@@ -314,6 +315,7 @@ class PhoneNumberMatcher implements Iterator
 			$candidate = mb_substr($this->text, $start, $cutLength);
 
 			// Check for extra numbers at the end.
+			/** @noinspection TodoComment */
 			// TODO: This is the place to start when trying to support extraction of multiple phone number
 			// from split notations (+41 49 123 45 67 / 68).
 			$candidate = static::trimAfterFirstMatch(PhoneNumberUtil::$SECOND_NUMBER_START_PATTERN, $candidate);
@@ -436,10 +438,8 @@ class PhoneNumberMatcher implements Iterator
 			while ($groupMatcher->find() && $this->maxTries > 0) {
 				if ($isFirstMatch) {
 					// We should handle any group before this one too.
-					$group = static::trimAfterFirstMatch(
-						PhoneNumberUtil::$UNWANTED_END_CHAR_PATTERN,
-						mb_substr($candidate, 0, $groupMatcher->start())
-					);
+					$group = static::trimAfterFirstMatch(PhoneNumberUtil::$UNWANTED_END_CHAR_PATTERN,
+						mb_substr($candidate, 0, $groupMatcher->start()));
 
 					$match = $this->parseAndVerify($group, $offset);
 					if ($match !== null) {
@@ -448,10 +448,8 @@ class PhoneNumberMatcher implements Iterator
 					$this->maxTries--;
 					$isFirstMatch = false;
 				}
-				$group = static::trimAfterFirstMatch(
-					PhoneNumberUtil::$UNWANTED_END_CHAR_PATTERN,
-					$groupMatcher->group(1)
-				);
+				$group = static::trimAfterFirstMatch(PhoneNumberUtil::$UNWANTED_END_CHAR_PATTERN,
+					$groupMatcher->group(1));
 				$match = $this->parseAndVerify($group, $offset + $groupMatcher->start(1));
 				if ($match !== null) {
 					return $match;
@@ -510,6 +508,7 @@ class PhoneNumberMatcher implements Iterator
 
 			if ($this->leniency::verify($number, $candidate, $this->phoneUtil)) {
 				// We used parseAndKeepRawInput to create this number, but for now we don't return the extra
+				/** @noinspection TodoComment */
 				// values parsed. TODO: stop clearing all values here and switch all users over
 				// to using rawInput() rather than the rawString() of PhoneNumberMatch
 				$number->clearCountryCodeSource();
@@ -518,7 +517,8 @@ class PhoneNumberMatcher implements Iterator
 
 				return new PhoneNumberMatch($offset, $candidate, $number);
 			}
-		} catch (Throwable) {
+		} /** @noinspection PhpRedundantCatchClauseInspection */
+		catch (NumberParseException $e) {
 			// ignore and continue
 		}
 
@@ -615,10 +615,8 @@ class PhoneNumberMatcher implements Iterator
 		// We use contains and not equals, since the national significant number may be present with
 		// a prefix such as a national number prefix, or the country code itself.
 		if (count($candidateGroups) == 1
-			|| mb_strpos(
-				$candidateGroups[$candidateNumberGroupIndex],
-				$util->getNationalSignificantNumber($number)
-			) !== false
+			|| mb_strpos($candidateGroups[$candidateNumberGroupIndex],
+				$util->getNationalSignificantNumber($number)) !== false
 		) {
 			return true;
 		}
@@ -636,10 +634,8 @@ class PhoneNumberMatcher implements Iterator
 		// Now check the first group. There may be a national prefix at the start, so we only check
 		// that the candidate group ends with the formatted number group.
 		return ($candidateNumberGroupIndex >= 0
-			&& mb_substr(
-				$candidateGroups[$candidateNumberGroupIndex],
-				-mb_strlen($formattedNumberGroups[0])
-			) == $formattedNumberGroups[0]);
+			&& mb_substr($candidateGroups[$candidateNumberGroupIndex],
+				-mb_strlen($formattedNumberGroups[0])) == $formattedNumberGroups[0]);
 	}
 
 	/**
@@ -676,11 +672,8 @@ class PhoneNumberMatcher implements Iterator
 		// If a format is provided, we format the NSN only, and split that according to the separator.
 		$nationalSignificantNumber = $util->getNationalSignificantNumber($number);
 
-		return explode('-', $util->formatNsnUsingPattern(
-			$nationalSignificantNumber,
-			$formattingPattern,
-			PhoneNumberFormat::RFC3966
-		));
+		return explode('-', $util->formatNsnUsingPattern($nationalSignificantNumber, $formattingPattern,
+			PhoneNumberFormat::RFC3966));
 	}
 
 	/**
@@ -795,10 +788,8 @@ class PhoneNumberMatcher implements Iterator
 					if ($util->isNumberMatch($number, mb_substr($candidate, $index)) != MatchType::NSN_MATCH) {
 						return false;
 					}
-				} else if (!PhoneNumberUtil::normalizeDigitsOnly(mb_substr(
-						$candidate,
-						$index
-					)) == $number->getExtension()
+				} else if (!PhoneNumberUtil::normalizeDigitsOnly(mb_substr($candidate,
+						$index)) == $number->getExtension()
 				) {
 					// This is the extension sign case, in which the 'x' or 'X' should always precede the
 					// extension number

@@ -12,6 +12,9 @@
 
 return [
   38343 => 'IPKO',
+  383432 => 'D3 Mobile',
+  383433 => 'D3 Mobile',
+  383434 => 'D3 Mobile',
   38344 => 'vala',
   383451 => 'vala',
   383452 => 'vala',

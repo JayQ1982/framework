@@ -5,63 +5,47 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use function implode;
-use function is_scalar;
-use function str_replace;
-use function str_split;
+use framework\vendor\Respect\Validation\Exceptions\ComponentException;
 
-/**
- * @author Henrique Moody <henriquemoody@gmail.com>
- * @author Nick Lombard <github@jigsoft.co.za>
- */
 abstract class AbstractFilterRule extends AbstractRule
 {
-    /**
-     * @var string
-     */
-    private $additionalChars;
+    public $additionalChars = '';
 
-    abstract protected function validateFilteredInput(string $input): bool;
+    abstract protected function validateClean($input);
 
-	/**
-	 * Initializes the rule with a list of characters to be ignored by the validation.
-	 *
-	 * @param string ...$additionalChars
-	 */
-    public function __construct(string ...$additionalChars)
+    public function __construct($additionalChars = '')
     {
-        $this->additionalChars = implode($additionalChars);
+        if (!is_string($additionalChars)) {
+            throw new ComponentException('Invalid list of additional characters to be loaded');
+        }
+
+        $this->additionalChars .= $additionalChars;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    protected function filter($input)
+    {
+        return str_replace(str_split($this->additionalChars), '', $input);
+    }
+
+    public function validate($input)
     {
         if (!is_scalar($input)) {
             return false;
         }
 
         $stringInput = (string) $input;
-        if ($stringInput === '') {
+        if ('' === $stringInput) {
             return false;
         }
 
-        $filteredInput = $this->filter($stringInput);
+        $cleanInput = $this->filter($stringInput);
 
-        return $filteredInput === '' || $this->validateFilteredInput($filteredInput);
-    }
-
-    private function filter(string $input): string
-    {
-        return str_replace(str_split($this->additionalChars), '', $input);
+        return $cleanInput === '' || $this->validateClean($cleanInput);
     }
 }

@@ -5,65 +5,40 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
 use framework\vendor\Respect\Validation\Exceptions\ValidationException;
 use framework\vendor\Respect\Validation\Validatable;
 
-use function array_shift;
-use function count;
-use function current;
-
-/**
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Caio César Tavares <caiotava@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class Not extends AbstractRule
+class Not extends AbstractRule
 {
-    /**
-     * @var Validatable
-     */
-    private $rule;
+    public $rule;
 
     public function __construct(Validatable $rule)
     {
-        $this->rule = $this->extractNegatedRule($rule);
+        $this->rule = $rule;
     }
 
-    public function getNegatedRule(): Validatable
-    {
-        return $this->rule;
-    }
-
-    public function setName(string $name): Validatable
+    public function setName($name)
     {
         $this->rule->setName($name);
 
         return parent::setName($name);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($input): bool
+    public function validate($input)
     {
-        return $this->rule->validate($input) === false;
+        return (false == $this->rule->validate($input));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function assert($input): void
+    public function assert($input)
     {
         if ($this->validate($input)) {
-            return;
+            return true;
         }
 
         $rule = $this->rule;
@@ -71,21 +46,12 @@ final class Not extends AbstractRule
             $rule = $this->absorbAllOf($rule, $input);
         }
 
-        $exception = $rule->reportError($input);
-        $exception->updateMode(ValidationException::MODE_NEGATIVE);
-
-        throw $exception;
+        throw $rule
+            ->reportError($input)
+            ->setMode(ValidationException::MODE_NEGATIVE);
     }
 
-	/**
-	 * @param AllOf $rule
-	 * @param mixed $input
-	 *
-	 * @return Validatable
-	 * @return Validatable
-	 * @return Validatable
-	 */
-    private function absorbAllOf(AllOf $rule, $input): Validatable
+    private function absorbAllOf(AllOf $rule, $input)
     {
         $rules = $rule->getRules();
         while (($current = array_shift($rules))) {
@@ -99,24 +65,6 @@ final class Not extends AbstractRule
             }
 
             $rules = $rule->getRules();
-        }
-
-        return $rule;
-    }
-
-    private function extractNegatedRule(Validatable $rule): Validatable
-    {
-        if ($rule instanceof self && $rule->getNegatedRule() instanceof self) {
-            return $this->extractNegatedRule($rule->getNegatedRule()->getNegatedRule());
-        }
-
-        if (!$rule instanceof AllOf) {
-            return $rule;
-        }
-
-        $rules = $rule->getRules();
-        if (count($rules) === 1) {
-            return $this->extractNegatedRule(current($rules));
         }
 
         return $rule;

@@ -5,54 +5,40 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation;
 
 use framework\vendor\Respect\Validation\Exceptions\ValidationException;
 
 /** Interface for validation rules */
-
-/**
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
 interface Validatable
 {
 	/**
-	 * @param mixed $input
-	 */
-	public function assert($input): void;
-
-	/**
-	 * @param mixed $input
-	 */
-	public function check($input): void;
-
-	public function getName(): ?string;
-
-	/**
-	 * @param mixed   $input
-	 * @param mixed[] $extraParameters
+	 * @param $input
 	 *
-	 * @return ValidationException
-	 * @return ValidationException
+	 * @return mixed
+	 * @throws ValidationException
 	 */
-	public function reportError($input, array $extraParameters = []): ValidationException;
-
-	public function setName(string $name): Validatable;
-
-	public function setTemplate(string $template): Validatable;
+    public function assert($input);
 
 	/**
-	 * @param mixed $input
+	 * @param $input
 	 *
-	 * @return bool
-	 * @return bool
+	 * @return mixed
+	 * @throws ValidationException
 	 */
-	public function validate($input): bool;
+    public function check($input);
+
+    public function getName();
+
+    public function reportError($input, array $relatedExceptions = []);
+
+    public function setName($name);
+
+    public function setTemplate($template);
+
+    public function validate($input);
 }

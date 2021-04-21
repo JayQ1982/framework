@@ -14,7 +14,7 @@
 return [
 	'generalDesc' =>
   [
-	  'NationalNumberPattern' => '[1-9]\\d{7}',
+	  'NationalNumberPattern' => '\\d{8}',
 	  'PossibleLength' =>
     [
       0 => 8,
@@ -45,7 +45,7 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '[1-9]\\d{7}',
+	  'NationalNumberPattern' => '\\d{8}',
 	  'ExampleNumber' => '12345678',
 	  'PossibleLength' =>
     [
@@ -146,7 +146,6 @@ return [
 	    'format' => '$1 $2',
 	    'leadingDigitsPatterns' =>
       [
-        0 => '[1-9]',
       ],
 	    'nationalPrefixFormattingRule' => '',
 	    'domesticCarrierCodeFormattingRule' => '',

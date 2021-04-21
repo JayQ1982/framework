@@ -5,30 +5,29 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Exceptions;
 
-/**
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Andrew Peters <amp343@gmail.com>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class MaxException extends ValidationException
+class MaxException extends ValidationException
 {
-    /**
-     * {@inheritDoc}
-     */
-    protected $defaultTemplates = [
+    const INCLUSIVE = 1;
+
+    public static $defaultTemplates = [
         self::MODE_DEFAULT => [
-            self::STANDARD => '{{name}} must be less than or equal to {{compareTo}}',
+            self::STANDARD => '{{name}} must be less than {{interval}}',
+            self::INCLUSIVE => '{{name}} must be less than or equal to {{interval}}',
         ],
         self::MODE_NEGATIVE => [
-            self::STANDARD => '{{name}} must not be less than or equal to {{compareTo}}',
+            self::STANDARD => '{{name}} must not be less than {{interval}}',
+            self::INCLUSIVE => '{{name}} must not be less than or equal to {{interval}}',
         ],
     ];
+
+    public function chooseTemplate()
+    {
+        return $this->getParam('inclusive') ? static::INCLUSIVE : static::STANDARD;
+    }
 }

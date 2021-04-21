@@ -11,9 +11,9 @@
  */
 
 return [
+  23120 => 'LIBTELCO',
   231330 => 'West Africa Telecom',
-  231555 => 'Lonestar Cell',
-  2316 => 'Lonestar Cell',
+  231555 => 'Novafone',
   2317 => 'Orange',
   2318 => 'Lonestar Cell',
 ];

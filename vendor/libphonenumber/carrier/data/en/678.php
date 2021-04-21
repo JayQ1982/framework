@@ -12,5 +12,10 @@
 
 return [
   6785 => 'Digicel',
-  6787 => 'Telecom Vanuatu Ltd',
+  67870 => 'SMILE',
+  67871 => 'SMILE',
+  67873 => 'SMILE',
+  67874 => 'SMILE',
+  67875 => 'SMILE',
+  67876 => 'SMILE',
 ];

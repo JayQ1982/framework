@@ -5,27 +5,20 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Exceptions;
 
-use function count;
-
-/**
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class KeySetException extends GroupedValidationException implements NonOmissibleException
+class KeySetException extends GroupedValidationException
 {
-    public const STRUCTURE = 'structure';
+    const STRUCTURE = 2;
 
     /**
-     * {@inheritDoc}
+     * @var array
      */
-    protected $defaultTemplates = [
+    public static $defaultTemplates = [
         self::MODE_DEFAULT => [
             self::NONE => 'All of the required rules must pass for {{name}}',
             self::SOME => 'These rules must pass for {{name}}',
@@ -39,12 +32,12 @@ final class KeySetException extends GroupedValidationException implements NonOmi
     ];
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function chooseTemplate(): string
+    public function chooseTemplate()
     {
-        if (count($this->getChildren()) === 0) {
-            return self::STRUCTURE;
+        if ($this->getParam('keys')) {
+            return static::STRUCTURE;
         }
 
         return parent::chooseTemplate();

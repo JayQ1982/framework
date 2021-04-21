@@ -5,29 +5,18 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Exceptions;
 
-use function count;
-
-/**
- * @author Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
 class GroupedValidationException extends NestedValidationException
 {
-    public const NONE = 'none';
-    public const SOME = 'some';
+    const NONE = 0;
+    const SOME = 1;
 
-    /**
-     * {@inheritDoc}
-     */
-    protected $defaultTemplates = [
+    public static $defaultTemplates = [
         self::MODE_DEFAULT => [
             self::NONE => 'All of the required rules must pass for {{name}}',
             self::SOME => 'These rules must pass for {{name}}',
@@ -38,14 +27,11 @@ class GroupedValidationException extends NestedValidationException
         ],
     ];
 
-    /**
-     * {}
-     */
-    protected function chooseTemplate(): string
+    public function chooseTemplate()
     {
         $numRules = $this->getParam('passed');
-        $numFailed = count($this->getChildren());
+        $numFailed = $this->getRelated()->count();
 
-        return $numRules === $numFailed ? self::NONE : self::SOME;
+        return $numRules === $numFailed ? static::NONE : static::SOME;
     }
 }

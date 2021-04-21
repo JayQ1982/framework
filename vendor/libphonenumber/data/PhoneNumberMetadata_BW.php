@@ -14,12 +14,11 @@
 return [
 	'generalDesc' =>
   [
-	  'NationalNumberPattern' => '(?:0800|(?:[37]|800)\\d)\\d{6}|(?:[2-6]\\d|90)\\d{5}',
+	  'NationalNumberPattern' => '90\\d{5}|(?:[2-6]|7\\d)\\d{6}',
 	  'PossibleLength' =>
     [
       0 => 7,
       1 => 8,
-      2 => 10,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -39,7 +38,7 @@ return [
   ],
 	'mobile' =>
   [
-	  'NationalNumberPattern' => '77200\\d{3}|(?:321|7(?:[1-6]\\d|7[013-9]|8[01]))\\d{5}',
+	  'NationalNumberPattern' => '77200\\d{3}|7(?:[1-6]\\d|7[014-8])\\d{5}',
 	  'ExampleNumber' => '71123456',
 	  'PossibleLength' =>
     [
@@ -51,11 +50,9 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '(?:0800|800\\d)\\d{6}',
-	  'ExampleNumber' => '0800012345',
 	  'PossibleLength' =>
     [
-      0 => 10,
+      0 => -1,
     ],
 	  'PossibleLengthLocalOnly' =>
     [
@@ -169,7 +166,7 @@ return [
 	    'format' => '$1 $2',
 	    'leadingDigitsPatterns' =>
       [
-        0 => '[24-6]|3[15-79]',
+        0 => '[2-6]',
       ],
 	    'nationalPrefixFormattingRule' => '',
 	    'domesticCarrierCodeFormattingRule' => '',
@@ -181,31 +178,7 @@ return [
 	    'format' => '$1 $2 $3',
 	    'leadingDigitsPatterns' =>
       [
-        0 => '[37]',
-      ],
-	    'nationalPrefixFormattingRule' => '',
-	    'domesticCarrierCodeFormattingRule' => '',
-	    'nationalPrefixOptionalWhenFormatting' => false,
-    ],
-	  3 =>
-    [
-	    'pattern' => '(\\d{4})(\\d{3})(\\d{3})',
-	    'format' => '$1 $2 $3',
-	    'leadingDigitsPatterns' =>
-      [
-        0 => '0',
-      ],
-	    'nationalPrefixFormattingRule' => '',
-	    'domesticCarrierCodeFormattingRule' => '',
-	    'nationalPrefixOptionalWhenFormatting' => false,
-    ],
-	  4 =>
-    [
-	    'pattern' => '(\\d{3})(\\d{4})(\\d{3})',
-	    'format' => '$1 $2 $3',
-	    'leadingDigitsPatterns' =>
-      [
-        0 => '8',
+        0 => '7',
       ],
 	    'nationalPrefixFormattingRule' => '',
 	    'domesticCarrierCodeFormattingRule' => '',

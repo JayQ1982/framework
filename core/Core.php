@@ -6,48 +6,103 @@
 
 namespace framework\core;
 
+use LogicException;
 use framework\autoloader\Autoloader;
 use framework\autoloader\AutoloaderPathModel;
 use framework\exception\ExceptionHandler;
 use framework\security\CspNonce;
+use framework\session\AbstractSessionHandler;
 
 class Core
 {
+	private static ?Core $instance = null;
+
+	private bool $isHttpResponsePrepared = false;
+	private Autoloader $autoloader;
 	private CoreProperties $coreProperties;
 	private HttpRequest $httpRequest;
 	private SettingsHandler $settingsHandler;
-	private EnvironmentHandler $environmentHandler;
+	private EnvironmentSettingsModel $environmentSettingsModel;
 	private Logger $logger;
-	private ExceptionHandler $exceptionHandler;
 	private ErrorHandler $errorHandler;
-	private SessionHandler $sessionHandler;
+	private AbstractSessionHandler $sessionHandler;
 	private RequestHandler $requestHandler;
-	private LocaleHandler $localeHandler;
+	private ?LocaleHandler $localeHandler = null;
 	private ?ContentHandler $contentHandler = null;
 
-	public function __construct(string $documentRoot, string $fwRoot, string $siteRoot, Autoloader $autoloader)
+	public static function init(string $defaultTimeZone = 'Europe/Zurich'): Core
 	{
-		$this->coreProperties = new CoreProperties($documentRoot, $fwRoot, $siteRoot);
+		if (!is_null(Core::$instance)) {
+			throw new LogicException('Core is already initialized');
+		}
+
+		// Make sure we display all errors that occur during initialization
+		error_reporting(E_ALL);
+		@ini_set('display_errors', '1');
+
+		date_default_timezone_set($defaultTimeZone);
+
+		// Use directory separator from system in documentRoot
+		$documentRoot = str_replace('/', DIRECTORY_SEPARATOR, $_SERVER['DOCUMENT_ROOT'] . DIRECTORY_SEPARATOR);
+
+		// Make sure there is only one trailing slash
+		$documentRoot = str_replace(DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $documentRoot);
+
+		// Framework specific paths
+		$fwRoot = $documentRoot . 'framework' . DIRECTORY_SEPARATOR;
+		$siteRoot = $documentRoot . 'site' . DIRECTORY_SEPARATOR;
+
+		// Initialize autoloader for classes and interfaces
+		/** @noinspection PhpIncludeInspection */
+		require_once($fwRoot . 'autoloader' . DIRECTORY_SEPARATOR . 'Autoloader.php');
+		$autoloader = Autoloader::register($siteRoot . 'cache' . DIRECTORY_SEPARATOR . 'cache.autoload');
+		/** @noinspection PhpIncludeInspection */
+		require_once($fwRoot . 'autoloader' . DIRECTORY_SEPARATOR . 'AutoloaderPathModel.php');
+		$autoloader->addPath(new AutoloaderPathModel(
+			'fw-logic',
+			$documentRoot,
+			AutoloaderPathModel::MODE_NAMESPACE,
+			['.class.php', '.php', '.interface.php']
+		));
+
+		$coreProperties = new CoreProperties($documentRoot, $fwRoot, $siteRoot);
+
+		return Core::$instance = new Core($autoloader, $coreProperties);
+	}
+
+	private function __construct(Autoloader $autoloader, CoreProperties $coreProperties)
+	{
+		$this->autoloader = $autoloader;
+		$this->coreProperties = $coreProperties;
 		$this->httpRequest = new HttpRequest();
 		if ($this->httpRequest->getProtocol() === HttpRequest::PROTOCOL_HTTP) {
 			$this->redirect($this->httpRequest->getURL(HttpRequest::PROTOCOL_HTTPS));
-
-			return;
 		}
+	}
+
+	public function prepareHttpResponse(EnvironmentSettingsModel $environmentSettingsModel, ?ExceptionHandler $individualExceptionHandler): void
+	{
+		if ($this->isHttpResponsePrepared) {
+			throw new LogicException('The response is already prepared');
+		}
+		$this->isHttpResponsePrepared = true;
 
 		$this->settingsHandler = new SettingsHandler($this->coreProperties, $this->httpRequest->getHost());
-		$this->environmentHandler = new EnvironmentHandler($this->settingsHandler);
-		$this->logger = new Logger($this->environmentHandler, $this->coreProperties);
-		$this->exceptionHandler = new ExceptionHandler($this);
+		$this->environmentSettingsModel = $environmentSettingsModel;
+		$this->logger = new Logger($this->environmentSettingsModel, $this->coreProperties);
+		set_exception_handler([is_null($individualExceptionHandler) ? new ExceptionHandler($this) : $individualExceptionHandler, 'handleException']);
 		$this->errorHandler = new ErrorHandler($this);
-		$this->sessionHandler = new SessionHandler($this->environmentHandler, $this->httpRequest);
-		$this->sessionHandler->start($this->httpRequest);
-		$this->requestHandler = new RequestHandler($this);
-		$this->localeHandler = new LocaleHandler($this->environmentHandler, $this->requestHandler);
+		$this->sessionHandler = AbstractSessionHandler::getSessionHandler($this->environmentSettingsModel, $this->httpRequest);
+
+		$this->requestHandler = RequestHandler::getInstance();
+		$this->requestHandler->init($this);
+
+		$this->localeHandler = LocaleHandler::getInstance();
+		$this->localeHandler->init($this->environmentSettingsModel, $this->requestHandler);
 
 		if ($this->settingsHandler->exists('autoloader')) {
 			foreach ((array)$this->settingsHandler->get('autoloader') as $library => $settings) {
-				$autoloader->addPath(new AutoloaderPathModel(
+				$this->autoloader->addPath(new AutoloaderPathModel(
 					$library,
 					$settings->path,
 					$settings->mode,
@@ -74,9 +129,9 @@ class Core
 		return $this->settingsHandler;
 	}
 
-	public function getEnvironmentHandler(): EnvironmentHandler
+	public function getEnvironmentSettingsModel(): EnvironmentSettingsModel
 	{
-		return $this->environmentHandler;
+		return $this->environmentSettingsModel;
 	}
 
 	public function getLogger(): Logger
@@ -84,17 +139,12 @@ class Core
 		return $this->logger;
 	}
 
-	public function getExceptionHandler(): ExceptionHandler
-	{
-		return $this->exceptionHandler;
-	}
-
 	public function getErrorHandler(): ErrorHandler
 	{
 		return $this->errorHandler;
 	}
 
-	public function getSessionHandler(): SessionHandler
+	public function getSessionHandler(): AbstractSessionHandler
 	{
 		return $this->sessionHandler;
 	}
@@ -104,7 +154,7 @@ class Core
 		return $this->requestHandler;
 	}
 
-	public function getLocaleHandler(): LocaleHandler
+	public function getLocaleHandler(): ?LocaleHandler
 	{
 		return $this->localeHandler;
 	}
@@ -114,8 +164,15 @@ class Core
 		return $this->contentHandler;
 	}
 
-	public function redirect(string $relativeOrAbsoluteUri, int $httpStatusCode = HttpStatusCodes::HTTP_SEE_OTHER): void
-	{
+	public function redirect(
+		string $relativeOrAbsoluteUri,
+		int $httpStatusCode = HttpStatusCodes::HTTP_SEE_OTHER,
+		bool $setSameSiteCookieTemporaryToLax = false
+	): void {
+		if ($setSameSiteCookieTemporaryToLax) {
+			$this->getSessionHandler()->changeCookieSameSiteToLax();
+		}
+
 		HttpResponse::redirectAndExit($this->generateAbsoluteUri($relativeOrAbsoluteUri), $httpStatusCode);
 	}
 
@@ -145,15 +202,19 @@ class Core
 		return $absoluteUri;
 	}
 
-	public function sendResponse(): void
+	public function sendHttpResponse(): void
 	{
+		if (!$this->isHttpResponsePrepared) {
+			throw new LogicException('The response is not prepared, call Core->prepareHttpResponse()');
+		}
+
 		$contentHandler = $this->contentHandler;
 		$contentType = $contentHandler->getContentType();
 		$content = $contentHandler->getContent();
 		$httpStatusCode = $contentHandler->getHttpStatusCode();
 		if ($contentType === HttpResponse::TYPE_HTML) {
-			$cspPolicySettings = $contentHandler->isSuppressCspHeader() ? null : $this->environmentHandler->getCspPolicySettings();
-			$httpResponse = HttpResponse::createHtmlResponse($httpStatusCode, $content, $cspPolicySettings, CspNonce::get());
+			$cspPolicySettingsModel = $contentHandler->isSuppressCspHeader() ? null : $this->environmentSettingsModel->getCspPolicySettingsModel();
+			$httpResponse = HttpResponse::createHtmlResponse($httpStatusCode, $content, $cspPolicySettingsModel, CspNonce::get());
 		} else {
 			$httpResponse = HttpResponse::createResponseFromString($httpStatusCode, $content, $contentType);
 		}

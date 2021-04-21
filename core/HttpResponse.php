@@ -8,8 +8,8 @@ namespace framework\core;
 
 use framework\common\FileHandler;
 use framework\common\MimeTypeHandler;
+use framework\security\CspPolicySettingsModel;
 use LogicException;
-use stdClass;
 
 class HttpResponse
 {
@@ -93,11 +93,11 @@ class HttpResponse
 		exit;
 	}
 
-	public static function createHtmlResponse(int $httpStatusCode, string $htmlContent, ?stdClass $cspPolicySettings, ?string $nonce): HttpResponse
+	public static function createHtmlResponse(int $httpStatusCode, string $htmlContent, ?CspPolicySettingsModel $cspPolicySettingsModel, ?string $nonce): HttpResponse
 	{
 		$httpResponse = new HttpResponse(md5($htmlContent), time(), $httpStatusCode, null, HttpResponse::TYPE_HTML, $htmlContent, null, null);
-		if (!is_null($cspPolicySettings)) {
-			$httpResponse->setContentSecurityPolicy($cspPolicySettings, $nonce);
+		if (!is_null($cspPolicySettingsModel)) {
+			$httpResponse->setHeader('Content-Security-Policy', $cspPolicySettingsModel->getHttpHeaderDataString($nonce));
 		}
 
 		return $httpResponse;
@@ -165,18 +165,6 @@ class HttpResponse
 		}
 
 		return false;
-	}
-
-	private function setContentSecurityPolicy(stdClass $cspPolicySettings, string $nonce): void
-	{
-		$csp = '';
-		foreach (get_object_vars($cspPolicySettings) as $key => $val) {
-			if ($key === 'script-src' && !str_contains($val, "'none'")) {
-				$val .= " 'nonce-" . $nonce . "'";
-			}
-			$csp .= $key . ' ' . $val . '; ';
-		}
-		$this->setHeader('Content-Security-Policy', trim($csp));
 	}
 
 	public function sendAndExit(): void

@@ -29,11 +29,7 @@ class InputFieldRenderer extends FormRenderer
 		$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('type', $formField->getType(), true));
 		$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('name', $formField->getName(), true));
 		$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('id', $formField->getId(), true));
-
-		$htmlValue = $formField->getRawValue();
-		if (!is_null($htmlValue)) {
-			$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('value', $htmlValue, false));
-		}
+		$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('value', $formField->renderValue(), true));
 
 		if (!is_null($formField->getPlaceholder())) {
 			$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('placeholder', $formField->getPlaceholder(), true));

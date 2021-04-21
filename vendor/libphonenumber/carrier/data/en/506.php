@@ -11,11 +11,9 @@
  */
 
 return [
-  5063 => 'Kolbi ICE',
-  50650 => 'Kolbi ICE',
-  50657 => 'Kolbi ICE',
+  50650 => 'OMV',
+  50657 => 'OMV',
   5066 => 'Movistar',
-  5067000 => 'Claro',
   50670010 => 'Claro',
   50670011 => 'Claro',
   50670012 => 'Claro',
@@ -43,10 +41,6 @@ return [
   5067300 => 'Claro',
   5067301 => 'Claro',
   50683 => 'Kolbi ICE',
-  50684 => 'Kolbi ICE',
-  50685 => 'Kolbi ICE',
-  50686 => 'Kolbi ICE',
-  50687 => 'Kolbi ICE',
   50688 => 'Kolbi ICE',
   50689 => 'Kolbi ICE',
 ];

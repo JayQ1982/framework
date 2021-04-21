@@ -5,32 +5,21 @@
  *
  * (c) Alexandre Gomes Gaigalas <alexandre@gaigalas.net>
  *
- * For the full copyright and license information, please view the LICENSE file
- * that was distributed with this source code.
+ * For the full copyright and license information, please view the "LICENSE.md"
+ * file that was distributed with this source code.
  */
-
-declare(strict_types=1);
 
 namespace framework\vendor\Respect\Validation\Rules;
 
-use function nl_langinfo;
-
-use const NOEXPR;
-
-/**
- * Validates if value is considered as "No".
- *
- * @author Henrique Moody <henriquemoody@gmail.com>
- */
-final class No extends AbstractEnvelope
+class No extends Regex
 {
-    public function __construct(bool $useLocale = false)
+    public function __construct($useLocale = false)
     {
         $pattern = '^n(o(t|pe)?|ix|ay)?$';
-        if ($useLocale) {
+        if ($useLocale && defined('NOEXPR')) {
             $pattern = nl_langinfo(NOEXPR);
         }
 
-        parent::__construct(new Regex('/' . $pattern . '/i'));
+        parent::__construct('/'.$pattern.'/i');
     }
 }

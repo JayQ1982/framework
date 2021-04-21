@@ -7,17 +7,37 @@
 namespace framework\core;
 
 use Exception;
+use LogicException;
 
 class LocaleHandler
 {
+	private static ?LocaleHandler $instance = null;
+	private bool $isInitialized = false;
+
 	private array $languageBlocks = [];
 	private array $loadedLangFiles = [];
 
-	public function __construct(EnvironmentHandler $environmentHandler, RequestHandler $requestHandler)
+	public static function getInstance(): LocaleHandler
 	{
-		date_default_timezone_set($environmentHandler->getTimezone());
+		if (is_null(LocaleHandler::$instance)) {
+			LocaleHandler::$instance = new LocaleHandler();
+		}
 
-		$availableLanguages = $environmentHandler->getAvailableLanguages();
+		return LocaleHandler::$instance;
+	}
+
+	private function __construct() { }
+
+	public function init(EnvironmentSettingsModel $environmentSettingsModel, RequestHandler $requestHandler)
+	{
+		if ($this->isInitialized) {
+			throw new LogicException('LocaleHandler is already initialized');
+		}
+		$this->isInitialized = true;
+
+		date_default_timezone_set($environmentSettingsModel->getTimezone());
+
+		$availableLanguages = $environmentSettingsModel->getAvailableLanguages();
 		$activeLanguage = $requestHandler->getLanguage();
 
 		if (!array_key_exists($activeLanguage, $availableLanguages)) {

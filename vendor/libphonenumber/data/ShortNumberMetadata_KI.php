@@ -14,7 +14,7 @@
 return [
 	'generalDesc' =>
   [
-	  'NationalNumberPattern' => '[179]\\d{2,3}',
+	  'NationalNumberPattern' => '[17]\\d{2,3}',
 	  'PossibleLength' =>
     [
       0 => 3,
@@ -26,7 +26,7 @@ return [
   ],
 	'tollFree' =>
   [
-	  'NationalNumberPattern' => '19[2-5]|99[2-4]',
+	  'NationalNumberPattern' => '19[2-5]',
 	  'ExampleNumber' => '192',
 	  'PossibleLength' =>
     [
@@ -48,7 +48,7 @@ return [
   ],
 	'emergency' =>
   [
-	  'NationalNumberPattern' => '19[2-5]|99[2-4]',
+	  'NationalNumberPattern' => '19[2-5]',
 	  'ExampleNumber' => '192',
 	  'PossibleLength' =>
     [
@@ -60,7 +60,7 @@ return [
   ],
 	'shortCode' =>
   [
-	  'NationalNumberPattern' => '1(?:05[0-259]|88|9[2-5])|777|99[2-4]|10[0-8]',
+	  'NationalNumberPattern' => '1(?:05[0-259]|88|9[2-5])|777|10[0-8]',
 	  'ExampleNumber' => '100',
 	  'PossibleLength' =>
     [
