@@ -10,6 +10,7 @@ use framework\common\StringUtils;
 use framework\form\rule\PhoneNumberRule;
 use framework\html\HtmlDocument;
 use framework\html\HtmlText;
+use framework\vendor\libphonenumber\PhoneNumberUtil;
 
 class PhoneNumberField extends TextField
 {
@@ -65,5 +66,20 @@ class PhoneNumberField extends TextField
 		}
 
 		return HtmlDocument::htmlEncode(StringUtils::phoneNumber($this->getRawValue(), $this->countryCode, $this->renderInternalFormat));
+	}
+
+	public function valueHasChanged(): bool
+	{
+		$originalValue = trim($this->getOriginalValue());
+		if ($originalValue !== '') {
+			$parsedOriginalValue = StringUtils::parsePhoneNumber($this->getOriginalValue(), $this->getCountryCode());
+			if (is_null($parsedOriginalValue)) {
+				$originalValue = '';
+			} else {
+				$originalValue = PhoneNumberUtil::PLUS_SIGN . $parsedOriginalValue->getCountryCode() . '.' . $parsedOriginalValue->getNationalNumber();
+			}
+		}
+
+		return ($this->getRawValue() !== $originalValue);
 	}
 }

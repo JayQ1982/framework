@@ -34,7 +34,12 @@ abstract class DefaultOptionsRenderer extends FormRenderer
 			throw new LogicException('There must be at least one option!');
 		}
 
-		$ulTag = new HtmlTag('ul', false);
+		$htmlTagAttributes = [];
+		if($optionsField->hasErrors()) {
+			$htmlTagAttributes[] = new HtmlTagAttribute('class', 'list-has-error', true);
+		}
+
+		$ulTag = new HtmlTag('ul', false, $htmlTagAttributes);
 
 		foreach ($options as $key => $htmlText) {
 			$name = ($this->acceptMultipleValues) ? $optionsField->getName() . '[]' : $optionsField->getName();
@@ -59,9 +64,13 @@ abstract class DefaultOptionsRenderer extends FormRenderer
 
 			$inputTag = new HtmlTag('input', true, $attributes);
 
+			// Create inner "span-label":
+			$spanLabelTag = new HtmlTag('span', false, [new HtmlTagAttribute('class', 'label-text', true)]);
+			$spanLabelTag->addText(new HtmlText($htmlText->render(), true));
+
 			$labelTag = new HtmlTag('label', false);
 			$labelTag->addTag($inputTag);
-			$labelTag->addText(new HtmlText(' ' . $htmlText->render(), true));
+			$labelTag->addText(HtmlText::encoded(' ' . $spanLabelTag->render()));
 
 			$liTag = new HtmlTag('li', false);
 			$liTag->addTag($labelTag);

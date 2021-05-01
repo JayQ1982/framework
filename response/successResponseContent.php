@@ -19,7 +19,7 @@ class successResponseContent extends responseContent
 
 		switch ($this->contentType) {
 			case HttpResponse::TYPE_JSON:
-				$this->setContent(JsonUtils::enJson(['status' => $status, 'result' => $resultData]));
+				$this->setContent(JsonUtils::convertToJsonString(['status' => $status, 'result' => $resultData]));
 				break;
 			case HttpResponse::TYPE_TXT:
 			case HttpResponse::TYPE_CSV:

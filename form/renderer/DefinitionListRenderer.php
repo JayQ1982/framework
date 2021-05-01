@@ -80,15 +80,18 @@ class DefinitionListRenderer extends FormRenderer
 
 		$additionalColumnContent = $formField->getAdditionalColumnContent();
 
-		$ddAttributes = [];
+		$ddClasses = [];
+
 		if (!is_null($additionalColumnContent)) {
-			$ddAttributes[] = new HtmlTagAttribute('class', 'form-cols', true);
+			$ddClasses[] = 'form-cols';
 		}
 
-		$ddTag = new HtmlTag('dd', false, $ddAttributes);
 		if ($formField->hasErrors()) {
-			$ddTag->addHtmlTagAttribute(new HtmlTagAttribute('class', 'has-error', true));
+			$ddClasses[] = 'has-error';
 		}
+
+		$ddAttributes = (count($ddClasses) === 0) ? [] : [new HtmlTagAttribute('class', implode(' ', $ddClasses), true)];
+		$ddTag = new HtmlTag('dd', false, $ddAttributes);
 
 		$defaultFormFieldRenderer = $formField->getDefaultRenderer();
 		$defaultFormFieldRenderer->prepare();

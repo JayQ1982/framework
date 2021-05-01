@@ -17,6 +17,7 @@ use Throwable;
 class ExceptionHandler
 {
 	private Core $core;
+	private string $contentType;
 
 	public function __construct(Core $core)
 	{
@@ -31,6 +32,7 @@ class ExceptionHandler
 	final public function handleException(Throwable $throwable): void
 	{
 		$core = $this->core;
+		$this->contentType = $this->initContentType($core);
 		if ($core->getEnvironmentSettingsModel()->isDebug()) {
 			$this->sendDebugHttpResponseAndExit($throwable);
 		}
@@ -66,52 +68,56 @@ class ExceptionHandler
 			$placeholders = ['title' => 'Internal Server Error'];
 		}
 
-		$contentHandler = $core->getContentHandler();
-		$contentType = is_null($contentHandler) ? HttpResponse::TYPE_HTML : $contentHandler->getContentType();
-
 		$placeholders['errorType'] = get_class($throwable);
 		$placeholders['errorMessage'] = $errorMessage;
 		$placeholders['errorFile'] = $realException->getFile();
 		$placeholders['errorLine'] = $realException->getLine();
 		$placeholders['errorCode'] = $realException->getCode();
-		$placeholders['backtrace'] = ($contentType === HttpResponse::TYPE_HTML) ? $realException->getTraceAsString() : $realException->getTrace();
+		$placeholders['backtrace'] = ($this->contentType === HttpResponse::TYPE_HTML) ? $realException->getTraceAsString() : $realException->getTrace();
 
-		$this->sendHttpResponseAndExit($core, $httpStatusCode, $errorMessage, $errorCode, 'debug.html', $placeholders);
+		$this->sendHttpResponseAndExit(
+			core: $core,
+			httpStatusCode: $httpStatusCode,
+			errorMessage: $errorMessage,
+			errorCode: $errorCode,
+			htmlFileName: 'debug.html',
+			placeholders: $placeholders
+		);
 	}
 
 	protected function sendNotFoundHttpResponseAndExit(Throwable $throwable): void
 	{
 		$this->sendHttpResponseAndExit(
-			$this->core,
-			HttpStatusCodes::HTTP_NOT_FOUND,
-			$throwable->getMessage(),
-			$throwable->getCode(),
-			'notFound.html',
-			['title' => 'Page not found']
+			core: $this->core,
+			httpStatusCode: HttpStatusCodes::HTTP_NOT_FOUND,
+			errorMessage: $throwable->getMessage(),
+			errorCode: $throwable->getCode(),
+			htmlFileName: 'notFound.html',
+			placeholders: []
 		);
 	}
 
 	protected function sendUnauthorizedHttpResponseAndExit(Throwable $throwable): void
 	{
 		$this->sendHttpResponseAndExit(
-			$this->core,
-			HttpStatusCodes::HTTP_UNAUTHORIZED,
-			$throwable->getMessage(),
-			$throwable->getCode(),
-			'unauthorized.html',
-			['title' => 'Unauthorized']
+			core: $this->core,
+			httpStatusCode: HttpStatusCodes::HTTP_UNAUTHORIZED,
+			errorMessage: $throwable->getMessage(),
+			errorCode: $throwable->getCode(),
+			htmlFileName: 'unauthorized.html',
+			placeholders: []
 		);
 	}
 
 	protected function sendDefaultHttpResponseAndExit(Throwable $throwable): void
 	{
 		$this->sendHttpResponseAndExit(
-			$this->core,
-			HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR,
-			'Internal Server Error',
-			$throwable->getCode(),
-			'default.html',
-			['title' => 'Internal Server Error']
+			core: $this->core,
+			httpStatusCode: HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR,
+			errorMessage: 'Internal Server Error',
+			errorCode: $throwable->getCode(),
+			htmlFileName: 'default.html',
+			placeholders: []
 		);
 	}
 
@@ -123,9 +129,7 @@ class ExceptionHandler
 		string $htmlFileName,
 		array $placeholders
 	): void {
-		$contentHandler = $core->getContentHandler();
-		$contentType = is_null($contentHandler) ? HttpResponse::TYPE_HTML : $contentHandler->getContentType();
-
+		$contentType = $this->contentType;
 		if ($contentType === HttpResponse::TYPE_HTML) {
 			$httpResponse = HttpResponse::createHtmlResponse(
 				$httpStatusCode,
@@ -175,5 +179,28 @@ class ExceptionHandler
 		$content = file_get_contents($contentPath);
 
 		return str_replace($srcArr, $rplArr, $content);
+	}
+
+	private function initContentType(Core $core): string
+	{
+		$contentHandler = $core->getContentHandler();
+		if (is_null($contentHandler)) {
+			return HttpResponse::TYPE_HTML;
+		}
+
+		$contentType = $contentHandler->getContentType();
+		if (in_array($contentType, [
+			HttpResponse::TYPE_HTML,
+			HttpResponse::TYPE_JSON,
+			HttpResponse::TYPE_XML,
+			HttpResponse::TYPE_TXT,
+			HttpResponse::TYPE_CSV,
+		])) {
+			return $contentType;
+		}
+
+		$contentHandler->setContentType(HttpResponse::TYPE_HTML);
+
+		return HttpResponse::TYPE_HTML;
 	}
 }

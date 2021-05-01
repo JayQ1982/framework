@@ -7,30 +7,37 @@
 namespace framework\core;
 
 use Exception;
-use framework\exception\NotFoundException;
+use LogicException;
 use framework\html\HtmlDocument;
 
 class ContentHandler
 {
+	private static ?ContentHandler $instance = null;
 	private Core $core;
 	private int $httpStatusCode = HttpStatusCodes::HTTP_OK;
 	private string $content = '';
 	private string $contentType = HttpResponse::TYPE_HTML;
 	private bool $suppressCspHeader = false;
-	private ?HtmlDocument $htmlDocument;
+	private bool $isInitialized = false;
 
-	public function __construct(Core $core)
+	public static function getInstance(Core $core): ContentHandler
+	{
+		if (is_null(ContentHandler::$instance)) {
+			ContentHandler::$instance = new ContentHandler($core);
+		}
+
+		return ContentHandler::$instance;
+	}
+
+	private function __construct(Core $core)
 	{
 		$this->core = $core;
 		$requestHandler = $core->getRequestHandler();
-		$localeHandler = $core->getLocaleHandler();
-		$environmentSettingsModel = $core->getEnvironmentSettingsModel();
 
 		$defaultContentType = trim($requestHandler->getContentType());
 		if ($defaultContentType !== '') {
 			$this->contentType = $defaultContentType;
 		}
-		$this->htmlDocument = ($this->contentType === HttpResponse::TYPE_HTML) ? new HtmlDocument($requestHandler, $localeHandler, $environmentSettingsModel) : null;
 	}
 
 	public function setContentType(string $contentType): void
@@ -46,36 +53,34 @@ class ContentHandler
 		return $this->contentType;
 	}
 
-	public function setContent(): void
+	public function init(): void
 	{
+		if ($this->isInitialized) {
+			throw new LogicException('ContentHandler is already initialized');
+		}
+		$this->isInitialized = true;
 		$core = $this->core;
-		$requestHandler = $core->getRequestHandler();
-		$localeHandler = $core->getLocaleHandler();
-		$coreProperties = $core->getCoreProperties();
 
 		ob_start();
 		ob_implicit_flush(false);
 
-		$this->loadLocalizedText($requestHandler, $localeHandler);
+		$this->loadLocalizedText($core->getRequestHandler(), $core->getLocaleHandler());
 		$this->executePHP($core);
-		if (!is_null($this->htmlDocument)) {
-			// After php execution because php script can modify the htmlDocument properties
-			$this->addContent($this->htmlDocument->render($requestHandler, $coreProperties));
+		if (!$this->hasContent() && $this->contentType === HttpResponse::TYPE_HTML) {
+			$this->setContent(HtmlDocument::getInstance($core)->render());
 		}
-
-		$this->addContent(ob_get_clean());
-
-		$this->checkContent();
+		$outputBufferContents = trim(ob_get_clean());
+		if ($outputBufferContents !== '') {
+			$this->setContent($outputBufferContents);
+		}
 	}
 
-	public function addContent(?string $content): void
+	public function setContent(string $contentString): void
 	{
-		$content = trim($content);
-		if ($content === '') {
-			return;
+		if ($this->hasContent()) {
+			throw new LogicException('Content is already set. You are not allowed to overwrite it.');
 		}
-
-		$this->content .= $content;
+		$this->content = $contentString;
 	}
 
 	public function setHttpStatusCode(int $httpStatusCode)
@@ -130,27 +135,14 @@ class ContentHandler
 
 		/** @var baseView $baseView */
 		$baseView = new $phpClassName($this->core);
-		if (!$baseView->hasContent()) {
+		if(!$this->hasContent()) {
 			$baseView->execute();
 		}
-		$this->addContent($baseView->getContent());
-	}
-
-	public function getHtmlDocument(): HtmlDocument
-	{
-		return $this->htmlDocument;
 	}
 
 	public function hasContent(): bool
 	{
 		return trim($this->content) !== '';
-	}
-
-	private function checkContent()
-	{
-		if (!$this->hasContent()) {
-			throw new NotFoundException($this->core, false);
-		}
 	}
 
 	public function suppressCspHeader(): void

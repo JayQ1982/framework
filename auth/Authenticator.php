@@ -227,7 +227,7 @@ class Authenticator
 	private function doAccessCheck(bool $accessOnlyForLoggedInUsers, array $requiredAccessRights): bool
 	{
 		if (!$this->isLoggedIn()) {
-			return $accessOnlyForLoggedInUsers ? false : true;
+			return !$accessOnlyForLoggedInUsers;
 		}
 
 		// User is logged in

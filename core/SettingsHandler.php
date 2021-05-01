@@ -86,11 +86,7 @@ class SettingsHandler
 			throw new Exception('Failed to load settings from ' . $filePath);
 		}
 
-		$settingsObj = JsonUtils::decode($content, false, false);
-
-		if (is_null($settingsObj)) {
-			throw new Exception('Invalid JSON code in settings file: ' . $filePath);
-		}
+		$settingsObj = JsonUtils::decodeFile(filePath: $filePath, isMinified: false, returnAssociativeArray: false);
 
 		// Replace some fw placeholders
 		$this->interpolateObj($settingsObj, $this->replace);
@@ -122,10 +118,10 @@ class SettingsHandler
 		}
 
 		foreach ($settingsArray as $k => $v) {
-			if (is_object($settingsArray[$k]) && $settingsArray[$k] instanceof stdClass) {
-				$this->interpolateObj($settingsArray[$k], $replace);
-			} else if (is_array($settingsArray[$k])) {
-				$this->interpolateArray($settingsArray[$k], $replace);
+			if (is_object($v) && $v instanceof stdClass) {
+				$this->interpolateObj($v, $replace);
+			} else if (is_array($v)) {
+				$this->interpolateArray($v, $replace);
 			} else {
 				$settingsObj[$k] = strtr($v, $replace);
 			}

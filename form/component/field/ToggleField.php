@@ -98,7 +98,11 @@ class ToggleField extends OptionsField
 
 	public function getHtmlTag(): HtmlTag
 	{
-		$ulTag = new HtmlTag('ul', false, [new HtmlTagAttribute('class', 'form-toggle-list', true)]);
+		$ulTagClasses = ['form-toggle-list'];
+		if ($this->hasErrors()) {
+			$ulTagClasses[] = 'list-has-error';
+		}
+		$ulTag = new HtmlTag('ul', false, [new HtmlTagAttribute('class', implode(' ', $ulTagClasses), true)]);
 
 		foreach ($this->getFormOptions()->getData() as $key => $htmlText) {
 			$combinedSpecifier = $this->getName() . '_' . $key;
@@ -129,11 +133,15 @@ class ToggleField extends OptionsField
 			// Create the Toggle-<input>
 			$input = new HtmlTag('input', true, $inputAttributes);
 
+			// Create inner "span-label":
+			$spanLabelTag = new HtmlTag('span', false, [new HtmlTagAttribute('class', 'label-text', true)]);
+			$spanLabelTag->addText(new HtmlText($htmlText->render(), true));
+
 			// Create the Toggle-<label> element:
 			$label = new HtmlTag('label', false);
 			// add the Toggle-<input> into Toggle-<label>
 			$label->addTag($input);
-			$label->addText(new HtmlText(' ' . $htmlText->render(), true));
+			$label->addText(HtmlText::encoded(' ' . $spanLabelTag->render()));
 
 			// create -Toggle-<li> tag and add the Toggle-<label> to it
 			$li = new HtmlTag('li', false);

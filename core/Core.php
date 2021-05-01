@@ -10,6 +10,7 @@ use LogicException;
 use framework\autoloader\Autoloader;
 use framework\autoloader\AutoloaderPathModel;
 use framework\exception\ExceptionHandler;
+use framework\exception\NotFoundException;
 use framework\security\CspNonce;
 use framework\session\AbstractSessionHandler;
 
@@ -110,8 +111,8 @@ class Core
 				));
 			}
 		}
-		$this->contentHandler = new ContentHandler($this);
-		$this->contentHandler->setContent();
+		$this->contentHandler = ContentHandler::getInstance($this);
+		$this->contentHandler->init();
 	}
 
 	public function getCoreProperties(): CoreProperties
@@ -210,6 +211,9 @@ class Core
 
 		$contentHandler = $this->contentHandler;
 		$contentType = $contentHandler->getContentType();
+		if (!$contentHandler->hasContent()) {
+			throw new NotFoundException($this, false);
+		}
 		$content = $contentHandler->getContent();
 		$httpStatusCode = $contentHandler->getHttpStatusCode();
 		if ($contentType === HttpResponse::TYPE_HTML) {

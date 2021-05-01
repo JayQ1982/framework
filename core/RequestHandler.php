@@ -26,7 +26,7 @@ class RequestHandler
 	private array $routeVariables = [];
 	private ?string $area = null;
 	private ?string $areaDir = null;
-	private string $defaultFileName = 'home.html';
+	private string $defaultFileName = '';
 	private ?string $acceptedExtension = HttpResponse::TYPE_HTML;
 	private ?string $language = null;
 	private ?string $contentType = null;
@@ -130,7 +130,7 @@ class RequestHandler
 			}
 			foreach ($matches1[1] as $nr => $variableName) {
 				$nr = $nr + 1;
-				$val = isset($matches2[$nr]) ? $matches2[$nr] : '';
+				$val = $matches2[$nr] ?? '';
 				if ($variableName === 'fileName') {
 					$this->fileName = $val;
 				} else if ($variableName == 'fileGroup') {

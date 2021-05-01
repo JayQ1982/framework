@@ -9,25 +9,25 @@ namespace framework\common;
 class utf8tools
 {
 	/**
-	 * @param string $hexcode : the 4-character hexcode representation for desired UNICODE character, like '005E' for 'n'
+	 * @param string $hexCode : the 4-character hexcode representation for desired UNICODE character, like '005E' for 'n'
 	 *
 	 * @return string : Unicode character
 	 */
-	public function utf8char(string $hexcode): string
+	public function utf8char(string $hexCode): string
 	{
-		return json_decode('"\u' . $hexcode . '"');
+		return json_decode('"\u' . $hexCode . '"');
 	}
 
 	/**
-	 * @param array $hexcodes : takes an array of the 4-character hexcode representations
+	 * @param array $hexCodes : takes an array of the 4-character hexcode representations
 	 *                        for desired UNICODE characters, like '005E' for 'n'
 	 *
 	 * @return array : array of unicode characters
 	 */
-	public function getUtf8charArray(array $hexcodes): array
+	public function getUtf8charArray(array $hexCodes): array
 	{
 		$utf8array = [];
-		foreach ($hexcodes as $hex) {
+		foreach ($hexCodes as $hex) {
 			$utf8array[] = $this->utf8char($hex);
 		}
 
@@ -47,7 +47,7 @@ class utf8tools
 			unset($x);
 		}
 		for ($i = $l; $i <= $u; $i++) {
-			$hexcode = str_pad((string)dechex($i), 4, '0', STR_PAD_LEFT);
+			$hexcode = str_pad(dechex($i), 4, '0', STR_PAD_LEFT);
 			$charArray[] = $this->utf8char($hexcode);
 		}
 

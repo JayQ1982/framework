@@ -142,9 +142,8 @@ class filters
 		$html = str_replace('[secondary_filter_button]', $secondaryFilterButton, $html);
 		$html = str_replace('[secondary_filter]', $secondary_filters, $html);
 		$html = str_replace('[makeVisibleCss]', $css, $html);
-		$html = str_replace('[csrfField]', CsrfToken::renderAsHiddenPostField(), $html);
 
-		return $html;
+		return str_replace('[csrfField]', CsrfToken::renderAsHiddenPostField(), $html);
 	}
 
 	public function getData(string $prefix = 'WHERE', string $suffix = ''): array

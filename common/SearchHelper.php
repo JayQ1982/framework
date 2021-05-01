@@ -149,7 +149,7 @@ class SearchHelper
 	 * a set of quotes, in which case " " is retained.  The string is then
 	 * split on "~~~~~" with the surviving spaces intact.
 	 *
-	 * @param $line
+	 * @param string $line
 	 *
 	 * @return array
 	 */

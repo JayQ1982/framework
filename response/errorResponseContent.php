@@ -26,7 +26,7 @@ class errorResponseContent extends responseContent
 
 		switch ($this->contentType) {
 			case HttpResponse::TYPE_JSON:
-				$this->setContent(JsonUtils::enJson([
+				$this->setContent(JsonUtils::convertToJsonString([
 					'status' => $status,
 					'error'  => $errorData,
 				]));

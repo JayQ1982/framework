@@ -33,7 +33,6 @@ class SimpleXMLExtended extends SimpleXMLElement
 	 * @param null   $namespace
 	 *
 	 * @return SimpleXMLExtended
-	 * @noinspection PhpMissingParamTypeInspection
 	 */
 	public function addChild($qualifiedName, $value = null, $namespace = null): SimpleXmlElement
 	{
@@ -124,7 +123,7 @@ class SimpleXMLExtended extends SimpleXMLElement
 			return false;
 		}
 		// actual conversion
-		$arr = JsonUtils::deJson(JsonUtils::enJson((array)$tmp));
+		$arr = JsonUtils::decodeJsonString(jsonString: JsonUtils::convertToJsonString((array)$tmp), returnAssociativeArray: true);
 		if (is_null($arr)) {
 			return false;
 		}
@@ -145,7 +144,7 @@ class SimpleXMLExtended extends SimpleXMLElement
 			if (count($data) == 0 && $instanceCounter != 1) {
 				$data = '';
 			} else {
-				foreach ($data as $key => &$value) {
+				foreach ($data as &$value) {
 					SimpleXMLExtended::stringifyEmptyInnerArrays($value, $instanceCounter++);
 				}
 			}

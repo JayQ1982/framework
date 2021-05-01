@@ -32,27 +32,38 @@ class ValidEmailAddressRule extends FormRule
 			return true;
 		}
 
-		$fieldValue = $formField->getRawValue();
+		$fieldValue = trim($formField->getRawValue());
 
-		$hiddenCharactersToRemoveSilently = [
+		/*
+		 * An Email address has *never* spaces/tabs/newlines in it (they might get into
+		 * that string by c&p error done by users)
+		 *
+		 * We purposely do NOT allow commas/semicolons (preventing "multiple email address
+		 * entered, where NOT expected)
+		 *
+		 * ':' Will catch "mailto:" copy&paste errors from users, which also result in an
+		 * invalid email address
+		 *
+		 * We cannot "silently replace" invalid whitespace characters WITHIN the given
+		 * string. Because just imagine the following:
+		 * "alice@example.com bob@example.com" --> "alice@example.combob@example.com" => completely
+		 * new "email" address being valid(!).
+		 */
+		$forbiddenCharacters = [
+			',',
+			';',
+			':',
 			' ',
 			"\t",
 			"\n",
 			"\r",
 			"&#8203;", "\xE2\x80\x8C", "\xE2\x80\x8B", // https://stackoverflow.com/questions/22600235/remove-unicode-zero-width-space-php
 		];
-		$sanitizedValue = str_replace($hiddenCharactersToRemoveSilently, '', trim($fieldValue));
-
-		$forbiddenCharacters = [
-			',',
-			';',
-			':', // Catches mailto:
-		];
-		if ($sanitizedValue !== str_replace($forbiddenCharacters, '', $sanitizedValue)) {
+		if ($fieldValue !== str_replace($forbiddenCharacters, '', $fieldValue)) {
 			return false;
 		}
 
-		$emailParts = explode('@', $sanitizedValue);
+		$emailParts = explode('@', $fieldValue);
 
 		if (!isset($emailParts[1])) {
 			return false;

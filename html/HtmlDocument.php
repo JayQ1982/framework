@@ -6,10 +6,8 @@
 
 namespace framework\html;
 
-use framework\core\CoreProperties;
-use framework\core\EnvironmentSettingsModel;
-use framework\core\LocaleHandler;
-use framework\core\RequestHandler;
+use framework\core\Core;
+use framework\exception\NotFoundException;
 use framework\security\CspNonce;
 use framework\security\CsrfToken;
 use framework\template\template\DirectoryTemplateCache;
@@ -17,18 +15,33 @@ use framework\template\template\TemplateEngine;
 
 class HtmlDocument
 {
+	private static ?HtmlDocument $instance = null;
+	private Core $core;
 	private string $templateName = 'default';
 	private string $contentFileName;
 	private array $replacements = [];
 	private array $activeHtmlIds = [];
 
-	public function __construct(RequestHandler $requestHandler, LocaleHandler $localeHandler, EnvironmentSettingsModel $environmentSettingsModel)
+	public static function getInstance(Core $core): HtmlDocument
 	{
+		if (is_null(HtmlDocument::$instance)) {
+			HtmlDocument::$instance = new HtmlDocument(core: $core);
+		}
+
+		return HtmlDocument::$instance;
+	}
+
+	private function __construct(Core $core)
+	{
+		$this->core = $core;
+		$requestHandler = $core->getRequestHandler();
+		$environmentSettingsModel = $core->getEnvironmentSettingsModel();
+
 		$fileTitle = trim($requestHandler->getFileTitle());
 		$this->contentFileName = $fileTitle;
 
 		$this->replacements['_fileTitle'] = $fileTitle;
-		$this->replacements['_localeHandler'] = $localeHandler;
+		$this->replacements['_localeHandler'] = $core->getLocaleHandler();
 
 		$copyright = $environmentSettingsModel->getCopyrightYear();
 		$this->addText('bodyid', 'body_' . $fileTitle, true);
@@ -127,16 +140,22 @@ class HtmlDocument
 		return array_key_exists($key, $this->activeHtmlIds);
 	}
 
-	public function render(RequestHandler $requestHandler, CoreProperties $coreProperties): string
+	public function render(): string
 	{
+		$core = $this->core;
+		$requestHandler = $core->getRequestHandler();
 		$contentFileDirectory = $requestHandler->getAreaDir() . 'html/';
 		if (!is_null($requestHandler->getFileGroup())) {
-			$contentFileDirectory .= $requestHandler->getFileGroup() .'/';
+			$contentFileDirectory .= $requestHandler->getFileGroup() . '/';
+		}
+
+		if ($this->contentFileName === '') {
+			throw new NotFoundException($core, false);
 		}
 
 		$fullContentFilePath = $contentFileDirectory . $this->contentFileName . '.html';
-		if ($this->contentFileName === '' || !is_file($fullContentFilePath)) {
-			return '';
+		if (!is_file($fullContentFilePath)) {
+			throw new NotFoundException($core, false);
 		}
 		$this->addText('this', $fullContentFilePath, true);
 
@@ -145,6 +164,7 @@ class HtmlDocument
 		if ($templateName === '' || !is_file($templateFilePath)) {
 			$templateFilePath = $fullContentFilePath;
 		}
+		$coreProperties = $core->getCoreProperties();
 		$tplCache = new DirectoryTemplateCache($coreProperties->getSiteCacheDir(), $coreProperties->getSiteContentDir());
 		$tplEngine = new TemplateEngine($tplCache, 'tst');
 		$htmlAfterReplacements = $tplEngine->getResultAsHtml($templateFilePath, $this->replacements);

@@ -8,84 +8,34 @@ namespace framework\common;
 
 use Exception;
 use stdClass;
-use Throwable;
 
 class JsonUtils
 {
-	/**
-	 * Converts a JSON string into a nested array.
-	 *
-	 * @param      $string : The JSON string
-	 * @param bool $assoc  : Return associative array (or json object if false)
-	 *
-	 * @return array|stdClass|null : null on failure/error
-	 */
-	public static function deJson($string, bool $assoc = true): array|stdClass|null
+	public static function decodeJsonString($jsonString, bool $returnAssociativeArray): stdClass|array
 	{
-		return json_decode($string, $assoc, 512, JSON_BIGINT_AS_STRING);
+		return json_decode(json: $jsonString, associative: $returnAssociativeArray, flags: JSON_BIGINT_AS_STRING | JSON_THROW_ON_ERROR);
 	}
 
-	/**
-	 * Converts a nested array into a JSON string.
-	 *
-	 * @param array $array : A nested array
-	 *
-	 * @return false|string : The JSON string on success, "false" on failure/error
-	 */
-	public static function enJson(array $array): false|string
+	public static function convertToJsonString(mixed $valueToConvert): string
 	{
-		return json_encode($array, (JSON_UNESCAPED_UNICODE | JSON_BIGINT_AS_STRING));
+		return json_encode(value: $valueToConvert, flags: JSON_UNESCAPED_UNICODE | JSON_BIGINT_AS_STRING | JSON_THROW_ON_ERROR);
 	}
 
-	public static function decode(string $json, bool $toAssoc = false, bool $minified = true)
-	{
-		if ($minified === false && $json !== '{}') {
-			$json = JsonUtils::minify($json);
-		}
-
-		$result = json_decode($json, $toAssoc);
-
-		$error = null;
-
-		switch (json_last_error()) {
-			case JSON_ERROR_DEPTH:
-				$error = 'Maximum stack depth exceeded';
-				break;
-			case JSON_ERROR_CTRL_CHAR:
-				$error = 'Unexpected control character found';
-				break;
-			case JSON_ERROR_SYNTAX:
-				$error = 'Syntax error, malformed JSON markup';
-				break;
-			case JSON_ERROR_NONE:
-			case 0:
-				break;
-			default:
-				$error = 'Unknown error in JSON: ' . json_last_error();
-		}
-
-		if (!is_null($error)) {
-			throw new Exception('Invalid JSON code: ' . $error);
-		}
-
-		return $result;
-	}
-
-	public static function decodeFile($filePath, $toAssoc = false, $minified = true)
+	public static function decodeFile($filePath, $isMinified, $returnAssociativeArray = false): stdClass|array
 	{
 		if (file_exists($filePath) === false) {
 			throw new Exception('JSON-File does not exist: ' . $filePath);
 		}
+		$jsonString = file_get_contents($filePath);
 
-		try {
-			return JsonUtils::decode(file_get_contents($filePath), $toAssoc, $minified);
-		} catch (Throwable $e) {
-
-			throw new Exception($e->getMessage() . ', File: ' . $filePath);
+		if ($isMinified === false && $jsonString !== '{}') {
+			$jsonString = JsonUtils::minify(jsonString: $jsonString);
 		}
+
+		return JsonUtils::decodeJsonString(jsonString: $jsonString, returnAssociativeArray: $returnAssociativeArray);
 	}
 
-	public static function minify(string $json): string
+	public static function minify(string $jsonString): string
 	{
 		$tokenizer = "/\"|(\/\*)|(\*\/)|(\/\/)|\n|\r/";
 		$in_string = false;
@@ -95,15 +45,14 @@ class JsonUtils
 		$tmp2 = null;
 		$new_str = [];
 		$from = 0;
-		$lc = null;
 		$rc = null;
 		$lastIndex = 0;
 
-		while (preg_match($tokenizer, $json, $tmp, PREG_OFFSET_CAPTURE, $lastIndex)) {
+		while (preg_match($tokenizer, $jsonString, $tmp, PREG_OFFSET_CAPTURE, $lastIndex)) {
 			$tmp = $tmp[0];
 			$lastIndex = $tmp[1] + strlen($tmp[0]);
-			$lc = substr($json, 0, $lastIndex - strlen($tmp[0]));
-			$rc = substr($json, $lastIndex);
+			$lc = substr($jsonString, 0, $lastIndex - strlen($tmp[0]));
+			$rc = substr($jsonString, $lastIndex);
 
 			if (!$in_multiline_comment && !$in_singleline_comment) {
 				$tmp2 = substr($lc, $from);
@@ -125,7 +74,7 @@ class JsonUtils
 				}
 
 				$from--; // include " character in next catch
-				$rc = substr($json, $from);
+				$rc = substr($jsonString, $from);
 			} else if ($tmp[0] == "/*" && !$in_string && !$in_multiline_comment && !$in_singleline_comment) {
 				$in_multiline_comment = true;
 			} else if ($tmp[0] == "*/" && !$in_string && $in_multiline_comment && !$in_singleline_comment) {

@@ -6,6 +6,7 @@
 
 namespace framework\api;
 
+use CurlHandle;
 use Exception;
 use framework\api\response\curlResponse;
 use framework\api\response\jsonCurlResponse;
@@ -38,8 +39,7 @@ class curlRequest
 
 	private string $lastErrMsg = ''; // Gather the very last error message so we can display it.
 	private string $lastErrCode = '0'; // Gather the very last error code so we can display it. Might not be an INT in every case ...
-	/** @var null|false|resource - Curl resource declared as static to use connection persistence for multiple requests to same url */
-	private static $curl = null;
+	private static ?CurlHandle $curlHandle = null; // Static to use connection persistence for multiple requests to the same url
 	private static int $instanceCounter = 0; // Counter for instances of this class so we can properly close curl in destructor for the last instance
 	private string $url; // Target url for this request
 	private ?string $postData = null; // Post data to be used in request
@@ -70,8 +70,8 @@ class curlRequest
 	{
 		curlRequest::$instanceCounter--;
 		// If "curl" was used, close it properly with last instance of this class
-		if (curlRequest::$instanceCounter == 0 && is_resource(curlRequest::$curl)) {
-			curl_close(curlRequest::$curl);
+		if (curlRequest::$instanceCounter == 0 && !is_null(curlRequest::$curlHandle)) {
+			curl_close(curlRequest::$curlHandle);
 		}
 	}
 
@@ -226,14 +226,13 @@ class curlRequest
 	public function execute(): bool
 	{
 		// Set curl resource
-		if (is_resource(curlRequest::$curl)) {
-			// Reuse curl resource, if already initialised before
-			curl_reset(curlRequest::$curl);
+		if (!is_null(curlRequest::$curlHandle)) {
+			// Reuse curl resource, if already initialized before
+			curl_reset(curlRequest::$curlHandle);
 		} else {
-			// Initialize a new curl resource or throw an exception on failure
-			curlRequest::$curl = curl_init();
+			curlRequest::$curlHandle = curl_init();
 
-			if (curlRequest::$curl === false) {
+			if (curlRequest::$curlHandle === false) {
 				throw new RuntimeException(__CLASS__ . ': Could not initialize a CURL handle.');
 			}
 		}
@@ -293,10 +292,10 @@ class curlRequest
 				$curlOpts[$name] = $value;
 			}
 		}
-		curl_setopt_array(curlRequest::$curl, $curlOpts);
+		curl_setopt_array(curlRequest::$curlHandle, $curlOpts);
 
-		$this->responseBody = curl_exec(curlRequest::$curl);
-		$this->responseHeader = curl_getinfo(curlRequest::$curl);
+		$this->responseBody = curl_exec(curlRequest::$curlHandle);
+		$this->responseHeader = curl_getinfo(curlRequest::$curlHandle);
 		$this->responseHttpCode = intval($this->responseHeader['http_code'] ?? 0);
 
 		if (
@@ -313,7 +312,9 @@ class curlRequest
 			$text .= match ($this->responseHttpCode) {
 				HttpStatusCodes::HTTP_MOVED_PERMANENTLY => ' ("moved permanently". Check URL/settings.)',
 				HttpStatusCodes::HTTP_SEE_OTHER => ' ("Redirect". Maybe HTTP-to-HTTPS? Check URL/settings.)',
+				HttpStatusCodes::HTTP_UNAUTHORIZED => ' ("unauthorized". Check credentials or request format.)',
 				HttpStatusCodes::HTTP_NOT_FOUND => ' ("not found" on server)',
+				HttpStatusCodes::HTTP_METHOD_NOT_ALLOWED => ' ("method not allowed". Check URL or request format/data.)',
 				HttpStatusCodes::HTTP_NOT_ACCEPTABLE => ' ("not acceptable" on server. Check request format/data.)',
 				HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR => ' (remote "Server error")',
 				default => ''
@@ -326,8 +327,8 @@ class curlRequest
 
 		if ($this->responseBody === false) {
 			// Try to detect problem for faster understanding in logs/protocols
-			$errNo = curl_errno(curlRequest::$curl);
-			$errMsg = __CLASS__ . ': (' . $errNo . ') ' . curl_error(curlRequest::$curl);
+			$errNo = curl_errno(curlRequest::$curlHandle);
+			$errMsg = __CLASS__ . ': (' . $errNo . ') ' . curl_error(curlRequest::$curlHandle);
 			// See http://www.php.net/manual/en/function.curl-errno.php for further values of interest.
 			$errMsg .= match ($errNo) {
 				9 => '; Hint: (Remote) Access denied.',

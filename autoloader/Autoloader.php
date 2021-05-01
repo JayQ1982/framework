@@ -8,6 +8,7 @@ namespace framework\autoloader;
 
 use Exception;
 use LogicException;
+use framework\common\JsonUtils;
 
 class Autoloader
 {
@@ -59,9 +60,9 @@ class Autoloader
 			return [];
 		}
 
-		$serialized = file_get_contents($cacheFilePath);
+		$jsonString = file_get_contents($cacheFilePath);
 
-		return json_decode($serialized, true);
+		return json_decode(json: $jsonString, associative: true, flags: JSON_THROW_ON_ERROR);
 	}
 
 	public function addPath(AutoloaderPathModel $autoloaderPathModel): void
@@ -153,7 +154,6 @@ class Autoloader
 			return;
 		}
 
-		$serialized = json_encode($this->cachedClasses);
-		file_put_contents($this->cacheFilePath, $serialized);
+		file_put_contents(filename: $this->cacheFilePath, data: JsonUtils::convertToJsonString(valueToConvert: $this->cachedClasses));
 	}
 }

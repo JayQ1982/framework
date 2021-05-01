@@ -256,7 +256,7 @@ class FrameworkDB extends PDO
 	/**
 	 * Creates a string like "?,?,?,..." for the number of array entries given
 	 *
-	 * @param $paramArr
+	 * @param array $paramArr
 	 *
 	 * @return string
 	 */

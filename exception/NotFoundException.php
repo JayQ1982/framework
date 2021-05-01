@@ -8,6 +8,7 @@ namespace framework\exception;
 
 use Exception;
 use framework\core\Core;
+use framework\core\HttpStatusCodes;
 use framework\core\RedirectRoute;
 
 class NotFoundException extends Exception
@@ -16,6 +17,13 @@ class NotFoundException extends Exception
 	{
 		if ($withRedirectCheck) {
 			(new RedirectRoute($core))->redirectIfRouteExists();
+		}
+
+		if ($message === '') {
+			$message = 'Not Found';
+		}
+		if ($code === 0) {
+			$code = HttpStatusCodes::HTTP_NOT_FOUND;
 		}
 
 		parent::__construct($message, $code);

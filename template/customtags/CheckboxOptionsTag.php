@@ -6,6 +6,9 @@
 
 namespace framework\template\customtags;
 
+use framework\html\HtmlTag;
+use framework\html\HtmlTagAttribute;
+use framework\html\HtmlText;
 use framework\template\template\TagNode;
 use framework\template\template\TemplateEngine;
 use framework\template\htmlparser\ElementNode;
@@ -63,7 +66,10 @@ class CheckboxOptionsTag extends TemplateTag implements TagNode
 			if (in_array($key, $selection)) {
 				$inputAttributes[] = 'checked';
 			}
-			$html .= '<li><label><input ' . implode(' ', $inputAttributes) . '> ' . $val . '</label></li>' . PHP_EOL;
+			// Create inner "span-label":
+			$spanLabelTag = new HtmlTag('span', false, [new HtmlTagAttribute('class', 'label-text', true)]);
+			$spanLabelTag->addText(new HtmlText($val, true));
+			$html .= '<li><label><input ' . implode(' ', $inputAttributes) . '> ' . $spanLabelTag->render() . '</label></li>' . PHP_EOL;
 		}
 
 		$html .= '</ul>';

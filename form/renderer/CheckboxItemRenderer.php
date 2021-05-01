@@ -10,6 +10,7 @@ use framework\form\component\field\CheckboxOptionsField;
 use framework\form\FormRenderer;
 use framework\html\HtmlTag;
 use framework\html\HtmlTagAttribute;
+use framework\html\HtmlText;
 
 class CheckboxItemRenderer extends FormRenderer
 {
@@ -24,18 +25,22 @@ class CheckboxItemRenderer extends FormRenderer
 	{
 		$checkboxOptionsField = $this->checkboxOptionsField;
 
-		$htmlElementClasses = ['form-element'];
+		$htmlElementDiv = new HtmlTag('div', false, [new HtmlTagAttribute('class', 'form-element', true)]);
+
+		$formItemCheckboxClasses = ['form-item-checkbox'];
 		if ($checkboxOptionsField->hasErrors()) {
-			$htmlElementClasses[] = 'has-error';
+			$formItemCheckboxClasses[] = 'has-error';
 		}
-
-		$htmlElementDiv = new HtmlTag('div', false, [new HtmlTagAttribute('class', implode(' ', $htmlElementClasses), true)]);
-
-		$formItemCheckboxDiv = new HtmlTag('div', false, [new HtmlTagAttribute('class', 'form-item-checkbox', true)]);
+		$formItemCheckboxDiv = new HtmlTag('div', false, [new HtmlTagAttribute('class', implode(' ', $formItemCheckboxClasses), true)]);
 
 		$labelTag = new HtmlTag('label', false);
 		$labelTag->addTag($this->getInputTag());
-		$labelTag->addText($checkboxOptionsField->getLabel());
+
+		// Create inner "span-label":
+		$spanLabelTag = new HtmlTag('span', false, [new HtmlTagAttribute('class', 'label-text', true)]);
+		$spanLabelTag->addText($checkboxOptionsField->getLabel());
+
+		$labelTag->addText(HtmlText::encoded(' ' . $spanLabelTag->render()));
 		$formItemCheckboxDiv->addTag($labelTag);
 		$htmlElementDiv->addTag($formItemCheckboxDiv);
 

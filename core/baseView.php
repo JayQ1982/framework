@@ -6,23 +6,22 @@
 
 namespace framework\core;
 
+use LogicException;
 use framework\auth\Authenticator;
 use framework\common\CSVFile;
+use framework\common\JsonUtils;
 use framework\common\SimpleXMLExtended;
 use framework\common\StringUtils;
 use framework\exception\NotFoundException;
 use framework\exception\UnauthorizedException;
-use framework\html\HtmlDocument;
 use framework\response\errorResponseContent;
 use framework\response\successResponseContent;
-use LogicException;
 use stdClass;
 
 abstract class baseView
 {
 	private Core $core;
 	private ?Authenticator $authenticator;
-	private ?string $content = null;
 	private array $mandatoryParams;
 	private array $optionalParams;
 
@@ -114,22 +113,9 @@ abstract class baseView
 		$this->setContent(implode(PHP_EOL, $helpLines));
 	}
 
-	public function hasContent(): bool
-	{
-		return !is_null($this->content);
-	}
-
 	protected function setContent(string $contentString): void
 	{
-		if ($this->hasContent()) {
-			throw new LogicException('Content is already set. You are not allowed to overwrite it.');
-		}
-		$this->content = $contentString;
-	}
-
-	public function getContent(): ?string
-	{
-		return $this->content;
+		$this->getCore()->getContentHandler()->setContent(contentString: $contentString);
 	}
 
 	private function checkMandatoryParameters(Core $core, array $mandatoryParams): void
@@ -237,7 +223,7 @@ abstract class baseView
 
 	protected function setContentByJsonObject(stdClass $jsonObject): void
 	{
-		$this->setContent(json_encode($jsonObject));
+		$this->setContent(JsonUtils::convertToJsonString(valueToConvert: $jsonObject));
 	}
 
 	protected function setErrorResponseContent(string $errorMessage, null|int|string $errorCode = null, array $additionalInfo = []): void
@@ -270,15 +256,5 @@ abstract class baseView
 			unlink($path);
 		}
 		$httpResponse->sendAndExit();
-	}
-
-	/**
-	 * Shortcut for direct access to the HtmlDocument
-	 *
-	 * @return HtmlDocument
-	 */
-	protected function getHtmlDocument(): HtmlDocument
-	{
-		return $this->getCore()->getContentHandler()->getHtmlDocument();
 	}
 }

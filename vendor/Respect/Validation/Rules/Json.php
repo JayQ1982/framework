@@ -11,16 +11,21 @@
 
 namespace framework\vendor\Respect\Validation\Rules;
 
+use Throwable;
+
 class Json extends AbstractRule
 {
-    public function validate($input)
-    {
-        if (!is_string($input) || '' === $input) {
-            return false;
-        }
+	public function validate($input)
+	{
+		if (!is_string($input) || '' === $input) {
+			return false;
+		}
 
-        json_decode($input);
-
-        return (json_last_error() === JSON_ERROR_NONE);
-    }
+		try {
+			json_decode(json: $input, flags: JSON_THROW_ON_ERROR);
+			return true;
+		} catch(Throwable) {
+			return false;
+		}
+	}
 }
