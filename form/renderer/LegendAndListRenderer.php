@@ -95,7 +95,7 @@ class LegendAndListRenderer extends FormRenderer
 		$htmlTag = new HtmlTag(
 			'fieldset',
 			false,
-			[new HtmlTagAttribute('class', 'legend-and-list' . ($formField->hasErrors() ? ' has-error' : ''), true)]
+			[new HtmlTagAttribute('class', 'legend-and-list', true)]
 		);
 		FormRenderer::addAriaAttributesToHtmlTag($formField, $htmlTag);
 

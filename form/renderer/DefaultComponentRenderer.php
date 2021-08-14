@@ -24,7 +24,7 @@ class DefaultComponentRenderer extends FormRenderer
 	{
 		$componentTag = new HtmlTag($this->formComponent->getName(), false);
 
-		if ($this->formComponent->hasErrors()) {
+		if ($this->formComponent->hasErrors(withChildElements: true)) {
 			$componentTag->addHtmlTagAttribute(new HtmlTagAttribute('class', 'has-error', true));
 		}
 		$this->setHtmlTag($componentTag);

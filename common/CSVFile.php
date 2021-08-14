@@ -30,7 +30,7 @@ class CSVFile
 		if (!$this->utf8Encode) {
 			return;
 		}
-		fputs($this->fileResource, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+		fputs($this->fileResource, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 	}
 
 	/**

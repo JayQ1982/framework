@@ -70,6 +70,11 @@ class Pagination
 		$this->nextDisabledHtml = $nextDisabledHtml;
 	}
 
+	public function setNextHtml(string $nextHtml): void
+	{
+		$this->nextHtml = $nextHtml;
+	}
+
 	public function render(string $listIdentifier, int $totalAmount, int $currentPage, int $entriesPerPage = 25, int $beforeAfter = 2, int $startEnd = 1, array $additionalLinkParameters = []): string
 	{
 		if ($totalAmount <= $entriesPerPage) {

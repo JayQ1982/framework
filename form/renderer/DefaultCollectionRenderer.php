@@ -24,7 +24,7 @@ class DefaultCollectionRenderer extends FormRenderer
 	{
 		$componentTag = new HtmlTag($this->formCollection->getName(), false);
 
-		if ($this->formCollection->hasErrors()) {
+		if ($this->formCollection->hasErrors(withChildElements: true)) {
 			$componentTag->addHtmlTagAttribute(new HtmlTagAttribute('class', 'has-error', true));
 		}
 

@@ -123,7 +123,7 @@ class FileField extends FormField
 			}
 		}
 
-		return !$this->hasErrors();
+		return !$this->hasErrors(withChildElements: true);
 	}
 
 	/**

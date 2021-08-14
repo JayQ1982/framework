@@ -54,22 +54,19 @@ abstract class FormRenderer
 
 	public static function addErrorsToParentHtmlTag(FormComponent $formComponentWithErrors, HtmlTag $parentHtmlTag): void
 	{
-		if (!$formComponentWithErrors->hasErrors()) {
+		if (!$formComponentWithErrors->hasErrors(withChildElements: false)) {
 			return;
 		}
-
-		$bTag = new HtmlTag('b', false);
-		$errorsHTML = [];
-		foreach ($formComponentWithErrors->getErrorsAsHtmlTextObjects() as $htmlText) {
-			$errorsHTML[] = $htmlText->render();
-		}
-		$bTag->addText(new HtmlText(implode('<br>', $errorsHTML), true));
 
 		$divTag = new HtmlTag('div', false, [
 			new HtmlTagAttribute('class', 'form-input-error', true),
 			new HtmlTagAttribute('id', $formComponentWithErrors->getName() . '-error', true),
 		]);
-		$divTag->addTag($bTag);
+		$errorsHTML = [];
+		foreach ($formComponentWithErrors->getErrorsAsHtmlTextObjects() as $htmlText) {
+			$errorsHTML[] = $htmlText->render();
+		}
+		$divTag->addText(new HtmlText(implode('<br>', $errorsHTML), true));
 		$parentHtmlTag->addTag($divTag);
 	}
 
@@ -87,7 +84,7 @@ abstract class FormRenderer
 	{
 		$ariaDescribedBy = [];
 
-		if ($formField->hasErrors()) {
+		if ($formField->hasErrors(withChildElements: false)) {
 			$parentHtmlTag->addHtmlTagAttribute(new HtmlTagAttribute('aria-invalid', 'true', true));
 			$ariaDescribedBy[] = $formField->getName() . '-error';
 		}

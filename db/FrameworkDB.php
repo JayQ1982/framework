@@ -18,8 +18,6 @@ class FrameworkDB extends PDO
 {
 	private bool $usedTransactions = false;
 	private static array $instances = [];
-	/** @var DbQueryLogItem[] */
-	private array $queryLog = [];
 
 	public static function getInstance(DbSettingsModel $dbSettingsModel): FrameworkDB
 	{
@@ -64,8 +62,15 @@ class FrameworkDB extends PDO
 		if (count($initSetCommands) > 0) {
 			$attributeOptions[PDO::MYSQL_ATTR_INIT_COMMAND] = 'SET ' . implode(', ', $initSetCommands);
 		}
-
-		parent::__construct($dsn, $dbSettingsModel->getUserName(), $dbSettingsModel->getPassword(), $attributeOptions);
+		try {
+			parent::__construct($dsn, $dbSettingsModel->getUserName(), $dbSettingsModel->getPassword(), $attributeOptions);
+		} catch (Throwable $t) {
+			// We do NOT want to leak the database password in the StackTrace of the caught (PDO)Exception.
+			throw new PDOException(
+				$t->getMessage(),
+				$t->getCode()
+			);
+		}
 	}
 
 	/**
@@ -83,15 +88,30 @@ class FrameworkDB extends PDO
 		}
 		try {
 			// This (on error) either throws a PDOException OR returns "false", depending on configuration
-			$stmnt = parent::prepare($query, $options);
-			if ($stmnt === false) {
+			$stmt = parent::prepare($query, $options);
+			if ($stmt === false) {
 				throw new RuntimeException('Could not prepare query.');
 			}
 
-			return $stmnt;
-		} catch (Throwable $t) {
-			throw $this->getEnrichedException($t, $query);
+			return $stmt;
+		} catch (Throwable $throwable) {
+			throw new DbRuntimeException(throwable: $throwable, sql: $query);
 		}
+	}
+
+	/**
+	 * Prepares a SELECT statement for repeated execution and returns a special statement object
+	 *
+	 * @param string $query   : Valid SQL statement
+	 * @param null   $options : One or more key=>value pairs to set attribute values for the returned PDOStatement
+	 * @param bool   $logQuery
+	 *
+	 * @return DbSelectStmt
+	 * @throws DbRuntimeException
+	 */
+	public function prepareSelect(string $query, $options = null, bool $logQuery = true): DbSelectStmt
+	{
+		return new DbSelectStmt($this->prepare($query, $options), $logQuery);
 	}
 
 	/**
@@ -118,12 +138,12 @@ class FrameworkDB extends PDO
 			$res = $stmnt->fetchAll(PDO::FETCH_OBJ);
 			if (isset($dbQueryLogItem)) {
 				$dbQueryLogItem->confirmFinishedExecution();
-				$this->queryLog[] = $dbQueryLogItem;
+				DbQueryLogList::add($dbQueryLogItem);
 			}
 
 			return $res;
-		} catch (Throwable $t) {
-			throw $this->getEnrichedException($t, $sql, $parameters);
+		} catch (Throwable $throwable) {
+			throw new DbRuntimeException(throwable: $throwable, sql: $sql, parameters: $parameters);
 		}
 	}
 
@@ -149,40 +169,13 @@ class FrameworkDB extends PDO
 
 			if (isset($dbQueryLogItem)) {
 				$dbQueryLogItem->confirmFinishedExecution();
-				$this->queryLog[] = $dbQueryLogItem;
+				DbQueryLogList::add($dbQueryLogItem);
 			}
 
 			return $stmnt;
-		} catch (Throwable $t) {
-			throw $this->getEnrichedException($t, $sql, $parameters);
+		} catch (Throwable $throwable) {
+			throw new DbRuntimeException(throwable: $throwable, sql: $sql, parameters: $parameters);
 		}
-	}
-
-	/**
-	 * Internal method to enrich an Throwable with some more useful information about
-	 * the actual SQL statement, and determining the real Error code from an PDOException.
-	 * This Method should NOT be chained, thus its thrown Exception not be caught to pass
-	 * again through this method. ;-)
-	 *
-	 * @param Throwable $t
-	 * @param string    $sql
-	 * @param array     $parameters
-	 *
-	 * @return RuntimeException
-	 */
-	private function getEnrichedException(Throwable $t, string $sql, array $parameters = []): RuntimeException
-	{
-		$realCode = $t->getCode();
-		if ($t instanceof PDOException) {
-			$realCode = (isset($t->errorInfo) && is_array($t->errorInfo) && isset($t->errorInfo[1])) ? $t->errorInfo[1] : 0;
-		}
-
-		$msg = 'PDO could not execute statement: ' . $t->getMessage() . ';' . PHP_EOL . 'SQL string was: "' . $sql . '"';
-		if (count($parameters) != 0) {
-			$msg .= ';' . PHP_EOL . 'Parameters where ["' . implode('","', $parameters) . '""]';
-		}
-
-		return new RuntimeException($msg, $realCode, $t);
 	}
 
 	public function __destruct()
@@ -270,6 +263,6 @@ class FrameworkDB extends PDO
 	 */
 	public function getQueryLog(): array
 	{
-		return $this->queryLog;
+		return DbQueryLogList::getLog();
 	}
 }

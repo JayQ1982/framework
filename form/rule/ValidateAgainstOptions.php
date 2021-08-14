@@ -4,8 +4,6 @@
  * @copyright Copyright (c) 2021, Actra AG
  */
 
-namespace framework\formHandler\rule;
-
 namespace framework\form\rule;
 
 use framework\form\component\FormField;

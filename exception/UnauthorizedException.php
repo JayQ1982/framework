@@ -10,4 +10,8 @@ use Exception;
 
 class UnauthorizedException extends Exception
 {
+	public function __construct($message = 'Unauthorized', $code = 9999)
+	{
+		parent::__construct($message, $code);
+	}
 }

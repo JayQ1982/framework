@@ -63,7 +63,7 @@ class DefaultFormRenderer extends FormRenderer
 	{
 		$form = $this->form;
 
-		if (!$form->hasErrors()) {
+		if (!$form->hasErrors(withChildElements: true)) {
 			// This component and all parents/children don't have any errors
 			return $htmlTag;
 		}

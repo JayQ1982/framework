@@ -74,7 +74,6 @@ class Autoloader
 	{
 		$includePath = $this->getPathFromCache($className);
 		if (!is_null($includePath)) {
-			/** @noinspection PhpIncludeInspection */
 			require_once $includePath;
 
 			return true;
@@ -141,7 +140,6 @@ class Autoloader
 		if (class_exists($className)) {
 			return;
 		}
-		/** @noinspection PhpIncludeInspection */
 		require_once $includePath;
 
 		$this->cachedClasses[$className] = $includePath;

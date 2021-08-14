@@ -35,6 +35,10 @@ class InputFieldRenderer extends FormRenderer
 			$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('placeholder', $formField->getPlaceholder(), true));
 		}
 
+		if($formField->isAutoFocus()) {
+			$inputTag->addHtmlTagAttribute(new HtmlTagAttribute('autofocus', null, true));
+		}
+
 		FormRenderer::addAriaAttributesToHtmlTag($formField, $inputTag);
 		$this->setHtmlTag($inputTag);
 	}

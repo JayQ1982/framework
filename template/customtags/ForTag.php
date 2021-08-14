@@ -143,10 +143,10 @@ class ForTag extends TemplateTag implements TagNode
 		$elementNode->parentNode->removeNode($elementNode);
 	}
 
-	private function str_replace_node($nodeList)
+	private function str_replace_node($nodeList): void
 	{
-		$pattern1 = '/\$\{(?:(\d+?)\:)?(\w+?)(?:\.([\w|\.]+?))?\}/';
-		$pattern2 = '/\{(?:(\d+?)\:)?(\w+?)(?:\.([\w|\.]+?))?\}/';
+		$pattern1 = '/{(?:(\d+?):)?(\w+?)(?:\.([\w|.]+?))?}/';
+		$pattern2 = '/{(?:(\d+?):)?(\w+?)(?:\.([\w|.]+?))?}/';
 
 		foreach ($nodeList as $node) {
 			$t1 = preg_replace_callback($pattern1, [$this, 'replaceVar'], $node->content);
@@ -168,8 +168,6 @@ class ForTag extends TemplateTag implements TagNode
 				$this->str_replace_node($node->childNodes);
 			}
 		}
-
-		return $nodeList;
 	}
 
 	public function replaceEcho($m): string

@@ -183,7 +183,7 @@ class TemplateEngine
 			$params = $parsedParams = [];
 
 			if (array_key_exists(2, $inlineTags[$j])) {
-				preg_match_all('@(?:(\\w+)=\'(.+?)\')@', $inlineTags[$j][2], $parsedParams, PREG_SET_ORDER);
+				preg_match_all('@(\w+)=\'(.+?)\'@', $inlineTags[$j][2], $parsedParams, PREG_SET_ORDER);
 
 				$countParams = count($parsedParams);
 				for ($p = 0; $p < $countParams; $p++) {
@@ -210,7 +210,8 @@ class TemplateEngine
 	 */
 	public function parse(string $tplFile): TemplateCacheEntry
 	{
-		if (($this->cached = $this->getTemplateCacheEntry($tplFile)) !== null) {
+		$this->cached = $this->getTemplateCacheEntry($tplFile);
+		if ($this->cached !== null) {
 			return $this->cached;
 		}
 
@@ -238,7 +239,8 @@ class TemplateEngine
 			return null;
 		}
 
-		if (($changeTime = @filemtime($filePath)) === false) {
+		$changeTime = @filemtime($filePath);
+		if ($changeTime === false) {
 			$changeTime = @filectime($filePath);
 		}
 
@@ -267,7 +269,6 @@ class TemplateEngine
 		try {
 			ob_start();
 
-			/** @noinspection PhpIncludeInspection */
 			require $this->templateCacheInterface->getCachePath() . $templateCacheEntry->getPath();
 
 			return ob_get_clean();
@@ -339,7 +340,7 @@ class TemplateEngine
 	 *
 	 * @throws Exception
 	 */
-	public function addData(string $key, mixed $value, $overwrite = false)
+	public function addData(string $key, mixed $value, bool $overwrite = false)
 	{
 		if ($this->dataPool->offsetExists($key) === true && $overwrite === false) {
 			throw new Exception("Data with the key '" . $key . "' is already registered");
@@ -458,7 +459,7 @@ class TemplateEngine
 	 * @return mixed
 	 * @throws Exception
 	 */
-	protected function getSelectorValue(string $selectorStr, $returnNull = false): mixed
+	protected function getSelectorValue(string $selectorStr, bool $returnNull = false): mixed
 	{
 		$selParts = explode('.', $selectorStr);
 		$firstPart = array_shift($selParts);
@@ -486,7 +487,8 @@ class TemplateEngine
 			} else if (is_object($varData) === true) {
 				$args = [];
 
-				if (($argPos = strpos($part, '(')) !== false) {
+				$argPos = strpos($part, '(');
+				if ($argPos !== false) {
 					$argStr = substr($part, $argPos + 1, -1);
 					$part = substr($part, 0, $argPos);
 

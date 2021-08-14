@@ -21,10 +21,8 @@ abstract class FormField extends FormComponent
 {
 	private string $id;
 	private HtmlText $label;
-	/** @var mixed */
-	private $value;
-	/** @var null|mixed */
-	private $originalValue;
+	private mixed $value;
+	private mixed $originalValue = null;
 	/** @var FormRule[] */
 	private array $rules = [];
 	/** @var FormFieldListener[] */
@@ -38,6 +36,7 @@ abstract class FormField extends FormComponent
 	protected bool $renderRequiredAbbr = true;
 	private bool $renderLabel = true;
 	private bool $acceptArrayAsValue = false;
+	private bool $autoFocus = false;
 
 	/**
 	 * @param string    $name          : The internal name for this formField which is also used by the renderer (name="")
@@ -46,7 +45,7 @@ abstract class FormField extends FormComponent
 	 *                                 array (as in NameserverField). By default it is null.
 	 * @param ?HtmlText $labelInfoText : Additional text padded to the displayed label-name (see FileField max-Info for example)
 	 */
-	public function __construct(string $name, HtmlText $label, $value = null, ?HtmlText $labelInfoText = null)
+	public function __construct(string $name, HtmlText $label, mixed $value = null, ?HtmlText $labelInfoText = null)
 	{
 		$this->id = $name;
 		$this->label = $label;
@@ -70,6 +69,16 @@ abstract class FormField extends FormComponent
 	protected function isArrayAsValueAllowed(): bool
 	{
 		return $this->acceptArrayAsValue;
+	}
+
+	public function setAutoFocus(): void
+	{
+		$this->autoFocus = true;
+	}
+
+	public function isAutoFocus(): bool
+	{
+		return $this->autoFocus;
 	}
 
 	public function setTopFormComponent(Form $topFormComponent): void
@@ -128,6 +137,10 @@ abstract class FormField extends FormComponent
 			$this->addError('Die ungültige Eingabe wurde ignoriert.', true);
 
 			return;
+		}
+
+		if(is_string($value)) {
+			$value = str_replace("\xE2\x80\x8B", '', $value);
 		}
 
 		$this->value = $value;
@@ -270,7 +283,7 @@ abstract class FormField extends FormComponent
 			}
 		}
 
-		$hasErrors = $this->hasErrors();
+		$hasErrors = $this->hasErrors(withChildElements: false);
 		foreach ($this->listeners as $formFieldListener) {
 			if ($this->isValueEmpty()) {
 				$formFieldListener->onEmptyValueAfterValidation($this->topFormComponent, $this);
@@ -285,7 +298,7 @@ abstract class FormField extends FormComponent
 			}
 		}
 
-		return !$this->hasErrors();
+		return !$this->hasErrors(withChildElements: true);
 	}
 
 	public function setRenderRequiredAbbr(bool $renderRequiredAbbr): void

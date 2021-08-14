@@ -75,7 +75,6 @@ class HtmlDoc
 			// Control-Node
 			$lostText = substr($this->htmlContent, $oldContentPos, ($newPos - $oldContentPos));
 			$this->currentLine += substr_count($lostText, "\n");
-			$lostTextNode = null;
 
 			if (preg_match('/^\\s*$/', $lostText) === true) {
 				$lostTextNode = new TextNode($this);
@@ -94,8 +93,6 @@ class HtmlDoc
 		}
 
 		$this->contentPos = $newPos + strlen($res[0][0]);
-
-		$newNode = null;
 
 		if (str_starts_with($res[0][0], '<!--')) {
 			// Comment-node
@@ -172,8 +169,6 @@ class HtmlDoc
 	public function getNodesByNamespace(string $namespace, ?HtmlNode $entryNode = null): array
 	{
 		$nodes = [];
-		$nodeList = null;
-
 		if ($entryNode === null) {
 			$nodeList = $this->nodeTree;
 		} else {
@@ -203,7 +198,6 @@ class HtmlDoc
 	public function getNodesByTagName(string $tagName, ?ElementNode $entryNode = null): array
 	{
 		$nodes = [];
-		$nodeList = null;
 
 		if ($entryNode === null) {
 			$nodeList = $this->nodeTree;
@@ -234,7 +228,6 @@ class HtmlDoc
 	public function getHtml(?ElementNode $entryNode = null): string
 	{
 		$html = '';
-		$nodeList = null;
 
 		if ($entryNode === null) {
 			$nodeList = $this->nodeTree->childNodes;
@@ -274,7 +267,6 @@ class HtmlDoc
 	public function replaceNode(HtmlNode $nodeSearch, HtmlNode $nodeReplace)
 	{
 		$parentSearchNode = $nodeSearch->getParentNode();
-		$nodeList = null;
 
 		if ($parentSearchNode === null) {
 			$nodeList = $this->nodeTree;

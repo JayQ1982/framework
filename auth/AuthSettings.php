@@ -15,7 +15,6 @@ class AuthSettings
 	private ?string $wrongPasswordQuery;
 	private ?string $loadRightsQuery;
 	private ?string $confirmLoginQuery;
-	private int $saltLength = 16;
 	private int $maxAllowedWrongPasswordAttempts = 5;
 	private int $maxIdleSeconds = 7200;
 	private string $hashAlgorithm = 'sha256';
@@ -53,11 +52,6 @@ class AuthSettings
 	public function getConfirmLoginQuery(): ?string
 	{
 		return $this->confirmLoginQuery;
-	}
-
-	public function getSaltLength(): int
-	{
-		return $this->saltLength;
 	}
 
 	public function getMaxAllowedWrongPasswordAttempts(): int

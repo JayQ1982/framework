@@ -8,22 +8,29 @@ namespace framework\form\component\field;
 
 use framework\common\StringUtils;
 use framework\form\rule\PhoneNumberRule;
+use framework\form\rule\RequiredRule;
 use framework\html\HtmlDocument;
 use framework\html\HtmlText;
 use framework\vendor\libphonenumber\PhoneNumberUtil;
 
-class PhoneNumberField extends TextField
+class PhoneNumberField extends InputField
 {
+	protected string $type = 'tel';
+
 	private string $countryCode = 'CH';
 	private string $countryCodeFieldName = 'countryCode';
 	private bool $renderInternalFormat = false;
 
 	public function __construct(string $name, HtmlText $label, ?string $value = null, ?HtmlText $requiredError = null, ?HtmlText $individualInvalidError = null)
 	{
-		parent::__construct($name, $label, $value, $requiredError);
+		parent::__construct(name: $name, label: $label, value: $value);
+
+		if (!is_null($requiredError)) {
+			$this->addRule(formRule: new RequiredRule($requiredError));
+		}
 
 		$invalidError = is_null($individualInvalidError) ? new HtmlText('Die eingegebene Telefonnummer ist ungültig.', true) : $individualInvalidError;
-		$this->addRule(new PhoneNumberRule($invalidError));
+		$this->addRule(formRule: new PhoneNumberRule($invalidError));
 	}
 
 	public function getCountryCode(): string
@@ -62,7 +69,7 @@ class PhoneNumberField extends TextField
 	public function renderValue(): string
 	{
 		if ($this->isValueEmpty()) {
-			return $this->getRawValue();
+			return trim($this->getRawValue());
 		}
 
 		return HtmlDocument::htmlEncode(StringUtils::phoneNumber($this->getRawValue(), $this->countryCode, $this->renderInternalFormat));

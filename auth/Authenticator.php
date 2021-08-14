@@ -208,7 +208,7 @@ class Authenticator
 	{
 		$hasAccess = $this->doAccessCheck($accessOnlyForLoggedInUsers, $requiredAccessRights);
 		if (!$hasAccess && $autoRedirect) {
-			if (in_array($this->core->getHttpRequest()->getPath(), (array)$this->core->getRequestHandler()->getDefaultRoutes())) {
+			if (in_array($this->core->getRequestHandler()->getRoute(), $this->core->getRequestHandler()->getDefaultRoutes())) {
 				$this->redirectToLoginPage();
 			}
 
@@ -267,23 +267,5 @@ class Authenticator
 	public function encryptPassword(string $salt, string $password): string
 	{
 		return hash($this->authSettings->getHashAlgorithm(), $salt . $password);
-	}
-
-	public function generateSalt(): string
-	{
-		$chars = utf8_decode('`´°+*ç%&/()=?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890üöä!£{}éèà[]¢|¬§°#@¦');
-		$charsLngth = strlen($chars);
-
-		srand((double)microtime() * 1000000);
-		$salt = '';
-
-		for ($i = 0; $i < $this->authSettings->getSaltLength(); $i++) {
-			$num = rand() % $charsLngth;
-
-			$tmp = utf8_encode(substr($chars, $num, 1));
-			$salt .= $tmp;
-		}
-
-		return $salt;
 	}
 }

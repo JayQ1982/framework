@@ -465,10 +465,10 @@ class curlRequest
 	/**
 	 * Sets an error for later processing by calling processes (for example "output in XML").
 	 *
-	 * @param string $errMsg  : The error message
-	 * @param        $errCode : The optional error code
+	 * @param string     $errMsg  : The error message
+	 * @param int|string $errCode : The optional error code
 	 */
-	protected function setLastErr(string $errMsg, $errCode = ''): void
+	protected function setLastErr(string $errMsg, int|string $errCode = ''): void
 	{
 		$this->lastErrMsg = $errMsg;
 		$this->lastErrCode = (string)$errCode;

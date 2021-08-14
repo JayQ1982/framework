@@ -32,9 +32,7 @@ class StringUtils
 			return '';
 		}
 
-		$afterStr = mb_substr($str, $posFrom + mb_strlen($after));
-
-		return ($afterStr !== false) ? $afterStr : '';
+		return mb_substr($str, $posFrom + mb_strlen($after));
 	}
 
 	public static function beforeFirst(string $str, string $before): string
@@ -264,6 +262,10 @@ class StringUtils
 			return null;
 		}
 
+		if (str_starts_with($phone, '00')) {
+			$phone = '+' . substr($phone, 2);
+		}
+
 		$countryCode = null;
 		if (mb_strlen($phone) > 1 && mb_substr($phone, 0, 1) !== '+' && mb_substr($phone, 0, 2) !== '00') {
 			// If no international number is given, assume country code from phone number field as the default region
@@ -326,8 +328,9 @@ class StringUtils
 		return $string;
 	}
 
-	private static function generateSecureRandomNumber(int $max, $exceptionCounter = 0): int
+	private static function generateSecureRandomNumber(int $max): int
 	{
+		$exceptionCounter = 0;
 		while ($exceptionCounter < 3) {
 			try {
 				return random_int(0, $max);
@@ -340,5 +343,18 @@ class StringUtils
 		}
 
 		throw new RuntimeException('Missing System entropy at generation of random string');
+	}
+
+	public static function generateSalt(int $length = 16): string
+	{
+		$chars = '`´°+*ç%&/()=?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890üöä!£{}éèà[]¢|¬§°#@¦';
+		$charsLength = mb_strlen($chars);
+		srand((double)microtime() * 1000000);
+		$salt = '';
+		for ($i = 0; $i < $length; $i++) {
+			$salt .= mb_substr($chars, (rand() % $charsLength), 1);
+		}
+
+		return $salt;
 	}
 }

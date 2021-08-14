@@ -159,15 +159,15 @@ class Form extends FormCollection
 			$formComponent->validate($inputData);
 		}
 
-		if (!$this->hasErrors()) {
+		if (!$this->hasErrors(withChildElements: true)) {
 			$this->validateCsrf($inputData);
 		}
 
-		if ($this->hasErrors() && (count($this->getErrorsAsHtmlTextObjects()) === 0) && !is_null($this->globalErrorMessage)) {
+		if ($this->hasErrors(withChildElements: true) && !$this->hasErrors(withChildElements: false) && !is_null($this->globalErrorMessage)) {
 			$this->addErrorAsHtmlTextObject($this->globalErrorMessage);
 		}
 
-		return !$this->hasErrors();
+		return !$this->hasErrors(withChildElements: true);
 	}
 
 	private function validateCsrf(array $inputData): void

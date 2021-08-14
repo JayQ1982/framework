@@ -182,7 +182,7 @@ class HttpResponse
 		exit;
 	}
 
-	private function notModifiedCheck(string $eTag, string $lastModifiedTimeStamp): bool
+	private function notModifiedCheck(string $eTag, int $lastModifiedTimeStamp): bool
 	{
 		if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] === $eTag) {
 			return true;

@@ -74,6 +74,10 @@ class ExceptionHandler
 		$placeholders['errorLine'] = $realException->getLine();
 		$placeholders['errorCode'] = $realException->getCode();
 		$placeholders['backtrace'] = ($this->contentType === HttpResponse::TYPE_HTML) ? $realException->getTraceAsString() : $realException->getTrace();
+		$placeholders['vardump_get'] = isset($_GET) ? htmlentities(var_export($_GET, true)) : '';
+		$placeholders['vardump_post'] = isset($_POST) ? htmlentities(var_export($_POST, true)) : '';
+		$placeholders['vardump_file'] = isset($_FILE) ? htmlentities(var_export($_FILE, true)) : '';
+		$placeholders['vardump_sess'] = isset($_SESSION) ? htmlentities(var_export($_SESSION, true)) : '';
 
 		$this->sendHttpResponseAndExit(
 			core: $core,

@@ -84,9 +84,9 @@ abstract class FormComponent extends HtmlElement
 		$this->setHasErrorsToTrue();
 	}
 
-	public function hasErrors(): bool
+	public function hasErrors(bool $withChildElements): bool
 	{
-		return $this->hasErrors;
+		return $withChildElements ? $this->hasErrors : (count($this->errors) > 0);
 	}
 
 	final protected function setHasErrorsToTrue(): void

@@ -28,7 +28,7 @@ abstract class DateTimeFieldCore extends TextField
 			return '';
 		}
 		$originalValue = $this->getRawValue();
-		if ($this->hasErrors()) {
+		if ($this->hasErrors(withChildElements: false)) {
 			// Invalid value; show original input
 			return HtmlDocument::htmlEncode(trim($originalValue));
 		}

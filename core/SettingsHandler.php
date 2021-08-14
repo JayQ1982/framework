@@ -118,7 +118,7 @@ class SettingsHandler
 		}
 
 		foreach ($settingsArray as $k => $v) {
-			if (is_object($v) && $v instanceof stdClass) {
+			if ($v instanceof stdClass) {
 				$this->interpolateObj($v, $replace);
 			} else if (is_array($v)) {
 				$this->interpolateArray($v, $replace);

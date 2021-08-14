@@ -43,9 +43,9 @@ class SearchHelper
 	private function cleanQuery(string $string): string
 	{
 		$string = trim($string);
-		$string = strip_tags($string); // remove any html/javascript.
+		// remove any html/javascript.
 		// prevents duplicate backslashes
-		return $string;
+		return strip_tags($string);
 	}
 
 	/**
@@ -137,9 +137,8 @@ class SearchHelper
 	private function handleShorthand(string $text): string
 	{
 		$text = preg_replace("/ \+/", " and ", $text);
-		$text = preg_replace("/ -/", " not ", $text);
 
-		return $text;
+		return preg_replace("/ -/", " not ", $text);
 	}
 
 	/**

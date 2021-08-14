@@ -35,7 +35,7 @@ abstract class DefaultOptionsRenderer extends FormRenderer
 		}
 
 		$htmlTagAttributes = [];
-		if($optionsField->hasErrors()) {
+		if($optionsField->hasErrors(withChildElements: true)) {
 			$htmlTagAttributes[] = new HtmlTagAttribute('class', 'list-has-error', true);
 		}
 

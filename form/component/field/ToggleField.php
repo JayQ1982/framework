@@ -99,7 +99,7 @@ class ToggleField extends OptionsField
 	public function getHtmlTag(): HtmlTag
 	{
 		$ulTagClasses = ['form-toggle-list'];
-		if ($this->hasErrors()) {
+		if ($this->hasErrors(withChildElements: false)) {
 			$ulTagClasses[] = 'list-has-error';
 		}
 		$ulTag = new HtmlTag('ul', false, [new HtmlTagAttribute('class', implode(' ', $ulTagClasses), true)]);
@@ -180,7 +180,7 @@ class ToggleField extends OptionsField
 		// then only the ToggleField-Area will be returned:
 		if (!$this->displayLegend) {
 			$divClasses = ['form-element'];
-			if ($this->hasErrors()) {
+			if ($this->hasErrors(withChildElements: true)) {
 				$divClasses[] = 'has-error';
 			}
 			$divTag = new HtmlTag('div', false, [new HtmlTagAttribute('class', implode(' ', $divClasses), true)]);
@@ -236,7 +236,7 @@ class ToggleField extends OptionsField
 	{
 		// First execute main rules on the toggle field
 		parent::validate($inputData, $overwriteValue);
-		if ($this->hasErrors()) {
+		if ($this->hasErrors(withChildElements: true)) {
 			// If we already have an error, return false
 			return false;
 		}
@@ -264,7 +264,7 @@ class ToggleField extends OptionsField
 			}
 		}
 
-		return !$this->hasErrors();
+		return !$this->hasErrors(withChildElements: true);
 	}
 
 	/**
@@ -272,7 +272,7 @@ class ToggleField extends OptionsField
 	 *
 	 * @return array|null
 	 */
-	private function changeValueToArray($value = null): ?array
+	private function changeValueToArray(null|array|string $value = null): ?array
 	{
 		if (!is_array($value)) {
 			return [$value];

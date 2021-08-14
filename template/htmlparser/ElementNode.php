@@ -69,8 +69,6 @@ class ElementNode extends HtmlNode
 	public function getInnerHtml(?ElementNode $entryNode = null): string
 	{
 		$html = '';
-		$nodeList = null;
-
 		if ($entryNode === null) {
 			$nodeList = $this->childNodes;
 		} else {

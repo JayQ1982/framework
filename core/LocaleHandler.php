@@ -65,7 +65,6 @@ class LocaleHandler
 	private function parseLanguageFile(string $filePath): void
 	{
 		$txt = [];
-		/** @noinspection PhpIncludeInspection */
 		require_once $filePath;
 
 		foreach ($txt as $key => $val) {

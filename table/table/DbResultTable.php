@@ -259,7 +259,20 @@ class DbResultTable extends SmartTable
 			}
 		}
 
-		return $this->totalAmount = $this->db->select(implode(' ', $newCountQueryParts), $this->params)[0]->amount;
+		$countQuery = implode(' ', $newCountQueryParts);
+		$amountOfCountParameters = count(explode(separator: '?', string: $countQuery)) - 1;
+		$parametersToRemoveForCount = count($this->params) - $amountOfCountParameters;
+		$countParameters = [];
+		$i = 0;
+		foreach ($this->params as $parameter) {
+			$i++;
+			if ($i <= $parametersToRemoveForCount) {
+				continue;
+			}
+			$countParameters[] = $parameter;
+		}
+
+		return $this->totalAmount = $this->db->select(sql: $countQuery, parameters: $countParameters)[0]->amount;
 	}
 
 	public function getDb(): FrameworkDB

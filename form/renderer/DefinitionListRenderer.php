@@ -15,6 +15,8 @@ use framework\html\HtmlText;
 class DefinitionListRenderer extends FormRenderer
 {
 	private FormField $formField;
+	/** @var HtmlTag[] */
+	private array $htmlTagsBeforeFormField = [];
 
 	public function __construct(FormField $formField)
 	{
@@ -55,7 +57,7 @@ class DefinitionListRenderer extends FormRenderer
 			// A <div> (instead of <dd>) will be created to contain the child with the "visualInvisible" <label>
 			$divTag = new HtmlTag('div', false);
 			$divTag->addTag($labelTag);
-			if ($formField->hasErrors()) {
+			if ($formField->hasErrors(withChildElements: true)) {
 				$divTag->addHtmlTagAttribute(new HtmlTagAttribute('class', 'form-toggle-content-item has-error', true));
 			} else {
 				$divTag->addHtmlTagAttribute(new HtmlTagAttribute('class', 'form-toggle-content-item', true));
@@ -86,12 +88,16 @@ class DefinitionListRenderer extends FormRenderer
 			$ddClasses[] = 'form-cols';
 		}
 
-		if ($formField->hasErrors()) {
+		if ($formField->hasErrors(withChildElements: true)) {
 			$ddClasses[] = 'has-error';
 		}
 
 		$ddAttributes = (count($ddClasses) === 0) ? [] : [new HtmlTagAttribute('class', implode(' ', $ddClasses), true)];
 		$ddTag = new HtmlTag('dd', false, $ddAttributes);
+
+		foreach ($this->htmlTagsBeforeFormField as $htmlTag) {
+			$ddTag->addTag($htmlTag);
+		}
 
 		$defaultFormFieldRenderer = $formField->getDefaultRenderer();
 		$defaultFormFieldRenderer->prepare();
@@ -118,5 +124,10 @@ class DefinitionListRenderer extends FormRenderer
 		$dlTag->addTag($dtTag);
 		$dlTag->addTag($ddTag);
 		$this->setHtmlTag($dlTag);
+	}
+
+	public function addHtmlTagBeforeFormField(HtmlTag $htmlTag): void
+	{
+		$this->htmlTagsBeforeFormField[] = $htmlTag;
 	}
 }

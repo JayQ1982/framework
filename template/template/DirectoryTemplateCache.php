@@ -29,7 +29,8 @@ class DirectoryTemplateCache extends TemplateCacheStrategy
 			return null;
 		}
 
-		if (($changeTime = filemtime($cacheFilePath)) === false) {
+		$changeTime = filemtime($cacheFilePath);
+		if ($changeTime === false) {
 			$changeTime = filectime($cacheFilePath);
 		}
 

@@ -24,6 +24,15 @@ class filters
 		$this->searchHelper = SearchHelper::getInstance($name, $core->getHttpRequest());
 	}
 
+	/**
+	 * @param string $name          : Name of filter
+	 * @param string $label         : Shown label in GUI rendering
+	 * @param string $type          : One of these strings: 'text', 'options', 'dateFrom', 'dateTo'
+	 * @param string $colName       : Name of column, to which the filter will apply to
+	 * @param string $defaultValue  : The default filter selection
+	 * @param array  $options       : Nested array of following kind: [ <entryName> => ['label' => '...', 'cond' => '...', 'params' => '...'] ]
+	 * @param bool   $primaryFilter : If set to true, it will be shown in the first row, and in any case
+	 */
 	public function addFilter(string $name, string $label, string $type = 'text', string $colName = '', string $defaultValue = '', array $options = [], bool $primaryFilter = true): void
 	{
 		$this->filters[$name] = [
@@ -80,7 +89,7 @@ class filters
 	 *                             the secondary filter row being shown, if that field is part of it
 	 *
 	 * @return string : HTML for display
-	 * @todo Make more object oriented and check all data for rendering if it needs additional encoding
+	 * TODO: Make more object oriented and check all data for rendering if it needs additional encoding
 	 */
 	public function display(array $neutralValues = []): string
 	{
