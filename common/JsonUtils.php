@@ -57,7 +57,11 @@ class JsonUtils
 			if (!$in_multiline_comment && !$in_singleline_comment) {
 				$tmp2 = substr($lc, $from);
 				if (!$in_string) {
-					$tmp2 = preg_replace("/(\n|\r|\s)*/", null, $tmp2);
+					$tmp2 = preg_replace(
+						pattern: "/(\n|\r|\s)*/",
+						replacement: '',
+						subject: $tmp2
+					);
 				}
 
 				$new_str[] = $tmp2;
@@ -89,6 +93,6 @@ class JsonUtils
 		}
 		$new_str[] = $rc;
 
-		return implode(null, $new_str);
+		return implode('', $new_str);
 	}
 }

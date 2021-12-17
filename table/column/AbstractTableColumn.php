@@ -14,18 +14,16 @@ abstract class AbstractTableColumn
 	private string $label;
 	private bool $isSortable;
 	private bool $sortAscendingByDefault;
-	private bool $columnScope;
 	private array $columnCssClasses = [];
 	private array $cellCssClasses = [];
 	private ?string $tableIdentifier = null;
 
-	public function __construct(string $identifier, string $label, bool $isSortable = false, bool $sortAscendingByDefault = true, bool $columnScope = true)
+	public function __construct(string $identifier, string $label, bool $isSortable = false, bool $sortAscendingByDefault = true)
 	{
 		$this->identifier = $identifier;
 		$this->label = $label;
 		$this->isSortable = $isSortable;
 		$this->sortAscendingByDefault = $sortAscendingByDefault;
-		$this->columnScope = $columnScope;
 
 		if ($this->isSortable) {
 			$this->addColumnCssClass('sort');

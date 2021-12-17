@@ -7,6 +7,7 @@
 namespace framework\auth;
 
 use framework\core\Core;
+use framework\core\HttpRequest;
 use framework\db\FrameworkDB;
 use framework\exception\UnauthorizedException;
 use LogicException;
@@ -66,7 +67,7 @@ class Authenticator
 			return false;
 		}
 
-		if (isset($userDataFromDb->confirmed) && is_null($userDataFromDb->confirmed)) {
+		if (property_exists($userDataFromDb, 'confirmed') && is_null($userDataFromDb->confirmed)) {
 			$this->setCredentialCheckError(Authenticator::ERROR_NOT_CONFIRMED);
 
 			return false;
@@ -85,7 +86,7 @@ class Authenticator
 			return false;
 		}
 
-		$salt = isset($userDataFromDb->salt) ? $userDataFromDb->salt : 'noSalt';
+		$salt = $userDataFromDb->salt ?? 'noSalt';
 		$inputPwHash = $this->encryptPassword($salt, $password);
 
 		if (!isset($userDataFromDb->password) || $userDataFromDb->password !== $inputPwHash) {
@@ -220,7 +221,7 @@ class Authenticator
 
 	public function redirectToLoginPage(): void
 	{
-		$pageAfterLogin = base64_encode($this->core->getHttpRequest()->getURI());
+		$pageAfterLogin = base64_encode(HttpRequest::getInstance()->getURI());
 		$this->core->redirect($this->authSettings->getLoginPage() . '?pageAfterLogin=' . $pageAfterLogin);
 	}
 

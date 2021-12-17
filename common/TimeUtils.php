@@ -12,7 +12,11 @@ class TimeUtils
 	{
 		// Check for Windows to find and replace the %e modifier correctly
 		if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-			$format = preg_replace('#(?<!%)((?:%%)*)%e#', '\1%#d', $format);
+			$format = preg_replace(
+				pattern: '#(?<!%)((?:%%)*)%e#',
+				replacement: '\1%#d',
+				subject: $format
+			);
 		}
 
 		return str_replace('%T', '%H:%i:%s', $format);

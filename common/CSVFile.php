@@ -9,7 +9,6 @@ namespace framework\common;
 class CSVFile
 {
 	private string $path;
-	private string $fileName;
 	/** @var resource|false */
 	private $fileResource;
 	private bool $utf8Encode;
@@ -18,10 +17,9 @@ class CSVFile
 
 	public function __construct(string $fileName, bool $utf8Encode)
 	{
-		$this->fileName = $fileName;
 		$this->path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $fileName;
 		$this->utf8Encode = $utf8Encode;
-		$this->fileResource = fopen($this->path, 'w');
+		$this->fileResource = fopen(filename: $this->path, mode: 'w');
 		$this->addBOM();
 	}
 
@@ -30,7 +28,7 @@ class CSVFile
 		if (!$this->utf8Encode) {
 			return;
 		}
-		fputs($this->fileResource, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+		fputs(stream: $this->fileResource, data: (chr(codepoint: 0xEF) . chr(codepoint: 0xBB) . chr(codepoint: 0xBF)));
 	}
 
 	/**
@@ -48,11 +46,11 @@ class CSVFile
 
 	public function load(string $delimiter = ';', string $enclosure = '"'): string
 	{
-		fputcsv($this->fileResource, $this->cols, $delimiter, $enclosure);
+		fputcsv(stream: $this->fileResource, fields: $this->cols, separator: $delimiter, enclosure: $enclosure);
 		foreach ($this->data as $row) {
-			fputcsv($this->fileResource, $row, $delimiter, $enclosure);
+			fputcsv(stream: $this->fileResource, fields: $row, separator: $delimiter, enclosure: $enclosure);
 		}
-		fclose($this->fileResource);
+		fclose(stream: $this->fileResource);
 
 		return $this->path;
 	}
@@ -60,51 +58,19 @@ class CSVFile
 	public function stringToArray(string $string, string $delimiter = ';', string $enclosure = '"', string $escape = '\\', string $terminator = "\n"): array
 	{
 		$r = [];
-		if (trim($string) == '') {
+		$string = trim($string);
+		if ($string === '') {
 			return $r;
 		}
-		$rows = explode($terminator, trim($string));
-		$names = array_shift($rows);
-		if (!function_exists('str_getcsv')) {
-			$r[] = $this->my_str_getcsv($names, $delimiter, $enclosure);
-		} else {
-			$r[] = str_getcsv($names, $delimiter, $enclosure, $escape);
-		}
-		$nc = count($r);
+		$rows = explode(separator: $terminator, string: $string);
+		$names = array_shift(array: $rows);
+		$r[] = str_getcsv(string: $names, separator: $delimiter, enclosure: $enclosure, escape: $escape);
 		foreach ($rows as $row) {
-			if (trim($row)) {
-				if (!function_exists('str_getcsv')) {
-					$values = $this->my_str_getcsv($row, $delimiter, $enclosure);
-				} else {
-					$values = str_getcsv($row, $delimiter, $enclosure, $escape);
-				}
-				if (!$values) {
-					$values = array_fill(0, $nc, null);
-				}
-				$r[] = $values;
+			$row = trim($row);
+			if ($row !== '') {
+				$r[] = str_getcsv(string: $row, separator: $delimiter, enclosure: $enclosure, escape: $escape);
 			}
 		}
-
-		return $r;
-	}
-
-	/**
-	 * @param        $input
-	 * @param string $delimiter
-	 * @param string $enclosure
-	 *
-	 * @return array|false|null
-	 */
-	private function my_str_getcsv($input, string $delimiter = ',', string $enclosure = '"'): bool|array|null
-	{
-		$temp = fopen("php://memory", "rw");
-		fwrite($temp, $input);
-		fseek($temp, 0);
-		if ($enclosure == '') {
-			$enclosure = '"';
-		}
-		$r = fgetcsv($temp, 4096, $delimiter[0], $enclosure[0]);
-		fclose($temp);
 
 		return $r;
 	}

@@ -38,20 +38,24 @@ class ElseifTag extends TemplateTag implements TagNode
 
 		$phpCode = '<?php ';
 
-		$phpCode .= 'elseif(' . preg_replace_callback('/\${(.*?)}/i', function($m) {
-				if (strlen($m[1]) === 0) {
-					throw new Exception('Empty template data reference');
-				}
+		$phpCode .= 'elseif(' . preg_replace_callback(
+				pattern: '/\${(.*?)}/i',
+				callback: function($m) {
+					if (strlen($m[1]) === 0) {
+						throw new Exception('Empty template data reference');
+					}
 
-				return '$this->getDataFromSelector(\'' . $m[1] . '\')';
-			}, $condAttr) . '): ?>';
+					return '$this->getDataFromSelector(\'' . $m[1] . '\')';
+				},
+				subject: $condAttr
+			) . '): ?>';
 		$phpCode .= $elementNode->getInnerHtml();
 
 		if ($tplEngine->isFollowedBy($elementNode, ['else', 'elseif']) === false) {
 			$phpCode .= '<?php endif; ?>';
 		}
 
-		$textNode = new TextNode($tplEngine->getDomReader());
+		$textNode = new TextNode();
 		$textNode->content = $phpCode;
 
 		$elementNode->parentNode->replaceNode($elementNode, $textNode);

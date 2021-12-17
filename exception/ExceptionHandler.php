@@ -9,7 +9,7 @@ namespace framework\exception;
 use framework\core\Core;
 use framework\core\HttpResponse;
 use framework\core\HttpStatusCodes;
-use framework\response\errorResponseContent;
+use framework\response\HttpErrorResponseContent;
 use framework\security\CspNonce;
 use framework\security\CsrfToken;
 use Throwable;
@@ -126,12 +126,12 @@ class ExceptionHandler
 	}
 
 	final protected function sendHttpResponseAndExit(
-		Core $core,
-		int $httpStatusCode,
-		string $errorMessage,
+		Core       $core,
+		int        $httpStatusCode,
+		string     $errorMessage,
 		string|int $errorCode,
-		string $htmlFileName,
-		array $placeholders
+		string     $htmlFileName,
+		array      $placeholders
 	): void {
 		$contentType = $this->contentType;
 		if ($contentType === HttpResponse::TYPE_HTML) {
@@ -144,11 +144,18 @@ class ExceptionHandler
 			$httpResponse->sendAndExit();
 		}
 
-		$contentString = '';
-		if (in_array($contentType, [HttpResponse::TYPE_JSON, HttpResponse::TYPE_TXT, HttpResponse::TYPE_CSV])) {
-			$errorResponseContent = new errorResponseContent($contentType, $errorMessage, $errorCode, $placeholders);
-			$contentString = $errorResponseContent->getContent();
-		}
+		$contentString = match ($contentType) {
+			HttpResponse::TYPE_JSON => HttpErrorResponseContent::createJsonResponseContent(
+				errorMessage: $errorMessage,
+				errorCode: $errorCode,
+				additionalInfo: (object)$placeholders
+			)->getContent(),
+			HttpResponse::TYPE_TXT, HttpResponse::TYPE_CSV => HttpErrorResponseContent::createTextResponseContent(
+				errorMessage: $errorMessage,
+				errorCode: $errorCode
+			)->getContent(),
+			default => '',
+		};
 
 		$httpResponse = HttpResponse::createResponseFromString($httpStatusCode, $contentString, $contentType);
 		$httpResponse->sendAndExit();

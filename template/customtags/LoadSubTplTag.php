@@ -36,7 +36,7 @@ class LoadSubTplTag extends TemplateTag implements TagNode
 		$tplFile = (preg_match('/^{(.+)}$/', $dataKey, $res) === 1) ? '$this->getData(\'' . $res[1] . '\')' : '\'' . $dataKey . '\'';
 
 		/** @var TextNode */
-		$newNode = new TextNode($tplEngine->getDomReader());
+		$newNode = new TextNode();
 		$newNode->content = '<?php ' . __NAMESPACE__ . '\\LoadSubTplTag::requireFile(' . $tplFile . ', $this); ?>';
 
 		$elementNode->parentNode->replaceNode($elementNode, $newNode);

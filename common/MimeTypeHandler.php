@@ -599,7 +599,6 @@ class MimeTypeHandler
 			'zip'         => 'application/zip',
 			'zmt'         => 'chemical/x-mopac-input',
 		];
-
 		$extension = mb_strtolower(trim($extension));
 
 		return $mimeTypes[$extension] ?? 'application/octet-stream'; // Default for unknown file types

@@ -7,9 +7,10 @@
 namespace framework\core;
 
 use Exception;
-use LogicException;
+use framework\datacheck\Sanitizer;
 use framework\exception\NotFoundException;
 use framework\session\AbstractSessionHandler;
+use LogicException;
 use stdClass;
 
 class RequestHandler
@@ -49,29 +50,34 @@ class RequestHandler
 	public function init(Core $core)
 	{
 		if ($this->isInitialized) {
-			throw new LogicException('RequestHandler is already initialized');
+			throw new LogicException(message: 'RequestHandler is already initialized');
 		}
 		$this->isInitialized = true;
-		$httpRequest = $core->getHttpRequest();
+		$httpRequest = HttpRequest::getInstance();
 		$environmentSettingsModel = $core->getEnvironmentSettingsModel();
 		$settingsHandler = $core->getSettingsHandler();
 		$coreProperties = $core->getCoreProperties();
 		$sessionHandler = $core->getSessionHandler();
 
 		$this->checkDomain($httpRequest, $environmentSettingsModel->getAllowedDomains());
-		$this->pathParts = explode('/', $httpRequest->getPath());
-		$this->countPathParts = count($this->pathParts);
-		$this->fileName = trim($this->pathParts[$this->countPathParts - 1]);
-		$routeSettings = $settingsHandler->get('routes');
-		$this->defaultRoutes = $this->initDefaultRoutes($routeSettings, $environmentSettingsModel);
-		$this->route = $this->initRoute($this->countPathParts, $httpRequest, $routeSettings, $core);
+		$this->pathParts = explode(separator: '/', string: $httpRequest->getPath());
+		$this->countPathParts = count(value: $this->pathParts);
+		$this->fileName = Sanitizer::trimmedString(input: $this->pathParts[$this->countPathParts - 1]);
+		$routeSettings = $settingsHandler->get(property: 'routes');
+		$this->defaultRoutes = $this->initDefaultRoutes(routeSettings: $routeSettings, environmentSettingsModel: $environmentSettingsModel);
+		$this->route = $this->initRoute(
+			countPathParts: $this->countPathParts,
+			httpRequest: $httpRequest,
+			routeSettings: $routeSettings,
+			core: $core
+		);
 		if (is_null($this->route)) {
-			throw new NotFoundException($core, true);
+			throw new NotFoundException(core: $core, withRedirectCheck: true);
 		}
 		$this->initPropertiesFromRouteSettings($routeSettings->routes->{$this->route}, $coreProperties, $environmentSettingsModel, $sessionHandler);
 		$this->setFileProperties();
 		if ($this->fileExtension !== $this->acceptedExtension) {
-			throw new NotFoundException($core, true);
+			throw new NotFoundException(core: $core, withRedirectCheck: true);
 		}
 	}
 
@@ -79,12 +85,12 @@ class RequestHandler
 	{
 		$host = $httpRequest->getHost();
 
-		if (count($allowedDomains) === 0) {
-			throw new Exception('Please define at least one allowed domain');
+		if (count(value: $allowedDomains) === 0) {
+			throw new Exception(message: 'Please define at least one allowed domain');
 		}
 
-		if (!in_array($host, $allowedDomains)) {
-			throw new Exception($host . ' is not set as allowed domain');
+		if (!in_array(needle: $host, haystack: $allowedDomains)) {
+			throw new Exception(message: $host . ' is not set as allowed domain');
 		}
 	}
 
@@ -93,14 +99,14 @@ class RequestHandler
 		$defaultRoutes = [];
 
 		foreach ((array)$routeSettings->default as $langCode => $defaultRoute) {
-			if (array_key_exists($langCode, $environmentSettingsModel->getAvailableLanguages())) {
+			if (array_key_exists(key: $langCode, array: $environmentSettingsModel->getAvailableLanguages())) {
 				$defaultRoutes[$langCode] = $defaultRoute;
 			}
 		}
 
 		// Make sure there is at least one default route
-		if (count($defaultRoutes) === 0) {
-			throw new Exception('There must be at least one default route with a language that is allowed by this domain');
+		if (count(value: $defaultRoutes) === 0) {
+			throw new Exception(message: 'There must be at least one default route with a language that is allowed by this domain');
 		}
 
 		return $defaultRoutes;
@@ -121,11 +127,19 @@ class RequestHandler
 		$requestedPath = $httpRequest->getPath();
 		$routes = (array)$routeSettings->routes;
 		foreach ($routes as $dynamicRoute => $dynamicRouteSettings) {
-			if (preg_match_all('#\${+(.*?)}#', $dynamicRoute, $matches1) === 0) {
+			if (preg_match_all(
+					pattern: '#\${+(.*?)}#',
+					subject: $dynamicRoute,
+					matches: $matches1
+				) === 0) {
 				continue;
 			}
-			$pattern = '#^' . str_replace($matches1[0], '(.*)?', $dynamicRoute) . '#';
-			if (preg_match($pattern, $requestedPath, $matches2) === 0) {
+			$pattern = '#^' . str_replace(search: $matches1[0], replace: '(.*?)', subject: $dynamicRoute) . '$#';
+			if (preg_match(
+					pattern: $pattern,
+					subject: $requestedPath,
+					matches: $matches2
+				) === 0) {
 				continue;
 			}
 			foreach ($matches1[1] as $nr => $variableName) {
@@ -146,22 +160,22 @@ class RequestHandler
 		if ($httpRequest->getURI() === '/') {
 			$defaultRoutes = (array)$routeSettings->default;
 			$preferredLanguage = $core->getSessionHandler()->getPreferredLanguage();
-			if (!is_null($preferredLanguage)) {
+			if (!is_null(value: $preferredLanguage)) {
 				foreach ($defaultRoutes as $language => $defaultRoute) {
 					if ($language === $preferredLanguage) {
-						$core->redirect($defaultRoute);
+						$core->redirect(relativeOrAbsoluteUri: $defaultRoute);
 					}
 				}
 			}
 
 			foreach ($httpRequest->getLanguages() as $language) {
-				if (array_key_exists($language, $defaultRoutes)) {
-					$core->redirect($defaultRoutes[$language]);
+				if (array_key_exists(key: $language, array: $defaultRoutes)) {
+					$core->redirect(relativeOrAbsoluteUri: $defaultRoutes[$language]);
 				}
 			}
 
 			// Redirect to first default route if none is available in accepted languages
-			$core->redirect(current($defaultRoutes));
+			$core->redirect(relativeOrAbsoluteUri: current(array: $defaultRoutes));
 		}
 
 		return null;
@@ -185,7 +199,7 @@ class RequestHandler
 		$this->acceptedExtension = $routeSettings->acceptedExtension ?? $this->acceptedExtension;
 		$this->language = $routeSettings->language ?? key($environmentSettingsModel->getAvailableLanguages());
 		if ($sessionHandler->getPreferredLanguage() !== $this->language) {
-			$sessionHandler->setPreferredLanguage($this->language);
+			$sessionHandler->setPreferredLanguage(language: $this->language);
 		}
 		$this->contentType = $routeSettings->contentType ?? null;
 		$this->displayHelpContent = $routeSettings->displayHelpContent ?? ($routeSettings->area === 'api');
@@ -194,15 +208,19 @@ class RequestHandler
 	private function setFileProperties(): void
 	{
 		$fileName = (trim($this->fileName) === '') ? $this->defaultFileName : $this->fileName;
-		$dotPos = strripos($fileName, '.');
+		$dotPos = strripos(haystack: $fileName, needle: '.');
 		if ($dotPos === false) {
-			$length = strlen($fileName);
+			$length = strlen(string: $fileName);
 			$fileExtension = '';
 		} else {
 			$length = $dotPos;
-			$fileExtension = substr($fileName, $length + 1);
+			$fileExtension = substr(string: $fileName, offset: $length + 1);
 		}
-		$fnArr = str_replace('__DASH__', '-', explode('-', substr($fileName, 0, $length)));
+		$fnArr = str_replace(
+			search: '__DASH__',
+			replace: '-',
+			subject: explode(separator: '-', string: substr(string: $fileName, offset: 0, length: $length))
+		);
 		$this->fileName = $fileName;
 		$this->fileTitle = $fnArr[0];
 		$this->pathVars = $fnArr;

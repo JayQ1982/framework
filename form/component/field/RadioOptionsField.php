@@ -25,9 +25,9 @@ class RadioOptionsField extends OptionsField
 
 		if (is_null($requiredError)) {
 			// Mandatory rule: In a field with radio options it is always required to choose one of those options
-			$requiredError = new HtmlText('Bitte wählen Sie eine der Optionen aus.', true);
+			$requiredError = HtmlText::encoded('Bitte wählen Sie eine der Optionen aus.');
 		}
-		$this->addRule(new RequiredRule($requiredError));
+		$this->addRule(new RequiredRule(defaultErrorMessage: $requiredError));
 
 		if ($layout !== RadioOptionsField::LAYOUT_NONE) {
 			switch ($layout) {

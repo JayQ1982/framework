@@ -22,7 +22,7 @@ abstract class OptionsField extends FormField
 		// We set a default error message because in normal circumstance this case cannot happen if the user chooses
 		// available options, so it doesn't make sense to always set an individual error message for this check.
 		// It can only happen by data manipulation, which we don't want to be notified about (by exception).
-		$this->addRule(new ValidateAgainstOptions(new HtmlText('Selected invalid value in field ' . $name, true), $this->formOptions));
+		$this->addRule(new ValidateAgainstOptions(HtmlText::encoded('Selected invalid value in field ' . $name), $this->formOptions));
 	}
 
 	public function getFormOptions(): FormOptions

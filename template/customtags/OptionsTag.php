@@ -33,13 +33,12 @@ class OptionsTag extends TemplateTag implements TagNode
 	{
 		$tplEngine->checkRequiredAttributes($elementNode, ['options']);
 
-		// TODO: getAttribute never returns null
-		$selectionSelector = ($elementNode->getAttribute('selected') !== null) ? "'{$elementNode->getAttribute('selected')->getValue()}'" : null;
+		$selectionSelector = "'{$elementNode->getAttribute('selected')->getValue()}'";
 		$optionsSelector = "'{$elementNode->getAttribute('options')->getValue()}'";
 
 		$textContent = '<?php echo ' . __CLASS__ . '::render($this, ' . $optionsSelector . ', ' . $selectionSelector . '); ?>';
 
-		$newNode = new TextNode($tplEngine->getDomReader());
+		$newNode = new TextNode();
 		$newNode->content = $textContent;
 
 		$elementNode->parentNode->insertBefore($newNode, $elementNode);

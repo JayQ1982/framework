@@ -7,17 +7,11 @@
 namespace framework\core;
 
 use DateTime;
+use framework\datacheck\Sanitizer;
 use Throwable;
 
 class FrameworkUtils
 {
-	const TYPE_UNKNOWN = 0;
-	const TYPE_INT = 1;
-	const TYPE_FLOAT = 2;
-	const TYPE_DOUBLE = 2;
-	const TYPE_STRING = 3;
-	const TYPE_DATETIME = 4;
-
 	public static function getErrorArrayAsHtml(?array $errors): ?string
 	{
 		if (is_null($errors) || count($errors) === 0) {
@@ -36,7 +30,11 @@ class FrameworkUtils
 	public static function strToDate(string $value): ?DateTime
 	{
 		if ($value !== '') {
-			return FrameworkUtils::castType($value, FrameworkUtils::TYPE_DATETIME);
+			try {
+				return new DateTime($value);
+			} catch (Throwable) {
+				return null;
+			}
 		}
 
 		return null;
@@ -59,31 +57,6 @@ class FrameworkUtils
 		return $value;
 	}
 
-	private static function castType($value, int $type): float|DateTime|int|string|null
-	{
-		if ($value === null) {
-			return null;
-		}
-
-		switch ($type) {
-			case FrameworkUtils::TYPE_INT:
-				return (int)$value;
-			case FrameworkUtils::TYPE_STRING:
-				return (string)$value;
-			case FrameworkUtils::TYPE_FLOAT:
-			case FrameworkUtils::TYPE_DOUBLE:
-				return (float)$value;
-			case FrameworkUtils::TYPE_DATETIME:
-				try {
-					return new DateTime($value);
-				} catch (Throwable) {
-					return null;
-				}
-			default:
-				return $value;
-		}
-	}
-
 	/**
 	 * Creates a kind of "hash" for a given array
 	 *
@@ -95,17 +68,10 @@ class FrameworkUtils
 	{
 		$string = '';
 		foreach ($array as $key => $val) {
-			$string .= "{$key}{$val}";
+			$string .= $key . $val;
 		}
 
 		return base64_encode($string);
-	}
-
-	public static function displayString(string $string): string
-	{
-		$r = trim($string);
-
-		return nl2br($r);
 	}
 
 	public static function validateEmail(string $email): bool
@@ -130,7 +96,7 @@ class FrameworkUtils
 		return $d;
 	}
 
-	public static function cleanNumber($number): float
+	public static function cleanNumber(float|int $number): float
 	{
 		$number = trim($number);
 
@@ -157,18 +123,14 @@ class FrameworkUtils
 			return floatval(str_replace([','], ['.'], $number));
 		}
 
-		if (is_string($number)) {
-			return floatval($number);
-		}
-
 		return floatval($number);
 	}
 
 	public static function getCurrency(): string
 	{
-		$localeInfo = localeconv();
+		$intCurrSymbol = Sanitizer::trimmedString(localeconv()['int_curr_symbol']);
 
-		return (trim($localeInfo['int_curr_symbol']) == '') ? 'CHF' : trim($localeInfo['int_curr_symbol']);
+		return ($intCurrSymbol === '') ? 'CHF' : $intCurrSymbol;
 	}
 
 	/**
@@ -220,11 +182,11 @@ class FrameworkUtils
 		}
 
 		foreach ($optionsArr as $key => $val) {
-			$options .= "<option value=\"{$key}\"";
+			$options .= '<option value="' . $key . '"';
 			if (in_array($key, $curr)) {
 				$options .= ' selected="selected"';
 			}
-			$options .= ">{$val}</option>\n";
+			$options .= '>' . $val . '</option>' . PHP_EOL;
 		}
 
 		return $options;

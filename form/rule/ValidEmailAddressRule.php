@@ -8,6 +8,7 @@ namespace framework\form\rule;
 
 use framework\common\StringUtils;
 use framework\common\ValidatedEmailAddress;
+use framework\datacheck\Sanitizer;
 use framework\form\component\FormField;
 use framework\form\FormRule;
 use framework\html\HtmlText;
@@ -31,7 +32,7 @@ class ValidEmailAddressRule extends FormRule
 			return true;
 		}
 
-		$fieldValue = trim($formField->getRawValue());
+		$fieldValue = Sanitizer::trimmedString($formField->getRawValue());
 
 		$validatedEmailAddress = new ValidatedEmailAddress($fieldValue);
 		if (!$validatedEmailAddress->isValidSyntax()) {

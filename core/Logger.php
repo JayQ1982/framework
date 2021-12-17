@@ -7,6 +7,7 @@
 namespace framework\core;
 
 use Exception;
+use framework\datacheck\Sanitizer;
 use Throwable;
 
 class Logger
@@ -93,7 +94,7 @@ class Logger
 
 		$this->checkMaxFileSize($filenameFullPath);
 		// Because of date('u')-PHP-bug (always 00000)
-		$mtimeParts = explode(' ', microtime());
+		$mtimeParts = explode(' ', (string)microtime());
 		$timestamp = date('Y-m-d H:i:s', $mtimeParts[1]) . ',' . substr($mtimeParts[0], 2);
 		$msg = $timestamp . PHP_EOL . $message . PHP_EOL . str_pad('', 70, '=') . PHP_EOL;
 		error_log($msg, 3, $filenameFullPath);
@@ -101,7 +102,7 @@ class Logger
 
 	private function mailMessage(string $fullMessage): void
 	{
-		if (trim($this->logEmailRecipient) === '') {
+		if (Sanitizer::trimmedString($this->logEmailRecipient) === '') {
 			return;
 		}
 		$headers = [
@@ -112,21 +113,14 @@ class Logger
 		error_log($fullMessage, 1, $this->logEmailRecipient, implode(PHP_EOL, $headers));
 	}
 
-	/**
-	 * "Log-rotates" the given file
-	 *
-	 * @param string $filenameFullPath : filename with full path
-	 *
-	 * @return bool : true, if rotated
-	 */
-	private function checkMaxFileSize(string $filenameFullPath): bool
+	private function checkMaxFileSize(string $filenameFullPath): void
 	{
 		if ($this->maxLogSize <= 0) {
-			return false;
+			return;
 		}
 
 		if (!file_exists($filenameFullPath) || filesize($filenameFullPath) < $this->maxLogSize) {
-			return false;
+			return;
 		}
 
 		$filePathParts = explode(DIRECTORY_SEPARATOR, $filenameFullPath);
@@ -157,7 +151,5 @@ class Logger
 
 		$fp = fopen($filenameFullPath, 'w+');
 		fclose($fp);
-
-		return true;
 	}
 }

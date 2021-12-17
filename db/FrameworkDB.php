@@ -76,12 +76,12 @@ class FrameworkDB extends PDO
 	/**
 	 * Prepares a statement for execution and returns a statement object
 	 *
-	 * @param string     $query   : Valid SQL statement
-	 * @param array|null $options : One or more key=>value pairs to set attribute values for the returned PDOStatement
+	 * @param string     $query   Valid SQL statement
+	 * @param array|null $options One or more key=>value pairs to set attribute values for the returned PDOStatement
 	 *
 	 * @return PDOStatement
 	 */
-	public function prepare($query, $options = null): PDOStatement
+	public function prepare(string $query, $options = null): PDOStatement
 	{
 		if (is_null($options)) {
 			$options = []; // Necessary circumventing of above mentioned library bug
@@ -118,14 +118,14 @@ class FrameworkDB extends PDO
 	 * This method is a shorthand to select data from the database:
 	 * "(prepare($sql)->execute($parameters))->fetchAll(PDO::FETCH_OBJ)"
 	 *
-	 * @param string $sql        : valid SQL statement
-	 * @param array  $parameters : list of parameter values to bind to the prepared sql statement in correct order
+	 * @param string $sql        valid SQL statement
+	 * @param array  $parameters list of parameter values to bind to the prepared sql statement in correct order
 	 * @param bool   $logQuery
 	 *
-	 * @return stdClass[]: Array with each row as an object of type stdClass
+	 * @return stdClass[] Array with each row as an object of type stdClass
 	 * @throws RuntimeException
 	 */
-	public function select(string $sql, array $parameters = [], bool $logQuery = true): array
+	public function select(string $sql, array $parameters = [], bool $logQuery = false): array
 	{
 		try {
 			if ($logQuery) {
@@ -156,7 +156,7 @@ class FrameworkDB extends PDO
 	 *
 	 * @return PDOStatement : The prepared statement after execution
 	 */
-	public function execute(string $sql, array $parameters = [], bool $logQuery = true): PDOStatement
+	public function execute(string $sql, array $parameters = [], bool $logQuery = false): PDOStatement
 	{
 		if ($logQuery) {
 			$dbQueryLogItem = new DbQueryLogItem($sql, $parameters);
@@ -264,5 +264,10 @@ class FrameworkDB extends PDO
 	public function getQueryLog(): array
 	{
 		return DbQueryLogList::getLog();
+	}
+
+	public function lastInsertId($name = null): int
+	{
+		return (int)parent::lastInsertId($name);
 	}
 }

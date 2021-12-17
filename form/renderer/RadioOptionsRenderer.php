@@ -10,11 +10,8 @@ use framework\form\component\field\RadioOptionsField;
 
 class RadioOptionsRenderer extends DefaultOptionsRenderer
 {
-	private RadioOptionsField $radioOptionsField;
-
 	public function __construct(RadioOptionsField $radioOptionsField)
 	{
-		$this->radioOptionsField = $radioOptionsField;
-		parent::__construct($radioOptionsField, 'radio', false);
+		parent::__construct(optionsField: $radioOptionsField, inputFieldType: 'radio', acceptMultipleValues: false);
 	}
 }

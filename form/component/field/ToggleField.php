@@ -135,7 +135,7 @@ class ToggleField extends OptionsField
 
 			// Create inner "span-label":
 			$spanLabelTag = new HtmlTag('span', false, [new HtmlTagAttribute('class', 'label-text', true)]);
-			$spanLabelTag->addText(new HtmlText($htmlText->render(), true));
+			$spanLabelTag->addText(htmlText: $htmlText);
 
 			// Create the Toggle-<label> element:
 			$label = new HtmlTag('label', false);
@@ -205,7 +205,7 @@ class ToggleField extends OptionsField
 				new HtmlTagAttribute('title', 'Erforderliche Eingabe', true),
 				new HtmlTagAttribute('class', 'required', true),
 			]);
-			$abbrTag->addText(new HtmlText('*', true));
+			$abbrTag->addText(HtmlText::encoded('*'));
 			$legendTag->addTag($abbrTag);
 		}
 
@@ -222,7 +222,7 @@ class ToggleField extends OptionsField
 		$fieldsetTag->addTag($legendTag);
 
 		if (!is_null($this->listDescription)) {
-			$fieldsetTag->addText(new HtmlText('<div class="fieldset-info">' . $this->listDescription->render() . '</div>', true));
+			$fieldsetTag->addText(HtmlText::encoded('<div class="fieldset-info">' . $this->listDescription->render() . '</div>'));
 		}
 
 		//  the <ul> tag will now be attached
@@ -268,7 +268,7 @@ class ToggleField extends OptionsField
 	}
 
 	/**
-	 * @param null|array|string $value : Internally we handle the value as array if it is a multiple field
+	 * @param null|array|string $value Internally we handle the value as array if it is a multiple field
 	 *
 	 * @return array|null
 	 */

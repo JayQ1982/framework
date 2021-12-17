@@ -8,8 +8,8 @@ namespace framework\template\htmlparser;
 
 class CommentNode extends HtmlNode
 {
-	public function __construct(HtmlDoc $htmlDocument)
+	public function __construct()
 	{
-		parent::__construct(HtmlNode::COMMENT_NODE, $htmlDocument);
+		parent::__construct(nodeType: HtmlNode::COMMENT_NODE);
 	}
 }

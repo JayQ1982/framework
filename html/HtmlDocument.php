@@ -7,6 +7,7 @@
 namespace framework\html;
 
 use framework\core\Core;
+use framework\datacheck\Sanitizer;
 use framework\exception\NotFoundException;
 use framework\security\CspNonce;
 use framework\security\CsrfToken;
@@ -37,7 +38,7 @@ class HtmlDocument
 		$requestHandler = $core->getRequestHandler();
 		$environmentSettingsModel = $core->getEnvironmentSettingsModel();
 
-		$fileTitle = trim($requestHandler->getFileTitle());
+		$fileTitle = Sanitizer::trimmedString($requestHandler->getFileTitle());
 		$this->contentFileName = $fileTitle;
 
 		$this->replacements['_fileTitle'] = $fileTitle;
@@ -47,7 +48,7 @@ class HtmlDocument
 		$this->addText('bodyid', 'body_' . $fileTitle, true);
 		$this->addText('language', $requestHandler->getLanguage(), true);
 		$this->addText('charset', 'UTF-8', true);
-		$this->addText('copyright', ($copyright < date('Y')) ? $copyright . '-' . date('Y') : $copyright, true);
+		$this->addText('copyright', ($copyright < (int)date('Y')) ? $copyright . '-' . date('Y') : $copyright, true);
 		$this->addText('robots', $environmentSettingsModel->getRobots(), true);
 		$this->addText('scripts', '', true);
 		$this->addText('cspNonce', CspNonce::get(), true);
@@ -169,12 +170,16 @@ class HtmlDocument
 		$tplEngine = new TemplateEngine($tplCache, 'tst');
 		$htmlAfterReplacements = $tplEngine->getResultAsHtml($templateFilePath, $this->replacements);
 
-		return preg_replace_callback('/(\s+id="nav-(.+?)")(\s+class="(.+?)")?/', [$this, 'setCSSActive'], $htmlAfterReplacements);
+		return preg_replace_callback(
+			pattern: '/(\s+id="nav-(.+?)")(\s+class="(.+?)")?/',
+			callback: [$this, 'setCSSActive'],
+			subject: $htmlAfterReplacements
+		);
 	}
 
 	private function setCSSActive(array $m): string
 	{
-		if (is_null($this->activeHtmlIds) || !in_array($m[2], $this->activeHtmlIds)) {
+		if (!in_array($m[2], $this->activeHtmlIds)) {
 			// The id is not within activeHtmlIds, so we just return the whole unmodified string
 			return $m[0];
 		}

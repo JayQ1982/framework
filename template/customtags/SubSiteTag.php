@@ -6,6 +6,7 @@
 
 namespace framework\template\customtags;
 
+use framework\datacheck\Sanitizer;
 use framework\template\template\TagNode;
 use framework\template\template\TemplateEngine;
 use framework\template\htmlparser\ElementNode;
@@ -31,16 +32,24 @@ class SubSiteTag extends TemplateTag implements TagNode
 
 	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$sites = array_map('trim', explode(',', $elementNode->getAttribute('sites')->getValue()));
+		$trimmedSitesString = '';
+		$inputValue = Sanitizer::trimmedString(input: $elementNode->getAttribute('sites')->getValue());
+		if($inputValue !== '') {
+			$sites = [];
+			foreach(explode(',', $inputValue) as $item) {
+				$sites[] = '\''.Sanitizer::trimmedString($item).'\'';
+			}
+			$trimmedSitesString = implode(',', $sites);
+		}
 
-		$phpCode = '<?php if(in_array(SubSiteTag::getData(\'_fileTitle\'),array(\'' . implode('\',\'', $sites) . '\'))) { ?>';
+		$phpCode = '<?php if(in_array(SubSiteTag::getData(\'_fileTitle\'),[' . $trimmedSitesString . '])) { ?>';
 		$phpCode .= $elementNode->getInnerHtml();
 
 		if ($tplEngine->isFollowedBy($elementNode, ['else']) === false) {
 			$phpCode .= '<?php } ?>';
 		}
 
-		$textNode = new TextNode($tplEngine->getDomReader());
+		$textNode = new TextNode();
 		$textNode->content = $phpCode;
 
 		$elementNode->parentNode->replaceNode($elementNode, $textNode);

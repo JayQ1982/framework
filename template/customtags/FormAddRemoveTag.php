@@ -37,7 +37,7 @@ class FormAddRemoveTag extends TemplateTag implements TagNode
 		$poolEntriesSelector = $elementNode->doesAttributeExist('pool') ? $elementNode->getAttribute('pool')->getValue() : null;
 		$nameSelector = $elementNode->getAttribute('name')->getValue();
 
-		$newNode = new TextNode($tplEngine->getDomReader());
+		$newNode = new TextNode();
 		$newNode->content = '<?= ' . FormAddRemoveTag::class . '::render(\'' . $nameSelector . '\', \'' . $chosenEntriesSelector . '\', \'' . $poolEntriesSelector . '\', $this); ?>';
 
 		$elementNode->parentNode->insertBefore($newNode, $elementNode);

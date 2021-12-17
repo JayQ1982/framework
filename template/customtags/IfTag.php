@@ -8,6 +8,7 @@ namespace framework\template\customtags;
 
 use Exception;
 use framework\common\StringUtils;
+use framework\datacheck\Sanitizer;
 use framework\template\template\TagNode;
 use framework\template\template\TemplateEngine;
 use framework\template\htmlparser\ElementNode;
@@ -34,9 +35,6 @@ class IfTag extends TemplateTag implements TagNode
 	/**
 	 * @param TemplateEngine $tplEngine
 	 * @param ElementNode    $elementNode
-	 *
-	 * @noinspection PhpStatementHasEmptyBodyInspection
-	 * @todo         Refactor so we can remove that inspection
 	 */
 	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
@@ -53,22 +51,18 @@ class IfTag extends TemplateTag implements TagNode
 
 			if (strlen($againstAttr) === 0) {
 				$againstAttr = "''";
-			} else if (is_int($againstAttr) === true) {
-				$againstAttr = intval($againstAttr);
-			} else if (is_float($againstAttr) === true) {
-				$againstAttr = floatval($againstAttr);
-			} else if (is_string($againstAttr) === true) {
-				if (strtolower($againstAttr) === 'null') {
-				} else if (strtolower($againstAttr) === 'true' || strtolower($againstAttr) === 'false') {
-				} else if (StringUtils::startsWith($againstAttr, '{') && StringUtils::endsWith($againstAttr, '}')) {
-					$arr = explode(',', substr($againstAttr, 1, -1));
-					$againstAttr = [];
+			} else if (is_string($againstAttr)) {
+				if (!in_array(strtolower($againstAttr), ['null', 'true', 'false'])) {
+					if (StringUtils::startsWith($againstAttr, '{') && StringUtils::endsWith($againstAttr, '}')) {
+						$arr = explode(',', substr($againstAttr, 1, -1));
+						$againstAttr = [];
 
-					foreach ($arr as $a) {
-						$againstAttr[] = trim($a);
+						foreach ($arr as $a) {
+							$againstAttr[] = Sanitizer::trimmedString($a);
+						}
+					} else {
+						$againstAttr = "'" . $againstAttr . "'";
 					}
-				} else {
-					$againstAttr = "'" . $againstAttr . "'";
 				}
 			}
 
@@ -83,13 +77,17 @@ class IfTag extends TemplateTag implements TagNode
 
 			$phpCode .= 'if($this->getDataFromSelector(\'' . $compareAttr . '\') ' . $operatorStr . ' ' . $againstAttr . ') { ?>';
 		} else {
-			$phpCode .= 'if(' . preg_replace_callback('/\${(.*?)}/i', function($m) {
-					if (strlen($m[1]) === 0) {
-						throw new Exception('Empty template data reference');
-					}
+			$phpCode .= 'if(' . preg_replace_callback(
+					pattern: '/\${(.*?)}/i',
+					callback: function($m) {
+						if (strlen($m[1]) === 0) {
+							throw new Exception('Empty template data reference');
+						}
 
-					return '$this->getDataFromSelector(\'' . $m[1] . '\')';
-				}, $condAttr) . ') { ?>';
+						return '$this->getDataFromSelector(\'' . $m[1] . '\')';
+					},
+					subject: $condAttr
+				) . ') { ?>';
 		}
 
 		$phpCode .= $elementNode->getInnerHtml();
@@ -98,7 +96,7 @@ class IfTag extends TemplateTag implements TagNode
 			$phpCode .= '<?php } ?>';
 		}
 
-		$textNode = new TextNode($tplEngine->getDomReader());
+		$textNode = new TextNode();
 		$textNode->content = $phpCode;
 
 		$elementNode->parentNode->replaceNode($elementNode, $textNode);

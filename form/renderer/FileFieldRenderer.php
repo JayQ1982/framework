@@ -56,7 +56,7 @@ class FileFieldRenderer extends FormRenderer
 			foreach ($alreadyUploadedFiles as $hash => $fileDataModel) {
 				$htmlContent .= '<li class="clearfix"><b>' . HtmlDocument::htmlEncode($fileDataModel->getName()) . '</b> <button type="submit" name="' . FileField::MNF_PREFIX . '_removeAttachment" value="' . HtmlDocument::htmlEncode($hash) . '">löschen</button>';
 			}
-			$fileListBox->addText(new HtmlText($htmlContent, true));
+			$fileListBox->addText(HtmlText::encoded($htmlContent));
 			$wrapper->addTag($fileListBox);
 		}
 

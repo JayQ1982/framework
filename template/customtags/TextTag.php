@@ -34,7 +34,7 @@ class TextTag extends TemplateTag implements TagNode, TagInline
 	{
 		$replValue = $this->replace($elementNode->getAttribute('value')->getValue());
 
-		$replNode = new TextNode($tplEngine->getDomReader());
+		$replNode = new TextNode();
 		$replNode->content = $replValue;
 
 		$elementNode->parentNode->replaceNode($elementNode, $replNode);

@@ -16,15 +16,15 @@ class AutoloaderPathModel
 	private string $mode;
 	/** @var string[] */
 	private array $fileSuffixList;
-	private ?string $phpFilePathRemove;
+	private string $phpFilePathRemove;
 
-	public function __construct(string $name, string $path, string $mode, array $classSuffixList, ?string $phpFilePathRemove = null)
+	public function __construct(string $name, string $path, string $mode, array $classSuffixList, string $phpFilePathRemove = '')
 	{
 		$this->name = $name;
 		$this->path = str_replace('/', DIRECTORY_SEPARATOR, $path);
 		$this->mode = str_replace('/', DIRECTORY_SEPARATOR, $mode);
 		$this->fileSuffixList = $classSuffixList;
-		$this->phpFilePathRemove = $phpFilePathRemove;
+		$this->phpFilePathRemove = trim($phpFilePathRemove);
 	}
 
 	public function getName(): string
@@ -47,7 +47,7 @@ class AutoloaderPathModel
 		return $this->fileSuffixList;
 	}
 
-	public function getPhpFilePathRemove(): ?string
+	public function getPhpFilePathRemove(): string
 	{
 		return $this->phpFilePathRemove;
 	}

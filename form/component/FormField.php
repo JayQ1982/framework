@@ -139,7 +139,7 @@ abstract class FormField extends FormComponent
 			return;
 		}
 
-		if(is_string($value)) {
+		if (is_string($value)) {
 			$value = str_replace("\xE2\x80\x8B", '', $value);
 		}
 
@@ -209,9 +209,9 @@ abstract class FormField extends FormComponent
 		$this->rules[] = $formRule;
 	}
 
-	public function addRequiredRule(string $errorMessage, bool $isEncodedForRendering)
+	public function addRequiredRule(HtmlText $errorMessage)
 	{
-		$this->addRule(new RequiredRule(new HtmlText($errorMessage, $isEncodedForRendering)));
+		$this->addRule(new RequiredRule($errorMessage));
 	}
 
 	protected function hasRule(string $ruleClassName): bool

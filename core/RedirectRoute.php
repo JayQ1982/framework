@@ -32,7 +32,7 @@ class RedirectRoute
 		if (isset($allRedirects->regex)) {
 			$this->regexRedirects = (array)$allRedirects->regex;
 		}
-		$this->requestedURI = mb_strtolower($core->getHttpRequest()->getPath());
+		$this->requestedURI = mb_strtolower(HttpRequest::getInstance()->getPath());
 	}
 
 	public function redirectIfRouteExists(): void
@@ -84,7 +84,11 @@ class RedirectRoute
 			$match = preg_match('!' . $pattern . '!', $path);
 			if ($match === 1) {
 				// Yes ... then do the replacements:
-				return preg_replace('!' . $pattern . '!', $newPath, $path);
+				return preg_replace(
+					pattern: '!' . $pattern . '!',
+					replacement: $newPath,
+					subject: $path
+				);
 			}
 		}
 

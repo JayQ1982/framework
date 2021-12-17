@@ -12,8 +12,10 @@ use framework\common\StringUtils;
 
 class HttpRequest
 {
-	const PROTOCOL_HTTP = 'http';
-	const PROTOCOL_HTTPS = 'https';
+	public const PROTOCOL_HTTP = 'http';
+	public const PROTOCOL_HTTPS = 'https';
+
+	private static ?HttpRequest $instance = null;
 
 	private array $inputData;
 	private array $cookies;
@@ -30,18 +32,27 @@ class HttpRequest
 	private string $remoteAddress;
 	private string $referrer;
 
-	public function __construct()
+	public static function getInstance(): HttpRequest
+	{
+		if (is_null(HttpRequest::$instance)) {
+			HttpRequest::$instance = new HttpRequest();
+		}
+
+		return HttpRequest::$instance;
+	}
+
+	private function __construct()
 	{
 		$this->inputData = array_merge($_GET, $_POST);
 		$this->cookies = $_COOKIE;
 		$this->host = $this->initHost();
 		$this->uri = $_SERVER['REQUEST_URI'];
-		$this->path = StringUtils::beforeFirst($this->uri, '?');
+		$this->path = StringUtils::beforeFirst(str: $this->uri, before: '?');
 		$this->port = (int)$_SERVER['SERVER_PORT'];
 		$this->protocol = $this->initProtocol();
 		$this->query = $_SERVER['QUERY_STRING'];
 		$this->requestTime = new DateTime();
-		$this->requestTime->setTimestamp($_SERVER['REQUEST_TIME']);
+		$this->requestTime->setTimestamp(timestamp: $_SERVER['REQUEST_TIME']);
 		$this->requestMethod = $_SERVER['REQUEST_METHOD'];
 		$this->userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 		$this->languages = $this->initLanguages();
@@ -58,7 +69,7 @@ class HttpRequest
 		if (isset($_SERVER['SERVER_NAME'])) {
 			return $_SERVER['SERVER_NAME'];
 		}
-		throw new Exception('HTTP_HOST and SERVER_NAME are not defined');
+		throw new Exception(message: 'HTTP_HOST and SERVER_NAME are not defined');
 	}
 
 	private function initProtocol(): string
@@ -84,49 +95,49 @@ class HttpRequest
 	private function initLanguages(): array
 	{
 		$languages = [];
-		$langsRates = explode(',', isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '');
+		$langsRates = explode(separator: ',', string: $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '');
 
 		foreach ($langsRates as $lr) {
-			$lrParts = explode(';', $lr);
-			$language = StringUtils::beforeFirst($lrParts[0], '-');
-			$priority = isset($lrParts[1]) ? ((float)StringUtils::afterFirst($lrParts[1], 'q=')) * 100 : 100;
+			$lrParts = explode(separator: ';', string: $lr);
+			$language = StringUtils::beforeFirst(str: $lrParts[0], before: '-');
+			$priority = isset($lrParts[1]) ? ((float)StringUtils::afterFirst(str: $lrParts[1], after: 'q=')) * 100 : 100;
 			if (!isset($languages[$priority])) {
 				$languages[$priority] = $language;
 			}
 		}
-		krsort($languages);
+		krsort(array: $languages);
 
 		return $languages;
 	}
 
 	public function hasScalarInputValue(string $keyName): bool
 	{
-		return (isset($this->inputData[$keyName]) && is_scalar($this->inputData[$keyName]));
+		return (isset($this->inputData[$keyName]) && is_scalar(value: $this->inputData[$keyName]));
 	}
 
 	public function getInputString(string $keyName): ?string
 	{
-		return ($this->hasScalarInputValue($keyName)) ? trim($this->inputData[$keyName]) : null;
+		return ($this->hasScalarInputValue(keyName: $keyName)) ? trim(string: $this->inputData[$keyName]) : null;
 	}
 
 	public function getInputInteger(string $keyName): ?int
 	{
-		return ($this->hasScalarInputValue($keyName)) ? (int)$this->inputData[$keyName] : null;
+		return ($this->hasScalarInputValue(keyName: $keyName)) ? (int)$this->inputData[$keyName] : null;
 	}
 
 	public function getInputFloat(string $keyName): ?float
 	{
-		return ($this->hasScalarInputValue($keyName)) ? (float)$this->inputData[$keyName] : null;
+		return ($this->hasScalarInputValue(keyName: $keyName)) ? (float)$this->inputData[$keyName] : null;
 	}
 
 	public function getInputArray(string $keyName): ?array
 	{
-		return (isset($this->inputData[$keyName]) && is_array($this->inputData[$keyName])) ? $this->inputData[$keyName] : null;
+		return (isset($this->inputData[$keyName]) && is_array(value: $this->inputData[$keyName])) ? $this->inputData[$keyName] : null;
 	}
 
 	public function getInputValue(string $keyName)
 	{
-		return isset($this->inputData[$keyName]) ? $this->inputData[$keyName] : null;
+		return $this->inputData[$keyName] ?? null;
 	}
 
 	public function getCookies(): array
@@ -196,7 +207,7 @@ class HttpRequest
 
 	public function getURL(?string $protocol = null): string
 	{
-		if (is_null($protocol)) {
+		if (is_null(value: $protocol)) {
 			$protocol = $this->protocol;
 		}
 
@@ -212,7 +223,7 @@ class HttpRequest
 	 */
 	public function getFile(string $name): ?array
 	{
-		return isset($_FILES[$name]) ? $_FILES[$name] : null;
+		return $_FILES[$name] ?? null;
 	}
 
 	/**
@@ -226,10 +237,10 @@ class HttpRequest
 	 */
 	public function getFiles(string $name): array
 	{
-		$filesArr = $this->getFile($name);
+		$filesArr = $this->getFile(name: $name);
 
 		$files = [];
-		$filesCount = count($filesArr['name']);
+		$filesCount = count(value: $filesArr['name']);
 
 		for ($i = 0; $i < $filesCount; ++$i) {
 			$file = [

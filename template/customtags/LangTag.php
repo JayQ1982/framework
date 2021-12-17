@@ -35,7 +35,7 @@ class LangTag extends TemplateTag implements TagNode, TagInline
 	{
 		$replValue = LangTag::replace($elementNode->getAttribute('key')->getValue(), $elementNode->getAttribute('vars')->getValue());
 
-		$replNode = new TextNode($tplEngine->getDomReader());
+		$replNode = new TextNode();
 		$replNode->content = $replValue;
 
 		$elementNode->parentNode->replaceNode($elementNode, $replNode);
@@ -48,10 +48,10 @@ class LangTag extends TemplateTag implements TagNode, TagInline
 		return LangTag::replace($tagArr['key'], $vars);
 	}
 
-	public function replace($key, $vars = null): string
+	public function replace($key, ?string $vars = null): string
 	{
 		$phpVars = ', array()';
-		if ($vars !== null) {
+		if (!is_null($vars)) {
 			$varsEx = explode(',', $vars);
 			$varsFull = [];
 

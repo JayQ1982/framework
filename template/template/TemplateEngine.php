@@ -129,9 +129,7 @@ class TemplateEngine
 				throw new Exception('The Tag "' . $tagClassName . '" does not exist');
 			}
 
-			/** @var TagNode $tagInstance */
 			$tagInstance = new $tagClassName;
-
 			if (($tagInstance instanceof TemplateTag) === false) {
 				$this->templateCacheInterface->setSaveOnDestruct(false);
 				throw new Exception('The class "' . $tagClassName . '" does not extend the abstract class "TemplateTag" and is so recognized as an illegal class for a custom tag."');
@@ -283,8 +281,6 @@ class TemplateEngine
 
 	protected function cache($tplFile): TemplateCacheEntry
 	{
-		$cacheFileName = null;
-
 		if (stream_resolve_include_path($tplFile) === false) {
 			throw new Exception('Template file \'' . $tplFile . '\' does not exists');
 		}

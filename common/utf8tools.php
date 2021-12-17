@@ -43,7 +43,6 @@ class utf8tools
 			// swap
 			$x = $l;
 			$l = $u;
-			$u = $l;
 			unset($x);
 		}
 		for ($i = $l; $i <= $u; $i++) {

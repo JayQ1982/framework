@@ -21,7 +21,7 @@ class FormControl extends FormComponent
 	{
 		$this->submitLabel = $submitLabel;
 		$this->cancelLink = $cancelLink;
-		$this->cancelLabel = is_null($cancelLabel) ? new HtmlText('Abbrechen', true) : $cancelLabel;
+		$this->cancelLabel = is_null($cancelLabel) ? HtmlText::encoded('Abbrechen') : $cancelLabel;
 
 		parent::__construct($name);
 	}

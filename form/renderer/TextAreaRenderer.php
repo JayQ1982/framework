@@ -56,7 +56,7 @@ class TextAreaRenderer extends FormRenderer
 			$html = HtmlDocument::htmlEncode($value);
 		}
 
-		$textareaTag->addText(new HtmlText($html, true));
+		$textareaTag->addText(HtmlText::encoded($html));
 
 		$this->setHtmlTag($textareaTag);
 	}

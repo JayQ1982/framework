@@ -16,7 +16,7 @@ class DbSelectStmt
 	private PDOStatement $pdoStatement;
 	private bool $logQuery;
 
-	public function __construct(PDOStatement $pdoStatement, bool $logQuery = true)
+	public function __construct(PDOStatement $pdoStatement, bool $logQuery = false)
 	{
 		$this->pdoStatement = $pdoStatement;
 		$this->logQuery = $logQuery;

@@ -40,7 +40,7 @@ class DefinitionListRenderer extends FormRenderer
 				new HtmlTagAttribute('title', 'Erforderliche Eingabe', true),
 				new HtmlTagAttribute('class', 'required', true),
 			]);
-			$abbrTag->addText(new HtmlText('*', true));
+			$abbrTag->addText(HtmlText::encoded('*'));
 			$labelTag->addTag($abbrTag);
 		}
 

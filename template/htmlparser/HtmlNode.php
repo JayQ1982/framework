@@ -10,29 +10,28 @@ use Exception;
 
 abstract class HtmlNode
 {
-	const ELEMENT_NODE = 1;
-	const ATTRIBUTE_NODE = 2;
-	const TEXT_NODE = 3;
-	const CDATA_SECTION_NODE = 4;
-	const ENTITY_REFERENCE_NODE = 5;
-	const ENTITY_NODE = 6;
-	const PROCESSING_INSTRUCTION_NODE = 7;
-	const COMMENT_NODE = 8;
-	const DOCUMENT_NODE = 9;
-	const DOCUMENT_TYPE_NODE = 10;
-	const DOCUMENT_FRAGMENT_NODE = 11;
-	const NOTATION_NODE = 12;
+	public const ELEMENT_NODE = 1;
+	public const ATTRIBUTE_NODE = 2;
+	public const TEXT_NODE = 3;
+	public const CDATA_SECTION_NODE = 4;
+	public const ENTITY_REFERENCE_NODE = 5;
+	public const ENTITY_NODE = 6;
+	public const PROCESSING_INSTRUCTION_NODE = 7;
+	public const COMMENT_NODE = 8;
+	public const DOCUMENT_NODE = 9;
+	public const DOCUMENT_TYPE_NODE = 10;
+	public const DOCUMENT_FRAGMENT_NODE = 11;
+	public const NOTATION_NODE = 12;
+
 	public string $nodeType;
 	public ?int $line = null;
 	/** @var HtmlNode[] */
 	public array $childNodes = [];
 	public ?HtmlNode $parentNode = null;
 	public string $content = '';
-	private HtmlDoc $htmlDoc;
 
-	public function __construct(string $nodeType, HtmlDoc $htmlDoc)
+	public function __construct(string $nodeType)
 	{
-		$this->htmlDoc = $htmlDoc;
 		$this->nodeType = $nodeType;
 	}
 

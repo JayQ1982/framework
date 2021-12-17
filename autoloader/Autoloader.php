@@ -14,13 +14,13 @@ class Autoloader
 {
 	private static ?Autoloader $instance = null;
 
-	private ?string $cacheFilePath;
+	private string $cacheFilePath;
 	private array $cachedClasses = [];
 	/** @var AutoloaderPathModel[] */
 	private array $paths = [];
 	private bool $cachedClassesChanged = false;
 
-	public static function register(?string $cacheFilePath = null): Autoloader
+	public static function register(string $cacheFilePath = ''): Autoloader
 	{
 		if (!is_null(Autoloader::$instance)) {
 			throw new LogicException('Autoloader is already registered');
@@ -32,18 +32,18 @@ class Autoloader
 		return Autoloader::$instance;
 	}
 
-	private function __construct(?string $cacheFilePath = null)
+	private function __construct(string $cacheFilePath = '')
 	{
-		$this->cacheFilePath = $cacheFilePath;
+		$this->cacheFilePath = trim($cacheFilePath);
 		if (!$this->checkIfCacheDirectoryExists($cacheFilePath)) {
 			return;
 		}
 		$this->cachedClasses = $this->initCachedClasses($cacheFilePath);
 	}
 
-	private function checkIfCacheDirectoryExists(?string $cacheFilePath): bool
+	private function checkIfCacheDirectoryExists(string $cacheFilePath): bool
 	{
-		if (is_null($cacheFilePath) || trim($cacheFilePath) === '') {
+		if ($cacheFilePath === '') {
 			return true;
 		}
 		$dir = dirname($cacheFilePath);
@@ -54,9 +54,9 @@ class Autoloader
 		return true;
 	}
 
-	private function initCachedClasses(?string $cacheFilePath): array
+	private function initCachedClasses(string $cacheFilePath): array
 	{
-		if (is_null($cacheFilePath) || trim($cacheFilePath) === '' || !file_exists($cacheFilePath)) {
+		if ($cacheFilePath === '' || !file_exists($cacheFilePath)) {
 			return [];
 		}
 
@@ -95,8 +95,12 @@ class Autoloader
 			$phpFilePath = implode(DIRECTORY_SEPARATOR, $classPathParts);
 
 			$phpFilePathRemove = $autoloaderPathModel->getPhpFilePathRemove();
-			if (!is_null($phpFilePathRemove) && trim($phpFilePathRemove) !== '') {
-				$phpFilePath = preg_replace('#' . $phpFilePathRemove . '#', '', $phpFilePath);
+			if ($phpFilePathRemove !== '') {
+				$phpFilePath = preg_replace(
+					pattern: '#' . $phpFilePathRemove . '#',
+					replacement: '',
+					subject: $phpFilePath
+				);
 			}
 
 			foreach ($autoloaderPathModel->getFileSuffixList() as $fileSuffix) {
@@ -148,7 +152,7 @@ class Autoloader
 
 	public function __destruct()
 	{
-		if (is_null($this->cacheFilePath) || trim($this->cacheFilePath) === '' || !$this->cachedClassesChanged) {
+		if ($this->cacheFilePath === '' || !$this->cachedClassesChanged) {
 			return;
 		}
 

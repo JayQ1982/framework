@@ -8,44 +8,49 @@ namespace framework\common;
 
 use DateTime;
 use framework\core\HttpRequest;
+use framework\db\DbQueryData;
 use Throwable;
 
 class SearchHelper
 {
+	public const PARAM_RESET = 'reset';
+	public const PARAM_FIND = 'find';
+
 	private string $sessionRootName = 'searchHelper';
 	private string $instanceName;
 	private HttpRequest $httpRequest;
 	/** @var SearchHelper[] */
 	private static array $instances = [];
 
-	public static function getInstance(string $instanceName, HttpRequest $httpRequest): SearchHelper
+	public static function getInstance(string $instanceName): SearchHelper
 	{
-		if (!array_key_exists($instanceName, SearchHelper::$instances)) {
-			SearchHelper::$instances[$instanceName] = new SearchHelper($instanceName, $httpRequest);
+		if (!array_key_exists(key: $instanceName, array: SearchHelper::$instances)) {
+			SearchHelper::$instances[$instanceName] = new SearchHelper(instanceName: $instanceName);
 		}
 
 		return SearchHelper::$instances[$instanceName];
 	}
 
-	private function __construct(string $instanceName, HttpRequest $httpRequest)
+	private function __construct(string $instanceName)
 	{
 		$this->instanceName = $instanceName;
-		$this->httpRequest = $httpRequest;
+		$this->httpRequest = HttpRequest::getInstance();
 	}
 
 	public function getBooleanQuery(string $spaceSeparatedFieldNames, string $query_text, $splitFields = true): string
 	{
-		$clean_query_text = $this->cleanQuery($query_text);
+		$clean_query_text = $this->cleanQuery(string: $query_text);
 
-		return "(" . $this->createQuery($clean_query_text, $splitFields, $spaceSeparatedFieldNames) . ")";
+		return "(" . $this->createQuery(
+				text: $clean_query_text,
+				splitFields: $splitFields,
+				spaceSeparatedFieldNames: $spaceSeparatedFieldNames
+			) . ")";
 	}
 
 	private function cleanQuery(string $string): string
 	{
-		$string = trim($string);
-		// remove any html/javascript.
-		// prevents duplicate backslashes
-		return strip_tags($string);
+		return strip_tags(string: trim($string));
 	}
 
 	/**
@@ -64,18 +69,18 @@ class SearchHelper
 		#
 		# We can't trust the user to give us a specific case
 		#
-		mb_internal_encoding('UTF-8');
-		$text = mb_strtolower($text);
+		mb_internal_encoding(encoding: 'UTF-8');
+		$text = mb_strtolower(string: $text);
 
 		#
 		# Support +keyword -keyword
 		#
-		$text = $this->handleShorthand($text);
+		$text = $this->handleShorthand(text: $text);
 
 		#
 		# Split, but respect quotation
 		#
-		$wordarray = $this->explodeRespectQuotes($text);
+		$wordArray = $this->explodeRespectQuotes(line: $text);
 
 		$buffer = "";
 		$output = "";
@@ -86,10 +91,10 @@ class SearchHelper
 		#
 		# "or" is assumed if neither "and" nor "not" is specified
 		#
-		for ($i = 0; $i < count($wordarray); $i++) {
-			$word = $wordarray[$i];
+		for ($i = 0; $i < count(value: $wordArray); $i++) {
+			$word = trim(string: $wordArray[$i]);
 
-			if (trim($word) == '') {
+			if ($word === '') {
 				continue;
 			} else if ($word == "and" || $word == "or" || $word == "not" and $i > 0) {
 				if ($word == "not") {
@@ -98,34 +103,74 @@ class SearchHelper
 					#
 					$i++;
 					if ($i == 1) { #invalid sql syntax to prefix the first check with and/or/not
-						$buffer = $this->createSubquery($wordarray[$i], "not", $splitFields, $spaceSeparatedFieldNames);
+						$buffer = $this->createSubquery(
+							word: $wordArray[$i],
+							mode: 'not',
+							splitFields: $splitFields,
+							spaceSeparatedFieldNames: $spaceSeparatedFieldNames
+						);
 					} else {
-						$buffer = " AND " . $this->createSubquery($wordarray[$i], "not", $splitFields, $spaceSeparatedFieldNames);
+						$buffer = ' AND ' . $this->createSubquery(
+								word: $wordArray[$i],
+								mode: 'not',
+								splitFields: $splitFields,
+								spaceSeparatedFieldNames: $spaceSeparatedFieldNames
+							);
 					}
 				} else {
 					if ($word == "or") {
 						$i++;
 						if ($i == 1) {
-							$buffer = $this->createSubquery($wordarray[$i], "", $splitFields, $spaceSeparatedFieldNames);
+							$buffer = $this->createSubquery(
+								word: $wordArray[$i],
+								mode: '',
+								splitFields: $splitFields,
+								spaceSeparatedFieldNames: $spaceSeparatedFieldNames
+							);
 						} else {
-							$buffer = " OR " . $this->createSubquery($wordarray[$i], "", $splitFields, $spaceSeparatedFieldNames);
+							$buffer = " OR " . $this->createSubquery(
+									word: $wordArray[$i],
+									mode: '',
+									splitFields: $splitFields,
+									spaceSeparatedFieldNames: $spaceSeparatedFieldNames
+								);
 						}
 					} else {
 						if ($word == "and") {
 							$i++;
 							if ($i == 1) {
-								$buffer = $this->createSubquery($wordarray[$i], "", $splitFields, $spaceSeparatedFieldNames);
+								$buffer = $this->createSubquery(
+									word: $wordArray[$i],
+									mode: '',
+									splitFields: $splitFields,
+									spaceSeparatedFieldNames: $spaceSeparatedFieldNames
+								);
 							} else {
-								$buffer = " AND " . $this->createSubquery($wordarray[$i], "", $splitFields, $spaceSeparatedFieldNames);
+								$buffer = " AND " . $this->createSubquery(
+										word: $wordArray[$i],
+										mode: '',
+										splitFields: $splitFields,
+										spaceSeparatedFieldNames: $spaceSeparatedFieldNames
+									);
 							}
 						}
 					}
 				}
 			} else {
 				if ($i == 0) { # 0 instead of 1 here because there was no conditional word to skip and no $i++;
-					$buffer = $this->createSubquery($wordarray[$i], "", $splitFields, $spaceSeparatedFieldNames);
+					$buffer = $this->createSubquery(
+						word: $wordArray[$i],
+						mode: '',
+						splitFields: $splitFields,
+						spaceSeparatedFieldNames: $spaceSeparatedFieldNames
+					);
 				} else {
-					$buffer = " OR " . $this->createSubquery($wordarray[$i], "", $splitFields, $spaceSeparatedFieldNames);
+					$buffer = ' OR ' . $this->createSubquery(
+							word: $wordArray[$i],
+							mode: '',
+							splitFields: $splitFields,
+							spaceSeparatedFieldNames: $spaceSeparatedFieldNames
+						);
 				}
 			}
 			$output = $output . $buffer;
@@ -136,9 +181,17 @@ class SearchHelper
 
 	private function handleShorthand(string $text): string
 	{
-		$text = preg_replace("/ \+/", " and ", $text);
+		$text = preg_replace(
+			pattern: "/ \+/",
+			replacement: " and ",
+			subject: $text
+		);
 
-		return preg_replace("/ -/", " not ", $text);
+		return preg_replace(
+			pattern: "/ -/",
+			replacement: " not ",
+			subject: $text
+		);
 	}
 
 	/**
@@ -155,9 +208,9 @@ class SearchHelper
 	private function explodeRespectQuotes(string $line): array
 	{
 		$quote_level = 0; #keep track if we are in or out of quote-space
-		$buffer = "";
+		$buffer = '';
 
-		for ($a = 0; $a < strlen($line); $a++) {
+		for ($a = 0; $a < strlen(string: $line); $a++) {
 			if ($line[$a] == "\"") {
 				$quote_level++;
 				if ($quote_level == 2) {
@@ -165,16 +218,16 @@ class SearchHelper
 				}
 			} else {
 
-				if ($line[$a] == " " && $quote_level == 0) {
+				if ($line[$a] === ' ' && $quote_level === 0) {
 					$buffer = $buffer . "~~~~"; #Hackish magic key
 				} else {
 					$buffer = $buffer . $line[$a];
 				}
 			}
 		}
-		$buffer = str_replace("\\", "", $buffer);
+		$buffer = str_replace(search: "\\", replace: '', subject: $buffer);
 
-		return explode("~~~~", $buffer);
+		return explode(separator: '~~~~', string: $buffer);
 	}
 
 	/**
@@ -191,26 +244,26 @@ class SearchHelper
 	 */
 	private function createSubquery(string $word, string $mode, bool $splitFields, string $spaceSeparatedFieldNames): string
 	{
-		$word = str_replace("'", "\'", $word);
+		$word = str_replace(search: "'", replace: "\'", subject: $word);
 
-		if ($mode === "not") {
-			$front = "(NOT (";
+		if ($mode === 'not') {
+			$front = '(NOT (';
 			$glue = " LIKE '%$word%' OR ";
 			$back = " LIKE '%$word%'))";
 		} else {
-			$front = "(";
+			$front = '(';
 			$glue = " LIKE '%$word%' OR ";
 			$back = " LIKE '%$word%')";
 		}
 
-		$text = ($splitFields) ? str_replace(" ", $glue, $spaceSeparatedFieldNames) : $spaceSeparatedFieldNames;
+		$text = ($splitFields) ? str_replace(search: ' ', replace: $glue, subject: $spaceSeparatedFieldNames) : $spaceSeparatedFieldNames;
 
 		return $front . $text . $back;
 	}
 
 	public function checkSearchTerm(string $default = ''): string
 	{
-		return $this->checkString('searchterm', $default);
+		return $this->checkString(fieldName: 'searchterm', default: $default);
 	}
 
 	private function resetField(string $fieldName, string $default = ''): void
@@ -220,8 +273,8 @@ class SearchHelper
 		$httpRequest = $this->httpRequest;
 		if (
 			!isset($_SESSION[$sessionRootName][$instanceName][$fieldName])
-			|| !is_null($httpRequest->getInputString('reset'))
-			|| !is_null($httpRequest->getInputString('find'))
+			|| !is_null($httpRequest->getInputString(keyName: SearchHelper::PARAM_RESET))
+			|| !is_null($httpRequest->getInputString(keyName: SearchHelper::PARAM_FIND))
 		) {
 			$_SESSION[$sessionRootName][$instanceName][$fieldName] = $default;
 		}
@@ -231,9 +284,9 @@ class SearchHelper
 	{
 		$sessionRootName = $this->sessionRootName;
 		$instanceName = $this->instanceName;
-		$this->resetField($fieldName, $default);
+		$this->resetField(fieldName: $fieldName, default: $default);
 
-		$userInput = $this->httpRequest->getInputString($fieldName);
+		$userInput = $this->httpRequest->getInputString(keyName: $fieldName);
 		if (!is_null($userInput)) {
 			$_SESSION[$sessionRootName][$instanceName][$fieldName] = $userInput;
 		}
@@ -245,9 +298,9 @@ class SearchHelper
 	{
 		$sessionRootName = $this->sessionRootName;
 		$instanceName = $this->instanceName;
-		$this->resetField($fieldName, $default);
+		$this->resetField(fieldName: $fieldName, default: $default);
 
-		$userInput = $this->httpRequest->getInputString($fieldName);
+		$userInput = $this->httpRequest->getInputString(keyName: $fieldName);
 		if (!is_null($userInput) && array_key_exists($userInput, $array)) {
 			$_SESSION[$sessionRootName][$instanceName][$fieldName] = $userInput;
 		}
@@ -258,20 +311,20 @@ class SearchHelper
 	public function checkMultiFilter(array $array, string $fieldName, array $default = []): array
 	{
 		$instanceName = $this->instanceName;
-		if (!isset($_SESSION[$this->sessionRootName][$instanceName][$fieldName]) || isset($_GET['reset']) || isset($_GET['find'])) {
+		if (!isset($_SESSION[$this->sessionRootName][$instanceName][$fieldName]) || isset($_GET[SearchHelper::PARAM_RESET]) || isset($_GET[SearchHelper::PARAM_FIND])) {
 			$_SESSION[$this->sessionRootName][$instanceName][$fieldName] = $default;
 		}
 
-		if (isset($_GET['reset']) || isset($_GET['find'])) {
+		if (isset($_GET[SearchHelper::PARAM_RESET]) || isset($_GET[SearchHelper::PARAM_FIND])) {
 			foreach ($array as $key => $val) {
-				$userInput = $this->httpRequest->getInputArray($fieldName);
-				if (!is_null($userInput) && in_array($key, $userInput)) {
+				$userInput = $this->httpRequest->getInputArray(keyName: $fieldName);
+				if (!is_null($userInput) && in_array(needle: $key, haystack: $userInput)) {
 					$_SESSION[$this->sessionRootName][$instanceName][$fieldName][] = $key;
 				}
 			}
-			$requestedValue = $this->httpRequest->getInputString($fieldName . 'ID');
+			$requestedValue = $this->httpRequest->getInputString(keyName: $fieldName . 'ID');
 
-			if (!is_null($requestedValue)) {
+			if (!is_null(value: $requestedValue)) {
 				$_SESSION[$this->sessionRootName][$instanceName][$fieldName][] = $requestedValue;
 			}
 		}
@@ -286,7 +339,7 @@ class SearchHelper
 		}
 
 		try {
-			$dateTime = new DateTime($date);
+			$dateTime = new DateTime(datetime: $date);
 			$dtErrors = DateTime::getLastErrors();
 			if ($dtErrors['warning_count'] > 0 || $dtErrors['error_count'] > 0) {
 				return null;
@@ -302,55 +355,59 @@ class SearchHelper
 	{
 		$instanceName = $this->instanceName;
 
-		if (!isset($_SESSION[$this->sessionRootName][$instanceName][$fromField]) || isset($_GET['reset']) || isset($_GET['find'])) {
+		if (!isset($_SESSION[$this->sessionRootName][$instanceName][$fromField]) || isset($_GET[SearchHelper::PARAM_RESET]) || isset($_GET[SearchHelper::PARAM_FIND])) {
 			$_SESSION[$this->sessionRootName][$instanceName][$fromField] = ($defaultFrom === null) ? $dateRange['minDate'] : $defaultFrom;
 		}
 
-		if (!isset($_SESSION[$this->sessionRootName][$instanceName][$toField]) || isset($_GET['reset']) || isset($_GET['find'])) {
+		if (!isset($_SESSION[$this->sessionRootName][$instanceName][$toField]) || isset($_GET[SearchHelper::PARAM_RESET]) || isset($_GET[SearchHelper::PARAM_FIND])) {
 			$_SESSION[$this->sessionRootName][$instanceName][$toField] = ($defaultTo === null) ? $dateRange['maxDate'] : $defaultTo;
 		}
 
-		$inputFrom = $this->httpRequest->getInputString($fromField);
-		$inputTo = $this->httpRequest->getInputString($toField);
+		$inputFrom = $this->httpRequest->getInputString(keyName: $fromField);
+		$inputTo = $this->httpRequest->getInputString(keyName: $toField);
 
 		$dateFromStr = is_null($inputFrom) ? $_SESSION[$this->sessionRootName][$instanceName][$fromField] : $inputFrom;
 		$dateToStr = is_null($inputTo) ? $_SESSION[$this->sessionRootName][$instanceName][$toField] : $inputTo;
 
-		$dateFromObj = $this->checkDate($dateFromStr);
-		$dateToObj = $this->checkDate($dateToStr);
+		$dateFromObj = $this->checkDate(date: $dateFromStr);
+		$dateToObj = $this->checkDate(date: $dateToStr);
 
-		$minDateObj = new DateTime($dateRange['minDate']);
-		$maxDateObj = new DateTime($dateRange['maxDate']);
+		$minDateObj = new DateTime(datetime: $dateRange['minDate']);
+		$maxDateObj = new DateTime(datetime: $dateRange['maxDate']);
 
 		// if to ist earlier then from, set it to from
-		if (!is_null($dateFromObj) && !is_null($dateToObj) && $dateFromObj->getTimestamp() > $dateToObj->getTimestamp()) {
+		if (!is_null(value: $dateFromObj) && !is_null(value: $dateToObj) && $dateFromObj->getTimestamp() > $dateToObj->getTimestamp()) {
 			$dateToObj = $dateFromObj;
 		}
 
 		// if from is empty or earlier than minDate, set it to minDate
-		if (is_null($dateFromObj) || $dateFromObj->getTimestamp() < $minDateObj->getTimestamp()) {
+		if (is_null(value: $dateFromObj) || $dateFromObj->getTimestamp() < $minDateObj->getTimestamp()) {
 			$dateFromObj = $minDateObj;
 		}
 
 		// if to is empty or later than maxDate, set it to maxDate
-		if (is_null($dateToObj) || $dateToObj->getTimestamp() > $maxDateObj->getTimestamp()) {
+		if (is_null(value: $dateToObj) || $dateToObj->getTimestamp() > $maxDateObj->getTimestamp()) {
 			$dateToObj = $maxDateObj;
 		}
 
-		$_SESSION[$this->sessionRootName][$instanceName][$fromField] = $dateFromObj->format('d.m.Y');
-		$_SESSION[$this->sessionRootName][$instanceName][$toField] = $dateToObj->format('d.m.Y');
+		$_SESSION[$this->sessionRootName][$instanceName][$fromField] = $dateFromObj->format(format: 'd.m.Y');
+		$_SESSION[$this->sessionRootName][$instanceName][$toField] = $dateToObj->format(format: 'd.m.Y');
 
 		return ['dateFrom' => $dateFromObj, 'dateTo' => $dateToObj];
 	}
 
 	public function createSQLSearch(string $string, array $columns): array
 	{
-		$searchWords = preg_split("/[\s,]*\"([^\"]+)\"[\s,]*|" . "[\s,]*'([^']+)'[\s,]*|" . "[\s,]+/", $string, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+		$searchWords = preg_split(
+			pattern: "/[\s,]*\"([^\"]+)\"[\s,]*|" . "[\s,]*'([^']+)'[\s,]*|" . "[\s,]+/",
+			subject: $string,
+			limit: -1,
+			flags: PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY
+		);
 		$searchWordsQuery = [];
 
 		foreach ($searchWords as $sw) {
-			$swTrim = trim($sw);
-			$searchWordsQuery[] = $swTrim;
+			$searchWordsQuery[] = trim($sw);
 		}
 
 		$conds = $params = [];
@@ -362,9 +419,9 @@ class SearchHelper
 				$params[] = '%' . $sw . '%';
 			}
 
-			$conds[] = '(' . implode(' OR ', $condsCol) . ')';
+			$conds[] = '(' . implode(separator: ' OR ', array: $condsCol) . ')';
 		}
-		$sql = (count($conds) == 0) ? '' : '(' . implode(' AND ', $conds) . ')';
+		$sql = (count(value: $conds) == 0) ? '' : '(' . implode(separator: ' AND ', array: $conds) . ')';
 
 		return [
 			'sql'           => $sql
@@ -376,75 +433,88 @@ class SearchHelper
 	/**
 	 * @param array $filterArr : indexed array [ 'colName' => 'colValue', ... ]
 	 *
-	 * @return array : indexed array [ 'sql' => *, 'params' => * ]
+	 * @return DbQueryData
 	 */
-	public function createSQLFilters(array $filterArr): array
+	public static function createSQLFilters(array $filterArr): DbQueryData
 	{
-		$filterConds = $params = [];
+		$whereConditions = [];
+		$sqlParams = [];
 
-		foreach ($filterArr as $key => $val) {
-			$val = trim($val);
-			if ($val == '.') {
-				$filterConds[] = "" . $key . "!=''";
-			} else if ($val == '_') {
-				$filterConds[] = "((" . $key . "='') OR (" . $key . " IS NULL))";
-			} else {
-				$wordsByType['and'] = [];
-				$wordsByType['not'] = [];
-				$wordsByType['or'] = [];
-				$wordsByType['equal'] = [];
+		foreach ($filterArr as $dataTableReference => $value) {
+			$value = trim(string: $value);
+			if ($value === '') {
+				continue;
+			}
+			if ($value === '.') {
+				$whereConditions[] = $dataTableReference . '!=\'\'';
+				continue;
+			}
 
-				$searchWords = preg_split("/[\s,]*([^\"]+)" . "[\s,]*'([^']+)'[\s,]*|" . "[\s,]+/", $val, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+			if ($value === '_') {
+				$whereConditions[] = "((" . $dataTableReference . "='') OR (" . $dataTableReference . " IS NULL))";
+				continue;
+			}
 
-				foreach ($searchWords as $word) {
-					$type = 'or';
-					if (str_starts_with($word, '!') || str_starts_with($word, '-')) {
-						$type = 'not';
-						$word = substr($word, 1);
-					} else if (str_starts_with($word, '+')) {
-						$type = 'and';
-						$word = substr($word, 1);
-					} else if (str_starts_with($word, '"')) {
-						$type = 'equal';
-						$word = substr($word, 1, -1);
-						$wordsByType[$type][] = $word;
-						continue;
-					}
-					$word = str_replace(['*'], ['%'], $word);
-					$word = (substr($word, 0, 1) != '%') ? '%' . $word : $word;
-					$word = (substr($word, -1) != '%') ? $word . '%' : $word;
+			$wordsByType['and'] = [];
+			$wordsByType['not'] = [];
+			$wordsByType['or'] = [];
+			$wordsByType['equal'] = [];
+
+			$searchWords = preg_split(
+				pattern: "/[\s,]*([^\"]+)" . "[\s,]*'([^']+)'[\s,]*|" . "[\s,]+/",
+				subject: $value, limit: -1,
+				flags: PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY
+			);
+
+			foreach ($searchWords as $word) {
+				$type = 'or';
+				if (str_starts_with(haystack: $word, needle: '!') || str_starts_with(haystack: $word, needle: '-')) {
+					$type = 'not';
+					$word = substr(string: $word, offset: 1);
+				} else if (str_starts_with(haystack: $word, needle: '+')) {
+					$type = 'and';
+					$word = substr(string: $word, offset: 1);
+				} else if (
+					str_starts_with(haystack: $word, needle: '"')
+					&& str_ends_with(haystack: $word, needle: '"')
+					&& mb_strlen(string: $word) > 2
+				) {
+					$type = 'equal';
+					$word = substr(string: $word, offset: 1, length: -1);
 					$wordsByType[$type][] = $word;
+					continue;
 				}
+				$word = str_replace(search: ['*'], replace: ['%'], subject: $word);
+				$word = (!str_starts_with(haystack: $word, needle: '%')) ? '%' . $word : $word;
+				$word = (!str_ends_with(haystack: $word, needle: '%')) ? $word . '%' : $word;
+				$wordsByType[$type][] = $word;
+			}
 
-				foreach ($wordsByType['and'] as $word) {
-					$filterConds[] = $key . ' LIKE ?';
-					$params[] = $word;
-				}
+			foreach ($wordsByType['and'] as $word) {
+				$whereConditions[] = $dataTableReference . ' LIKE ?';
+				$sqlParams[] = $word;
+			}
 
-				foreach ($wordsByType['not'] as $word) {
-					$filterConds[] = "((" . $key . " NOT LIKE ?) OR " . $key . " IS NULL)";
-					$params[] = $word;
-				}
+			foreach ($wordsByType['not'] as $word) {
+				$whereConditions[] = "((" . $dataTableReference . " NOT LIKE ?) OR " . $dataTableReference . " IS NULL)";
+				$sqlParams[] = $word;
+			}
 
-				if (count($wordsByType['or']) != 0) {
-					$tmpArr = [];
-					foreach ($wordsByType['or'] as $word) {
-						$tmpArr[] = $key . ' LIKE ?';
-						$params[] = $word;
-					}
-					$filterConds[] = '(' . implode(' OR ', $tmpArr) . ')';
+			if (count($wordsByType['or']) != 0) {
+				$tmpArr = [];
+				foreach ($wordsByType['or'] as $word) {
+					$tmpArr[] = $dataTableReference . ' LIKE ?';
+					$sqlParams[] = $word;
 				}
+				$whereConditions[] = '(' . implode(separator: ' OR ', array: $tmpArr) . ')';
+			}
 
-				foreach ($wordsByType['equal'] as $word) {
-					$filterConds[] = $key . ' = ?';
-					$params[] = $word;
-				}
+			foreach ($wordsByType['equal'] as $word) {
+				$whereConditions[] = $dataTableReference . ' = ?';
+				$sqlParams[] = $word;
 			}
 		}
 
-		return [
-			'sql'    => implode(' AND ', $filterConds),
-			'params' => $params,
-		];
+		return new DbQueryData(query: implode(' AND ', $whereConditions), params: $sqlParams);
 	}
 }

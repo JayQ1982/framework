@@ -11,30 +11,30 @@ class HtmlText extends HtmlElement
 	private string $textContent;
 	private bool $isEncodedForRendering;
 
-	public static function encoded(string $textContent): HtmlText
-	{
-		return new HtmlText($textContent, true);
-	}
-
-	public static function unencoded(string $textContent): HtmlText
-	{
-		return new HtmlText($textContent, false);
-	}
-
-	public function __construct(string $textContent, bool $isEncodedForRendering)
+	private function __construct(string $textContent, bool $isEncodedForRendering)
 	{
 		$this->textContent = $textContent;
 		$this->isEncodedForRendering = $isEncodedForRendering;
 		parent::__construct('htmlText');
 	}
 
+	public static function encoded(string $textContent): HtmlText
+	{
+		return new HtmlText(textContent: $textContent, isEncodedForRendering: true);
+	}
+
+	public static function unencoded(string $textContent): HtmlText
+	{
+		return new HtmlText(textContent: $textContent, isEncodedForRendering: false);
+	}
+
 	/**
 	 * Generate the "html-code" for this Text-Element to be used for output
 	 *
-	 * @return string : Generated html-code
+	 * @return string Generated html-code
 	 */
 	public function render(): string
 	{
-		return $this->isEncodedForRendering ? $this->textContent : HtmlDocument::htmlEncode($this->textContent);
+		return $this->isEncodedForRendering ? $this->textContent : HtmlDocument::htmlEncode(value: $this->textContent);
 	}
 }

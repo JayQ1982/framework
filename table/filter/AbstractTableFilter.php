@@ -7,10 +7,14 @@
 namespace framework\table\filter;
 
 use LogicException;
+use framework\core\HttpRequest;
 use framework\table\table\DbResultTable;
 
 abstract class AbstractTableFilter
 {
+	public const PARAM_RESET = 'reset';
+	public const PARAM_FIND = 'find';
+
 	private const sessionDataType = 'tableFilter';
 
 	/** @var AbstractTableFilter[] */
@@ -20,30 +24,42 @@ abstract class AbstractTableFilter
 
 	public function __construct(string $identifier)
 	{
-		if (array_key_exists($identifier, AbstractTableFilter::$instances)) {
-			throw new LogicException('There is already a filter with the same identifier ' . $identifier);
+		if (array_key_exists(key: $identifier, array: AbstractTableFilter::$instances)) {
+			throw new LogicException(message: 'There is already a filter with the same identifier ' . $identifier);
 		}
 		$this->identifier = $identifier;
 	}
 
 	protected function getFromSession(string $index): ?string
 	{
-		return DbResultTable::getFromSession(AbstractTableFilter::sessionDataType, $this->getIdentifier(), $index);
+		return DbResultTable::getFromSession(
+			dataType: AbstractTableFilter::sessionDataType,
+			identifier: $this->getIdentifier(),
+			index: $index
+		);
 	}
 
 	protected function saveToSession(string $index, string $value): void
 	{
-		DbResultTable::saveToSession(AbstractTableFilter::sessionDataType, $this->getIdentifier(), $index, $value);
+		DbResultTable::saveToSession(
+			dataType: AbstractTableFilter::sessionDataType,
+			identifier: $this->getIdentifier(),
+			index: $index,
+			value: $value
+		);
 	}
 
 	public function validate(DbResultTable $dbResultTable): void
 	{
-		$httpRequest = $dbResultTable->getHttpRequest();
-		if ($httpRequest->getInputString('find') === $this->getIdentifier() || !is_null($httpRequest->getInputString('reset'))) {
+		$httpRequest = HttpRequest::getInstance();
+		if (!is_null(value: $httpRequest->getInputString(keyName: AbstractTableFilter::PARAM_RESET))) {
 			$this->reset();
 		}
-		$this->checkInput($dbResultTable);
-		$this->filtersApplied = $this->applyFilters($dbResultTable);
+		if ($httpRequest->getInputString(keyName: AbstractTableFilter::PARAM_FIND) === $this->getIdentifier()) {
+			$this->reset();
+			$this->checkInput(dbResultTable: $dbResultTable);
+		}
+		$this->filtersApplied = $this->applyFilters(dbResultTable: $dbResultTable);
 	}
 
 	public function getIdentifier(): string

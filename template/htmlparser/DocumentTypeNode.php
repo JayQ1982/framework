@@ -8,8 +8,8 @@ namespace framework\template\htmlparser;
 
 class DocumentTypeNode extends HtmlNode
 {
-	public function __construct(HtmlDoc $htmlDocument)
+	public function __construct()
 	{
-		parent::__construct(HtmlNode::DOCUMENT_TYPE_NODE, $htmlDocument);
+		parent::__construct(nodeType: HtmlNode::DOCUMENT_TYPE_NODE);
 	}
 }

@@ -35,7 +35,7 @@ abstract class DefaultOptionsRenderer extends FormRenderer
 		}
 
 		$htmlTagAttributes = [];
-		if($optionsField->hasErrors(withChildElements: true)) {
+		if ($optionsField->hasErrors(withChildElements: true)) {
 			$htmlTagAttributes[] = new HtmlTagAttribute('class', 'list-has-error', true);
 		}
 
@@ -66,7 +66,7 @@ abstract class DefaultOptionsRenderer extends FormRenderer
 
 			// Create inner "span-label":
 			$spanLabelTag = new HtmlTag('span', false, [new HtmlTagAttribute('class', 'label-text', true)]);
-			$spanLabelTag->addText(new HtmlText($htmlText->render(), true));
+			$spanLabelTag->addText($htmlText);
 
 			$labelTag = new HtmlTag('label', false);
 			$labelTag->addTag($inputTag);

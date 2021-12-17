@@ -10,8 +10,6 @@ use framework\vendor\libphonenumber\NumberParseException;
 use framework\vendor\libphonenumber\PhoneNumber;
 use framework\vendor\libphonenumber\PhoneNumberFormat;
 use framework\vendor\libphonenumber\PhoneNumberUtil;
-use RuntimeException;
-use Throwable;
 
 class StringUtils
 {
@@ -168,10 +166,14 @@ class StringUtils
 			'¡'  => '',
 		];
 
-		$urlifiedStr = str_replace(array_keys($charMap), $charMap, strtolower(trim($str)));
+		$urlifiedStr = str_replace(array_keys($charMap), $charMap, mb_strtolower(trim(string: $str)));
 
 		// Replace multiple dashes
-		$urlifiedStr = preg_replace('/[-]{2,}/', '-', $urlifiedStr);
+		$urlifiedStr = preg_replace(
+			pattern: '/[-]{2,}/',
+			replacement: '-',
+			subject: $urlifiedStr
+		);
 
 		if ($maxLength === 0) {
 			return $urlifiedStr;
@@ -190,9 +192,25 @@ class StringUtils
 		return idn_to_ascii($string, 0, INTL_IDNA_VARIANT_UTS46);
 	}
 
+	public static function utf8_to_punycode_email(string $email): string
+	{
+		$fragments = explode('@', $email);
+		$lastFragment = array_pop($fragments);
+
+		return implode('@', $fragments) . '@' . StringUtils::utf8_to_punycode($lastFragment);
+	}
+
 	public static function punycode_to_utf8(string $string): false|string
 	{
 		return idn_to_utf8($string, 0, INTL_IDNA_VARIANT_UTS46);
+	}
+
+	public static function punycode_to_utf8_email(string $email): string
+	{
+		$fragments = explode('@', $email);
+		$lastFragment = array_pop($fragments);
+
+		return implode('@', $fragments) . '@' . StringUtils::punycode_to_utf8($lastFragment);
 	}
 
 	public static function formatBytes($bytes, int $precision = 2): float
@@ -216,11 +234,11 @@ class StringUtils
 	 * If the given string does not represent a valid phone number, it will return the trimmed, but
 	 * otherwise unchanged string
 	 *
-	 * @param string $phone              : The phone number
-	 * @param string $defaultCountryCode : The default country code if no international number is given
-	 * @param bool   $internalFormat     : Format the phone number to be used internally, for example in epp
+	 * @param string $phone              The phone number
+	 * @param string $defaultCountryCode The default country code if no international number is given
+	 * @param bool   $internalFormat     Format the phone number to be used internally, for example in epp
 	 *
-	 * @return string : Well formatted phone number in international format, if string was a valid phone number
+	 * @return string Well formatted phone number in international format, if string was a valid phone number
 	 */
 	public static function phoneNumber(string $phone = '', string $defaultCountryCode = '', bool $internalFormat = false): string
 	{
@@ -258,7 +276,8 @@ class StringUtils
 	 */
 	public static function parsePhoneNumber(string $phone, string $defaultCountryCode): ?PhoneNumber
 	{
-		if (trim($phone) === '') {
+		$phone = trim($phone);
+		if ($phone === '') {
 			return null;
 		}
 
@@ -288,68 +307,55 @@ class StringUtils
 		}
 	}
 
-	public static function sanitizeDomain(string $domain): ?string
-	{
-		$domain = mb_strtolower(trim($domain));
-		if ($domain === '') {
-			return '';
-		}
-		$rplArr = ['/\xE2\x80\x8B/', '@^[a-z]+://@i', '@^www\.@i', '/&#8203;/', '/\?/', '/ /', '/\/$/'];
-
-		return preg_replace($rplArr, '', $domain);
-	}
-
 	/**
 	 * Generates a random character string of given length, where characters, which could be easily mixed up, were avoided.
 	 * Set $cryptoSecurity to true to use a cryptographically secure pseudorandom number generator (random_int):
 	 * - https://stackoverflow.com/a/31107425/31107425
 	 * - http://stackoverflow.com/a/31284266/2224584
 	 *
-	 * @param int  $length         : length of desired string
-	 * @param bool $noSpecialChars : if destination system does not accept special chars, set this to TRUE
-	 * @param bool $cryptoSecurity : Use a slower/more complex cryptographically secure pseudorandom number generator
+	 * @param int  $requiredStringLength Required length of the random string
+	 * @param bool $noSpecialChars       Set to true to only use numbers and letters
 	 *
 	 * @return string
 	 */
-	public static function randomString(int $length, bool $noSpecialChars, bool $cryptoSecurity = false): string
+	public static function randomString(int $requiredStringLength, bool $noSpecialChars): string
 	{
-		$length = ($length < 1) ? 1 : $length;
-		$availableChars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPRSTUVWXYZ23456789';
+		$requiredStringLength = ($requiredStringLength < 1) ? 1 : $requiredStringLength;
+
+		$characterSets = [
+			'abcdefghjkmnpqrstuvwxyz',
+			'ABCDEFGHJKMNPQRSTUVWXYZ',
+			'23456789',
+		];
 		if (!$noSpecialChars) {
-			$availableChars .= '!@#$%&*?';
-		}
-		$maxCharPos = mb_strlen($availableChars, '8bit') - 1;
-		$string = '';
-		for ($i = 0; $i < $length; $i++) {
-			$randomCharacterPosition = $cryptoSecurity ? StringUtils::generateSecureRandomNumber($maxCharPos) : mt_rand(0, $maxCharPos);
-			$string .= $availableChars[$randomCharacterPosition];
+			$characterSets[] = '!@#$%&*?';
 		}
 
-		return $string;
-	}
-
-	private static function generateSecureRandomNumber(int $max): int
-	{
-		$exceptionCounter = 0;
-		while ($exceptionCounter < 3) {
-			try {
-				return random_int(0, $max);
-			} catch (Throwable) {
-				// It was not possible to gather sufficient entropy
-				$exceptionCounter++;
-				// Give system some (raised) time to gain entropy again
-				sleep($exceptionCounter * 4);
-			}
+		$unShuffledRandomString = '';
+		foreach ($characterSets as $characterSet) {
+			$unShuffledRandomString .= $characterSet[mt_rand(
+				min: 0,
+				max: mb_strlen(string: $characterSet, encoding: '8bit') - 1
+			)];
 		}
 
-		throw new RuntimeException('Missing System entropy at generation of random string');
+		$allCharacters = implode('', $characterSets);
+		$currentRandomStringLength = mb_strlen(string: $unShuffledRandomString);
+		while ($currentRandomStringLength < $requiredStringLength) {
+			$unShuffledRandomString .= $allCharacters[mt_rand(
+				min: 0,
+				max: mb_strlen(string: $allCharacters, encoding: '8bit') - 1
+			)];
+			$currentRandomStringLength++;
+		}
+
+		return str_shuffle(string: $unShuffledRandomString);
 	}
 
 	public static function generateSalt(int $length = 16): string
 	{
 		$chars = '`´°+*ç%&/()=?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890üöä!£{}éèà[]¢|¬§°#@¦';
 		$charsLength = mb_strlen($chars);
-		srand((double)microtime() * 1000000);
 		$salt = '';
 		for ($i = 0; $i < $length; $i++) {
 			$salt .= mb_substr($chars, (rand() % $charsLength), 1);

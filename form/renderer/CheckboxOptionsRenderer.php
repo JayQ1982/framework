@@ -10,11 +10,8 @@ use framework\form\component\field\CheckboxOptionsField;
 
 class CheckboxOptionsRenderer extends DefaultOptionsRenderer
 {
-	private CheckboxOptionsField $checkboxOptionsField;
-
 	public function __construct(CheckboxOptionsField $checkboxOptionsField)
 	{
-		$this->checkboxOptionsField = $checkboxOptionsField;
-		parent::__construct($checkboxOptionsField, 'checkbox', true);
+		parent::__construct(optionsField: $checkboxOptionsField, inputFieldType: 'checkbox', acceptMultipleValues: true);
 	}
 }

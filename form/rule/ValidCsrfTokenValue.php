@@ -16,7 +16,7 @@ class ValidCsrfTokenValue extends FormRule
 	public function __construct()
 	{
 		// Hidden fields have no own visible error label
-		parent::__construct(new HtmlText('Das Formular konnte wegen einem technischen Problem (ungültiges CSRF) nicht übermittelt werden. Bitte versuchen Sie es erneut.', true));
+		parent::__construct(HtmlText::encoded('Das Formular konnte wegen einem technischen Problem (ungültiges CSRF) nicht übermittelt werden. Bitte versuchen Sie es erneut.'));
 	}
 
 	public function validate(FormField $formField): bool

@@ -101,7 +101,7 @@ class For2Tag extends TemplateTag implements TagNode
 		' . $elementNode->getInnerHtml() . '
 		<?php endfor; ?>';
 
-		$newNode = new TextNode($tplEngine->getDomReader());
+		$newNode = new TextNode();
 		$newNode->content = $phpCode;
 
 		$elementNode->parentNode->replaceNode($elementNode, $newNode);

@@ -44,38 +44,38 @@ class ForTag extends TemplateTag implements TagNode
 		$step = ($stepAttr->getValue() === null) ? 1 : intval($stepAttr->getValue());
 
 		$firstClassAttr = $elementNode->getAttribute('classfirst');
-		$firstClass = ($firstClassAttr !== null) ? $firstClassAttr->getValue() : null;
+		$firstClass = $firstClassAttr->getValue();
 
 		$lastClassAttr = $elementNode->getAttribute('classlast');
-		$lastClass = ($lastClassAttr !== null) ? $lastClassAttr->getValue() : null;
+		$lastClass = $lastClassAttr->getValue();
 		$forUID = str_replace('.', '', uniqid('', true));
 
 		$this->str_replace_node($elementNode->childNodes);
 
-		$nodeForStart = new TextNode($tplEngine->getDomReader());
-		$nodeForStart->content = "<?php\n";
-		$nodeForStart->content .= "/* for: start */ \$tmpArr = \$this->getDataFromSelector('{$dataKey}');\n";
-		$nodeForStart->content .= "if(\$tmpArr === null) \$tmpArr = array();\n";
-		$nodeForStart->content .= "\$arr_{$forUID} = array_values((is_object(\$tmpArr) === false)?\$tmpArr:(array)\$tmpArr);\n";
-		$nodeForStart->content .= "\$arrCount_{$forUID} = count(\$arr_{$forUID});\n";
-		$nodeForStart->content .= "\$i_{$forUID} = 0;\n";
+		$nodeForStart = new TextNode();
+		$nodeForStart->content = '<?php' . PHP_EOL;
+		$nodeForStart->content .= '/* for: start */ $tmpArr = $this->getDataFromSelector(\'' . $dataKey . '\');' . PHP_EOL;
+		$nodeForStart->content .= 'if($tmpArr === null) $tmpArr = array();' . PHP_EOL;
+		$nodeForStart->content .= '$arr_' . $forUID . ' = array_values((is_object($tmpArr) === false)?$tmpArr:(array)$tmpArr);' . PHP_EOL;
+		$nodeForStart->content .= '$arrCount_' . $forUID . ' = count($arr_' . $forUID . ');' . PHP_EOL;
+		$nodeForStart->content .= '$i_' . $forUID . ' = 0;' . PHP_EOL;
 
-		$nodeForStart->content .= "for(\$i_{$forUID} = 0; \$i_{$forUID} < \$arrCount_{$forUID}; \$i_{$forUID} = \$i_{$forUID}+{$step}) {\n";
+		$nodeForStart->content .= 'for($i_' . $forUID . ' = 0; $i_' . $forUID . ' < $arrCount_' . $forUID . '; $i_' . $forUID . ' = $i_' . $forUID . '+' . $step . ') {' . PHP_EOL;
 
 		if ($step === 1) {
-			$nodeForStart->content .= "\t\$this->addData('{$asVar}', \$arr_{$forUID}[\$i_{$forUID}], true);\n";
-			$nodeForStart->content .= "\t\${$asVar} = \$arr_{$forUID}[\$i_{$forUID}];";
+			$nodeForStart->content .= '$this->addData(\'' . $asVar . '\', $arr_' . $forUID . '[$i_' . $forUID . '], true);' . PHP_EOL;
+			$nodeForStart->content .= '$' . $asVar . ' = $arr_' . $forUID . '[$i_' . $forUID . '];';
 		} else {
 			for ($i = 0; $i < $step; $i++) {
-				$nodeForStart->content .= "\t\$this->addData('" . $asVar . ($i + 1) . "', (isset(\$arr_{$forUID}[\$i_{$forUID}+{$i}]) === true)?\$arr_{$forUID}[\$i_{$forUID}+{$i}]:null, true);\n";
-				$nodeForStart->content .= "\t\$" . $asVar . ($i + 1) . " = (isset(\$arr_{$forUID}[\$i_{$forUID}+{$i}]) === true)?\$arr_{$forUID}[\$i_{$forUID}+{$i}]:null;";
+				$nodeForStart->content .= '$this->addData(\'' . $asVar . ($i + 1) . '\', (isset($arr_' . $forUID . '[$i_' . $forUID . '+' . $i . ']) === true)?$arr_' . $forUID . '[$i_' . $forUID . '+' . $i . ']:null, true);' . PHP_EOL;
+				$nodeForStart->content .= '$' . $asVar . ($i + 1) . ' = (isset($arr_' . $forUID . '[$i_' . $forUID . '+' . $i . ']) === true)?$arr_' . $forUID . '[$i_' . $forUID . '+' . $i . ']:null;';
 			}
 		}
 
-		$nodeForStart->content .= "\t\$this->addData('_count', \$i_{$forUID}, true);\n";
-		$nodeForStart->content .= "?>";
+		$nodeForStart->content .= '$this->addData(\'_count\', $i_' . $forUID . ', true);' . PHP_EOL;
+		$nodeForStart->content .= '?>';
 
-		$nodeForEnd = new TextNode($tplEngine->getDomReader());
+		$nodeForEnd = new TextNode();
 		$nodeForEnd->content = '<?php } $this->unsetData(\'' . $asVar . '\'); $this->unsetData(\'_count\'); /* for: end */ ?>';
 
 		$elementNode->parentNode->insertBefore($nodeForStart, $elementNode);
@@ -84,12 +84,12 @@ class ForTag extends TemplateTag implements TagNode
 		$nodeInnerHtml = $elementNode->getInnerHtml();
 
 		if (preg_match($forPattern, $nodeInnerHtml, $resVal)) {
-			$nodeInnerHtml = $resVal[1] . $resVal[2] . "<?php \$this->addData('_count', \$i_{$forUID}, true); ?>" . $resVal[3];
+			$nodeInnerHtml = $resVal[1] . $resVal[2] . '<?php $this->addData(\'_count\', $i_' . $forUID . ', true); ?>' . $resVal[3];
 		}
 
 		// No fist/last class magic
 		if ($firstClass === null && $lastClass === null) {
-			$txtForNode = new TextNode($tplEngine->getDomReader());
+			$txtForNode = new TextNode();
 			$txtForNode->content = $nodeInnerHtml;
 			$elementNode->parentNode->insertBefore($txtForNode, $elementNode);
 
@@ -100,7 +100,7 @@ class ForTag extends TemplateTag implements TagNode
 		}
 
 		if (preg_match($forPattern, $nodeInnerHtml, $resVal)) {
-			$nodeInnerHtml = $resVal[1] . $resVal[2] . " \$_count = \$i_{$forUID}; " . $resVal[3];
+			$nodeInnerHtml = $resVal[1] . $resVal[2] . ' $_count = $i_' . $forUID . '; ' . $resVal[3];
 		}
 
 		$forDOM = new HtmlDoc($nodeInnerHtml, null);
@@ -120,7 +120,7 @@ class ForTag extends TemplateTag implements TagNode
 				$lastClassStr = ($lastClass !== null) ? ' class="' . $lastClass . '"' : null;
 				$firstLastClassStr = ' class="' . (($firstClass !== null && $lastClass !== null) ? $firstClass . ' ' . $lastClass : (($firstClass !== null) ? $firstClass : $lastClass)) . '"';
 
-				$firstLast = "<?php echo ((\$arrCount_{$forUID} === 1)?'{$firstLastClassStr}':(\$i_{$forUID} === 0)?'{$firstClassStr}':((\$arrCount_{$forUID} === \$i_{$forUID}+1)?'{$lastClassStr}':null)); ?>";
+				$firstLast = '<?php echo (($arrCount_' . $forUID . ' === 1)?\'' . $firstLastClassStr . '\':($i_' . $forUID . ' === 0)?\'' . $firstClassStr . '\':(($arrCount_' . $forUID . ' === $i_' . $forUID . '+1)?\'' . $lastClassStr . '\':null)); ?>';
 			} else {
 				$space = ($classVal !== '') ? ' ' : null;
 
@@ -135,7 +135,7 @@ class ForTag extends TemplateTag implements TagNode
 			$forNode->removeAttribute('class');
 		}
 
-		$txtForNode = new TextNode($tplEngine->getDomReader());
+		$txtForNode = new TextNode();
 		$txtForNode->content = $forDOM->getHtml();
 		$elementNode->parentNode->insertBefore($txtForNode, $elementNode);
 
@@ -145,23 +145,39 @@ class ForTag extends TemplateTag implements TagNode
 
 	private function str_replace_node($nodeList): void
 	{
-		$pattern1 = '/{(?:(\d+?):)?(\w+?)(?:\.([\w|.]+?))?}/';
+		$pattern1 = '/\${(?:(\d+?):)?(\w+?)(?:\.([\w|.]+?))?}/';
 		$pattern2 = '/{(?:(\d+?):)?(\w+?)(?:\.([\w|.]+?))?}/';
 
 		foreach ($nodeList as $node) {
-			$t1 = preg_replace_callback($pattern1, [$this, 'replaceVar'], $node->content);
-			$node->content = preg_replace_callback($pattern2, [$this, 'replaceEcho'], $t1);
+			$t1 = preg_replace_callback(
+				pattern: $pattern1,
+				callback: [$this, 'replaceVar'],
+				subject: $node->content
+			);
+			$node->content = preg_replace_callback(
+				pattern: $pattern2,
+				callback: [$this, 'replaceEcho'],
+				subject: $t1
+			);
 
 			if ($node->nodeType !== HtmlNode::ELEMENT_NODE) {
 				continue;
 			}
 
 			foreach ($node->attributes as $attr) {
-				$attr->value = preg_replace_callback($pattern2, [$this, 'replaceEcho'], $attr->value);
+				$attr->value = preg_replace_callback(
+					pattern: $pattern2,
+					callback: [$this, 'replaceEcho'],
+					subject: $attr->value
+				);
 			}
 
 			if ($node->tagExtension !== null) {
-				$node->tagExtension = preg_replace_callback($pattern1, [$this, 'replaceVar'], $node->tagExtension);
+				$node->tagExtension = preg_replace_callback(
+					pattern: $pattern1,
+					callback: [$this, 'replaceVar'],
+					subject: $node->tagExtension
+				);
 			}
 
 			if (count($node->childNodes) > 0) {

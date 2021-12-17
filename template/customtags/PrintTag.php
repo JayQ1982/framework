@@ -35,7 +35,7 @@ class PrintTag extends TemplateTag implements TagNode, TagInline
 	{
 		$replValue = $this->replace($elementNode->getAttribute('var')->getValue());
 
-		$replNode = new TextNode($tplEngine->getDomReader());
+		$replNode = new TextNode();
 		$replNode->content = $replValue;
 
 		$elementNode->parentNode->replaceNode($elementNode, $replNode);

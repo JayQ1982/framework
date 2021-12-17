@@ -47,7 +47,7 @@ class HttpResponse
 	) {
 		$this->httpStatusCode = $httpStatusCode;
 		$this->setHeader('Etag', $eTag);
-		$this->setHeader('Last-Modified', gmdate('r', $lastModifiedTimeStamp));
+		$this->setHeader('Last-Modified', gmdate(format: 'r', timestamp: $lastModifiedTimeStamp));
 		$this->setHeader('Cache-Control', 'private, must-revalidate');
 
 		if (!is_null($downloadFileName)) {
@@ -136,7 +136,7 @@ class HttpResponse
 		}
 
 		$httpResponse = new HttpResponse(
-			md5($lastModifiedTimeStamp . $realPath),
+			md5(trim($lastModifiedTimeStamp . $realPath)),
 			$lastModifiedTimeStamp,
 			HttpStatusCodes::HTTP_OK,
 			($forceDownload ? $fileName : null),

@@ -7,6 +7,7 @@
 namespace framework\form\component\field;
 
 use framework\common\StringUtils;
+use framework\datacheck\Sanitizer;
 use framework\form\rule\PhoneNumberRule;
 use framework\form\rule\RequiredRule;
 use framework\html\HtmlDocument;
@@ -29,7 +30,7 @@ class PhoneNumberField extends InputField
 			$this->addRule(formRule: new RequiredRule($requiredError));
 		}
 
-		$invalidError = is_null($individualInvalidError) ? new HtmlText('Die eingegebene Telefonnummer ist ungültig.', true) : $individualInvalidError;
+		$invalidError = is_null($individualInvalidError) ? HtmlText::encoded('Die eingegebene Telefonnummer ist ungültig.') : $individualInvalidError;
 		$this->addRule(formRule: new PhoneNumberRule($invalidError));
 	}
 
@@ -69,7 +70,7 @@ class PhoneNumberField extends InputField
 	public function renderValue(): string
 	{
 		if ($this->isValueEmpty()) {
-			return trim($this->getRawValue());
+			return Sanitizer::trimmedString($this->getRawValue());
 		}
 
 		return HtmlDocument::htmlEncode(StringUtils::phoneNumber($this->getRawValue(), $this->countryCode, $this->renderInternalFormat));
@@ -77,7 +78,7 @@ class PhoneNumberField extends InputField
 
 	public function valueHasChanged(): bool
 	{
-		$originalValue = trim($this->getOriginalValue());
+		$originalValue = Sanitizer::trimmedString($this->getOriginalValue());
 		if ($originalValue !== '') {
 			$parsedOriginalValue = StringUtils::parsePhoneNumber($this->getOriginalValue(), $this->getCountryCode());
 			if (is_null($parsedOriginalValue)) {

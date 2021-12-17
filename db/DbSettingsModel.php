@@ -6,6 +6,7 @@
 
 namespace framework\db;
 
+use framework\datacheck\Sanitizer;
 use LogicException;
 
 class DbSettingsModel
@@ -42,8 +43,8 @@ class DbSettingsModel
 		}
 		DbSettingsModel::$instances[$identifier] = $this;
 
-		$charset = trim($charset ?? 'utf8');
-		if (strtolower($charset) === 'utf-8') {
+		$charset = Sanitizer::trimmedString($charset ?? 'utf8');
+		if (mb_strtolower($charset) === 'utf-8') {
 			throw new LogicException('Faulty charset setting string "utf-8". Must be "utf8" for PDO driver.');
 		}
 

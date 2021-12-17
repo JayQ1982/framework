@@ -75,7 +75,11 @@ abstract class FormComponent extends HtmlElement
 
 	public function addError(string $errorMessage, bool $isEncodedForRendering): void
 	{
-		$this->addErrorAsHtmlTextObject(new HtmlText($errorMessage, $isEncodedForRendering));
+		if ($isEncodedForRendering) {
+			$this->addErrorAsHtmlTextObject(HtmlText::encoded($errorMessage));
+		} else {
+			$this->addErrorAsHtmlTextObject(HtmlText::unencoded($errorMessage));
+		}
 	}
 
 	public function addErrorAsHtmlTextObject(HtmlText $errorMessageObject): void

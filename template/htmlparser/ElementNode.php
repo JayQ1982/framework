@@ -22,9 +22,14 @@ class ElementNode extends HtmlNode
 	public ?string $tagExtension = null;
 	public bool $closed = false;
 
-	public function __construct(HtmlDoc $htmlDocument)
+	public function __construct()
 	{
-		parent::__construct(HtmlNode::ELEMENT_NODE, $htmlDocument);
+		parent::__construct(nodeType: HtmlNode::ELEMENT_NODE);
+	}
+
+	public function close(): void
+	{
+		$this->closed = true;
 	}
 
 	/**
@@ -69,15 +74,8 @@ class ElementNode extends HtmlNode
 	public function getInnerHtml(?ElementNode $entryNode = null): string
 	{
 		$html = '';
-		if ($entryNode === null) {
-			$nodeList = $this->childNodes;
-		} else {
-			$nodeList = $entryNode->childNodes;
-		}
 
-		if ($nodeList === null) {
-			return $html;
-		}
+		$nodeList = is_null($entryNode) ? $this->childNodes : $entryNode->childNodes;
 
 		/** @var ElementNode $node */
 		foreach ($nodeList as $node) {

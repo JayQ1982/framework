@@ -34,4 +34,9 @@ class DbQueryLogItem
 	{
 		return $this->sqlQuery;
 	}
+
+	public function getParams(): array
+	{
+		return $this->params;
+	}
 }

@@ -34,7 +34,7 @@ class SimpleXMLExtended extends SimpleXMLElement
 	 *
 	 * @return SimpleXMLExtended
 	 */
-	public function addChild($qualifiedName, $value = null, $namespace = null): SimpleXmlElement
+	public function addChild(string $qualifiedName, $value = null, $namespace = null): SimpleXmlElement
 	{
 		$new_child = parent::addChild($qualifiedName, null, $namespace);
 
@@ -124,9 +124,6 @@ class SimpleXMLExtended extends SimpleXMLElement
 		}
 		// actual conversion
 		$arr = JsonUtils::decodeJsonString(jsonString: JsonUtils::convertToJsonString((array)$tmp), returnAssociativeArray: true);
-		if (is_null($arr)) {
-			return false;
-		}
 		SimpleXMLExtended::stringifyEmptyInnerArrays($arr);
 
 		return $arr;

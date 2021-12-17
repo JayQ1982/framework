@@ -8,6 +8,7 @@ namespace framework\form\rule;
 
 use LogicException;
 use framework\common\StringUtils;
+use framework\datacheck\Sanitizer;
 use framework\form\component\field\PhoneNumberField;
 use framework\form\component\FormField;
 use framework\form\FormRule;
@@ -25,7 +26,7 @@ class PhoneNumberRule extends FormRule
 			return true;
 		}
 
-		$phone = trim($formField->getRawValue());
+		$phone = Sanitizer::trimmedString($formField->getRawValue());
 
 		$phoneNumber = StringUtils::parsePhoneNumber($phone, $formField->getCountryCode());
 		if (is_null($phoneNumber)) {

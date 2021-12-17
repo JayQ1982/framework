@@ -42,7 +42,7 @@ class ElseTag extends TemplateTag implements TagNode
 		$phpCode .= $elementNode->getInnerHtml();
 		$phpCode .= '<?php } ?>';
 
-		$textNode = new TextNode($tplEngine->getDomReader());
+		$textNode = new TextNode();
 		$textNode->content = $phpCode;
 
 		$elementNode->parentNode->replaceNode($elementNode, $textNode);

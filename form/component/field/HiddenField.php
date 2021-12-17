@@ -23,7 +23,7 @@ class HiddenField extends InputField
 	 */
 	public function __construct(string $name, $value = null)
 	{
-		parent::__construct($name, new HtmlText('', true), $value);
+		parent::__construct(name: $name, label: HtmlText::encoded(''), value: $value);
 		$this->setRenderer(new HiddenFieldRenderer($this));
 	}
 }

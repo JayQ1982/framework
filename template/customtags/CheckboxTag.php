@@ -39,7 +39,7 @@ class CheckboxTag extends TemplateTag implements TagNode
 		$elementNode->namespace = null;
 		$elementNode->tagName = 'input';
 		if ($sels !== null) {
-			$elementNode->tagExtension = " <?php echo ((is_array({$selsStr}) && in_array({$value}, {$selsStr})) || ({$selsStr} == '{$value}'))?' checked':null; ?>";
+			$elementNode->tagExtension = ' <?php echo ((is_array('.$selsStr.') && in_array('.$value.', '.$selsStr.')) || ('.$selsStr.' == \''.$value.'\'))?\' checked\':null; ?>';
 		}
 
 		$elementNode->addAttribute(new HtmlTagAttribute('type', 'checkbox', true));

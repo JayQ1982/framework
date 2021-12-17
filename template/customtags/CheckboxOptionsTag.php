@@ -40,9 +40,9 @@ class CheckboxOptionsTag extends TemplateTag implements TagNode
 		$optionsSelector = $elementNode->getAttribute('options')->getValue();
 		$fldName = $elementNode->getAttribute('name')->getValue() . '[]';
 
-		$textContent = "<?php print " . __CLASS__ . "::render(\$this, '{$fldName}', '{$optionsSelector}', '{$checkedSelector}'); ?>";
+		$textContent = '<?php print ' . __CLASS__ . '::render($this, \''.$fldName.'\', \''.$optionsSelector.'\', \''.$checkedSelector.'\'); ?>';
 
-		$newNode = new TextNode($tplEngine->getDomReader());
+		$newNode = new TextNode();
 		$newNode->content = $textContent;
 
 		$elementNode->parentNode->insertBefore($newNode, $elementNode);
@@ -68,7 +68,7 @@ class CheckboxOptionsTag extends TemplateTag implements TagNode
 			}
 			// Create inner "span-label":
 			$spanLabelTag = new HtmlTag('span', false, [new HtmlTagAttribute('class', 'label-text', true)]);
-			$spanLabelTag->addText(new HtmlText($val, true));
+			$spanLabelTag->addText(HtmlText::encoded($val));
 			$html .= '<li><label><input ' . implode(' ', $inputAttributes) . '> ' . $spanLabelTag->render() . '</label></li>' . PHP_EOL;
 		}
 

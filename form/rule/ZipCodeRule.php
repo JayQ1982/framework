@@ -16,6 +16,7 @@
 namespace framework\form\rule;
 
 use LogicException;
+use framework\datacheck\Sanitizer;
 use framework\form\component\field\ZipCodeField;
 use framework\form\component\FormField;
 use framework\form\FormRule;
@@ -50,7 +51,7 @@ class ZipCodeRule extends FormRule
 		}
 
 		$countryCode = $formField->getCountryCode();
-		$zip = trim($formField->getRawValue());
+		$zip = Sanitizer::trimmedString($formField->getRawValue());
 		if (isset($this->zipCodeRegularExpression[$countryCode])) {
 			return (preg_match('/' . $this->zipCodeRegularExpression[$countryCode] . '/i', $zip) === 1);
 		}

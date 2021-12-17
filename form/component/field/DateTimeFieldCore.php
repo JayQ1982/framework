@@ -7,6 +7,7 @@
 namespace framework\form\component\field;
 
 use DateTime;
+use framework\datacheck\Sanitizer;
 use framework\html\HtmlDocument;
 use Throwable;
 
@@ -30,7 +31,7 @@ abstract class DateTimeFieldCore extends TextField
 		$originalValue = $this->getRawValue();
 		if ($this->hasErrors(withChildElements: false)) {
 			// Invalid value; show original input
-			return HtmlDocument::htmlEncode(trim($originalValue));
+			return HtmlDocument::htmlEncode(Sanitizer::trimmedString($originalValue));
 		}
 		try {
 			$dateTime = new DateTime($originalValue);
@@ -38,7 +39,7 @@ abstract class DateTimeFieldCore extends TextField
 			return $dateTime->format($this->renderValueFormat);
 		} catch (Throwable) {
 			// Should not be reached. Anyway ... invalid value; show original input
-			return HtmlDocument::htmlEncode(trim($originalValue));
+			return HtmlDocument::htmlEncode(Sanitizer::trimmedString($originalValue));
 		}
 	}
 }

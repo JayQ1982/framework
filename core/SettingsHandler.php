@@ -123,7 +123,7 @@ class SettingsHandler
 			} else if (is_array($v)) {
 				$this->interpolateArray($v, $replace);
 			} else {
-				$settingsObj[$k] = strtr($v, $replace);
+				$settingsArray[$k] = strtr($v, $replace);
 			}
 		}
 	}

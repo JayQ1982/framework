@@ -63,6 +63,10 @@ class DirectoryTemplateCache extends TemplateCacheStrategy
 	{
 		$offset = str_contains($tplFile, $this->baseDir) ? $this->baseDirLength : 0;
 
-		return preg_replace('/\.\w+$/', DirectoryTemplateCache::CACHE_SUFFIX, substr($tplFile, $offset));
+		return preg_replace(
+			pattern: '/\.\w+$/',
+			replacement: DirectoryTemplateCache::CACHE_SUFFIX,
+			subject: substr($tplFile, $offset)
+		);
 	}
 }

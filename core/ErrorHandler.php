@@ -10,17 +10,14 @@ use framework\exception\PhpException;
 
 class ErrorHandler
 {
-	private Core $core;
-
-	public function __construct(Core $core)
+	public function __construct()
 	{
-		$this->core = $core;
-		error_reporting(E_ALL);
-		set_error_handler([$this, 'handlePHPError']);
+		error_reporting(error_level: E_ALL);
+		set_error_handler(callback: [$this, 'handlePHPError']);
 	}
 
 	public function handlePHPError(int $errorCode, string $errorMessage, string $errorFile, int $errorLine): bool
 	{
-		throw new PhpException($errorMessage, $errorCode, $errorFile, $errorLine);
+		throw new PhpException(message: $errorMessage, code: $errorCode, file: $errorFile, line: $errorLine);
 	}
 }

@@ -24,7 +24,7 @@ class NoSqlSessionHandler extends AbstractSessionHandler
 		return true;
 	}
 
-	public function gc($max_lifetime): bool
+	public function gc($max_lifetime): false|int
 	{
 		// TODO: Overwrite gc() method.
 		return true;

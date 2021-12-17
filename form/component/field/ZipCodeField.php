@@ -18,7 +18,7 @@ class ZipCodeField extends TextField
 	{
 		parent::__construct($name, $label, $value, $requiredError);
 
-		$invalidError = is_null($individualInvalidError) ? new HtmlText('Die eingegebene PLZ ist ungültig.', true) : $individualInvalidError;
+		$invalidError = is_null($individualInvalidError) ? HtmlText::encoded('Die eingegebene PLZ ist ungültig.') : $individualInvalidError;
 		$this->addRule(new ZipCodeRule($invalidError));
 	}
 

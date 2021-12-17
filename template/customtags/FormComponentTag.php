@@ -34,7 +34,7 @@ class FormComponentTag extends TemplateTag implements TagNode
 		$tplEngine->checkRequiredAttributes($elementNode, ['form', 'name']);
 
 		// DATA
-		$newNode = new TextNode($tplEngine->getDomReader());
+		$newNode = new TextNode();
 		$newNode->content = '<?= ' . FormComponentTag::class . '::render(\'' . $elementNode->getAttribute('form')->getValue() . '\', \'' . $elementNode->getAttribute('name')->getValue() . '\', $this); ?>';
 
 		$elementNode->parentNode->insertBefore($newNode, $elementNode);

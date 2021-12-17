@@ -17,8 +17,8 @@ class ActionsColumn extends AbstractTableColumn
 
 	public function __construct(string $label = '', string $cellCssClass = 'action')
 	{
-		parent::__construct('actions', $label);
-		$this->addCellCssClass($cellCssClass);
+		parent::__construct(identifier: 'actions', label: $label);
+		$this->addCellCssClass(className: $cellCssClass);
 	}
 
 	public function addIndividualActionLink(string $identifier, string $linkHTML): void
@@ -44,7 +44,7 @@ class ActionsColumn extends AbstractTableColumn
 		if (
 			isset($this->actionLinks['delete'])
 			&& !empty($this->hideDeleteLinkField)
-			&& $tableItemModel->getRawValue($this->hideDeleteLinkField) === $this->hideDeleteLinkValue
+			&& $tableItemModel->getRawValue(name: $this->hideDeleteLinkField) === $this->hideDeleteLinkValue
 		) {
 			unset($allActionLinks['delete']);
 		}
@@ -57,13 +57,23 @@ class ActionsColumn extends AbstractTableColumn
 		$rplArr = [];
 		foreach ($tableItemModel->getAllData() as $key => $val) {
 			$srcArr[] = '[' . $key . ']';
-			$rplArr[] = HtmlDocument::htmlEncode($val, false);
+			$rplArr[] = HtmlDocument::htmlEncode(value: $val, keepQuotes: false);
 		}
 
-		return implode(PHP_EOL, [
-			'<ul>',
-			implode(str_replace($srcArr, $rplArr, $allActionLinks)),
-			'</ul>',
-		]);
+		return implode(
+			separator: PHP_EOL,
+			array: [
+				'<ul>',
+				implode(
+					separator: PHP_EOL,
+					array: str_replace(
+						search: $srcArr,
+						replace: $rplArr,
+						subject: $allActionLinks
+					)
+				),
+				'</ul>',
+			]
+		);
 	}
 }

@@ -6,32 +6,43 @@
 
 namespace framework\security;
 
+use framework\core\HttpRequest;
+
 class CspPolicySettingsModel
 {
-	private ?string $defaultSrc;
-	private ?string $styleSrc;
-	private ?string $fontSrc;
-	private ?string $imgSrc;
-	private ?string $objectSrc;
-	private ?string $scriptSrc;
-	private ?string $connectSrc;
-	private ?string $baseUri;
-	private ?string $frameSrc;
-	private ?string $frameAncestors;
+	private const PROTOCOL_PLACEHOLDER = '{PROTOCOL}';
+	private const HOST_PLACEHOLDER = '{HOST}';
+
+	// Content Security Policy Reference: https://content-security-policy.com/
+	private string $defaultSrc;
+	private string $styleSrc;
+	private string $fontSrc;
+	private string $imgSrc;
+	private string $objectSrc;
+	private string $scriptSrc;
+	private string $connectSrc;
+	private string $baseUri;
+	private string $frameSrc;
+	private string $frameAncestors;
 
 	public function __construct(
-		?string $defaultSrc = null,
-		?string $styleSrc = null,
-		?string $fontSrc = null,
-		?string $imgSrc = null,
-		?string $objectSrc = null,
-		?string $scriptSrc = null,
-		?string $connectSrc = null,
-		?string $baseUri = null,
-		?string $frameSrc = null,
-		?string $frameAncestors = null,
+		string $defaultSrc = "'self' data: " . CspPolicySettingsModel::PROTOCOL_PLACEHOLDER . "://" . CspPolicySettingsModel::HOST_PLACEHOLDER,
+		string $styleSrc = "'self'",
+		string $fontSrc = "'self'",
+		string $imgSrc = "'self'",
+		string $objectSrc = "'none'",
+		string $scriptSrc = "'strict-dynamic'",
+		string $connectSrc = "'none'",
+		string $baseUri = "'self'",
+		string $frameSrc = "'none'",
+		string $frameAncestors = "'none'",
 	) {
-		$this->defaultSrc = $defaultSrc;
+		$httpRequest = HttpRequest::getInstance();
+		$this->defaultSrc = str_replace(
+			search: [CspPolicySettingsModel::PROTOCOL_PLACEHOLDER, CspPolicySettingsModel::HOST_PLACEHOLDER],
+			replace: [$httpRequest->getProtocol(), $httpRequest->getHost()],
+			subject: $defaultSrc
+		);
 		$this->styleSrc = $styleSrc;
 		$this->fontSrc = $fontSrc;
 		$this->imgSrc = $imgSrc;
@@ -47,38 +58,38 @@ class CspPolicySettingsModel
 	{
 		$dataArray = [];
 
-		if (!is_null($this->defaultSrc)) {
+		if ($this->defaultSrc !== '') {
 			$dataArray[] = 'default-src ' . $this->defaultSrc;
 		}
-		if (!is_null($this->styleSrc)) {
+		if ($this->styleSrc !== '') {
 			$dataArray[] = 'style-src ' . $this->styleSrc;
 		}
-		if (!is_null($this->fontSrc)) {
+		if ($this->fontSrc !== '') {
 			$dataArray[] = 'font-src ' . $this->fontSrc;
 		}
-		if (!is_null($this->imgSrc)) {
+		if ($this->imgSrc !== '') {
 			$dataArray[] = 'img-src ' . $this->imgSrc;
 		}
-		if (!is_null($this->objectSrc)) {
+		if ($this->objectSrc !== '') {
 			$dataArray[] = 'object-src ' . $this->objectSrc;
 		}
-		if (!is_null($this->scriptSrc)) {
+		if ($this->scriptSrc !== '') {
 			$val = $this->scriptSrc;
 			if (!str_contains($val, "'none'")) {
 				$val .= " 'nonce-" . $nonce . "'";
 			}
 			$dataArray[] = 'script-src ' . $val;
 		}
-		if (!is_null($this->connectSrc)) {
+		if ($this->connectSrc !== '') {
 			$dataArray[] = 'connect-src ' . $this->connectSrc;
 		}
-		if (!is_null($this->baseUri)) {
+		if ($this->baseUri !== '') {
 			$dataArray[] = 'base-uri ' . $this->baseUri;
 		}
-		if (!is_null($this->frameSrc)) {
+		if ($this->frameSrc !== '') {
 			$dataArray[] = 'frame-src ' . $this->frameSrc;
 		}
-		if (!is_null($this->frameAncestors)) {
+		if ($this->frameAncestors !== '') {
 			$dataArray[] = 'frame-ancestors ' . $this->frameAncestors;
 		}
 

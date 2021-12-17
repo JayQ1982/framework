@@ -38,7 +38,7 @@ class LegendAndListRenderer extends FormRenderer
 		$labelText = $formField->getLabel();
 		if (!is_null($labelInfoText)) {
 			// Add a space to separate it from following labelInfo-Tag
-			$labelText = new HtmlText(' ' . $labelText->render(), true);
+			$labelText = HtmlText::encoded(' ' . $labelText->render());
 		}
 
 		$legendAttributes = [];
@@ -62,7 +62,7 @@ class LegendAndListRenderer extends FormRenderer
 				new HtmlTagAttribute('title', 'Erforderliche Eingabe', true),
 				new HtmlTagAttribute('class', 'required', true),
 			]);
-			$abbrTag->addText(new HtmlText('*', true));
+			$abbrTag->addText(HtmlText::encoded('*'));
 			$legendTag->addTag($abbrTag);
 		}
 
@@ -70,7 +70,7 @@ class LegendAndListRenderer extends FormRenderer
 		$fieldsetTag->addTag($legendTag);
 
 		if ($formField instanceof CheckboxOptionsField) {
-			$checkboxOptionsRenderer = new CheckboxOptionsRenderer($formField);
+			$checkboxOptionsRenderer = new CheckboxOptionsRenderer(checkboxOptionsField: $formField);
 			$checkboxOptionsRenderer->prepare();
 
 			$fieldsetTag->addTag($checkboxOptionsRenderer->getHtmlTag());

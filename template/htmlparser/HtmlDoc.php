@@ -6,6 +6,7 @@
 
 namespace framework\template\htmlparser;
 
+use framework\datacheck\Sanitizer;
 use framework\html\HtmlTagAttribute;
 
 class HtmlDoc
@@ -22,7 +23,7 @@ class HtmlDoc
 	public function __construct(?string $htmlContent = null, ?string $namespace = null)
 	{
 		$this->htmlContent = $htmlContent;
-		$this->nodeTree = new DocumentNode($this);
+		$this->nodeTree = new DocumentNode();
 		$this->pendingNode = $this->nodeTree;
 
 		$this->selfClosingTags = ['br', 'hr', 'img', 'input', 'link', 'meta'];
@@ -44,12 +45,10 @@ class HtmlDoc
 
 		$this->contentPos = 0;
 
-		while ($this->findNextNode() !== false) {
-			continue;
-		}
+		$this->findNextNode();
 
 		if ($this->contentPos !== strlen($this->htmlContent)) {
-			$restNode = new TextNode($this);
+			$restNode = new TextNode();
 			$restNode->content = substr($this->htmlContent, $this->contentPos);
 			$restNode->parentNode = $this->nodeTree;
 
@@ -59,13 +58,13 @@ class HtmlDoc
 		}
 	}
 
-	private function findNextNode(): bool
+	private function findNextNode(): void
 	{
 		$oldPendingNode = $this->pendingNode;
 		$oldContentPos = $this->contentPos;
 
 		if (preg_match($this->tagPattern, $this->htmlContent, $res, PREG_OFFSET_CAPTURE, $this->contentPos) === 0) {
-			return false;
+			return;
 		}
 
 		$this->currentLine += substr_count($res[0][0], "\n");
@@ -76,12 +75,7 @@ class HtmlDoc
 			$lostText = substr($this->htmlContent, $oldContentPos, ($newPos - $oldContentPos));
 			$this->currentLine += substr_count($lostText, "\n");
 
-			if (preg_match('/^\\s*$/', $lostText) === true) {
-				$lostTextNode = new TextNode($this);
-			} else {
-				$lostTextNode = new TextNode($this);
-			}
-
+			$lostTextNode = new TextNode();
 			$lostTextNode->content = $lostText;
 			$lostTextNode->parentNode = $oldPendingNode;
 
@@ -96,33 +90,35 @@ class HtmlDoc
 
 		if (str_starts_with($res[0][0], '<!--')) {
 			// Comment-node
-			$newNode = new CommentNode($this);
+			$newNode = new CommentNode();
 			$newNode->content = $res[0][0];
 		} else if (stripos($res[0][0], '<![CDATA[') === 0) {
 			// CDATA-node
-			$newNode = new CDataSectionNode($this);
+			$newNode = new CDataSectionNode();
 			$newNode->content = $res[0][0];
 		} else if (stripos($res[0][0], '<!DOCTYPE') === 0) {
-			$newNode = new DocumentTypeNode($this);
+			$newNode = new DocumentTypeNode();
 			$newNode->content = $res[0][0];
 		} else {
-			$newNode = new ElementNode($this);
+			$newNode = new ElementNode();
 
 			// </...> (close only)
 			if (array_key_exists(1, $res) && $res[1][1] !== -1) {
 				if ($this->pendingNode instanceof ElementNode) {
-					$this->pendingNode->closed = true;
+					$this->pendingNode->close();
 				}
 				$this->pendingNode = ($oldPendingNode !== null) ? $oldPendingNode->parentNode : null;
 
 				if ($this->pendingNode === null) {
-					$node = new TextNode($this);
+					$node = new TextNode();
 					$node->content = '</' . $res[2][0] . '>';
 
 					$this->nodeTree->addChildNode($node);
 				}
 
-				return true;
+				$this->findNextNode();
+
+				return;
 			}
 
 			// Normal HTML-Tag-node
@@ -149,7 +145,7 @@ class HtmlDoc
 				preg_match_all('/(.+?)="(.*?)"/', $res[3][0], $resAttrs, PREG_SET_ORDER);
 
 				foreach ($resAttrs as $attr) {
-					$newNode->addAttribute(new HtmlTagAttribute(trim($attr[1]), trim($attr[2]), true));
+					$newNode->addAttribute(new HtmlTagAttribute(Sanitizer::trimmedString($attr[1]), Sanitizer::trimmedString($attr[2]), true));
 				}
 			}
 		}
@@ -163,17 +159,14 @@ class HtmlDoc
 			$oldPendingNode->addChildNode($newNode);
 		}
 
-		return true;
+		$this->findNextNode();
 	}
 
 	public function getNodesByNamespace(string $namespace, ?HtmlNode $entryNode = null): array
 	{
 		$nodes = [];
-		if ($entryNode === null) {
-			$nodeList = $this->nodeTree;
-		} else {
-			$nodeList = $entryNode->childNodes;
-		}
+
+		$nodeList = ($entryNode === null) ? $this->nodeTree : $entryNode->childNodes;
 
 		/** @var ElementNode $node */
 		foreach ($nodeList as $node) {
@@ -198,12 +191,7 @@ class HtmlDoc
 	public function getNodesByTagName(string $tagName, ?ElementNode $entryNode = null): array
 	{
 		$nodes = [];
-
-		if ($entryNode === null) {
-			$nodeList = $this->nodeTree;
-		} else {
-			$nodeList = $entryNode->childNodes;
-		}
+		$nodeList = ($entryNode === null) ? $this->nodeTree : $entryNode->childNodes;
 
 		/** @var ElementNode $node */
 		foreach ($nodeList as $node) {
@@ -267,12 +255,7 @@ class HtmlDoc
 	public function replaceNode(HtmlNode $nodeSearch, HtmlNode $nodeReplace)
 	{
 		$parentSearchNode = $nodeSearch->getParentNode();
-
-		if ($parentSearchNode === null) {
-			$nodeList = $this->nodeTree;
-		} else {
-			$nodeList = $nodeSearch->getParentNode()->childNodes;
-		}
+		$nodeList = ($parentSearchNode === null) ? $this->nodeTree : $nodeSearch->getParentNode()->childNodes;
 
 		$countChildren = count($nodeList);
 

@@ -19,11 +19,22 @@ class SelectOptionsField extends OptionsField
 	private bool $acceptMultipleSelections = false;
 	private bool $renderEmptyValueOption = true;
 
-	public function __construct(string $name, HtmlText $label, FormOptions $formOptions, null|string|array $initialValue, ?HtmlText $requiredError = null, ?HtmlText $individualEmptyValueLabel = null)
-	{
-		$this->emptyValueLabel = is_null($individualEmptyValueLabel) ? new HtmlText('-- Bitte wählen --', true) : $individualEmptyValueLabel;
+	public function __construct(
+		string            $name,
+		HtmlText          $label,
+		FormOptions       $formOptions,
+		null|string|array $initialValue,
+		?HtmlText         $requiredError = null,
+		?HtmlText         $individualEmptyValueLabel = null
+	) {
+		$this->emptyValueLabel = is_null($individualEmptyValueLabel) ? HtmlText::encoded('-- Bitte wählen --') : $individualEmptyValueLabel;
 
-		parent::__construct($name, $label, $formOptions, $initialValue);
+		parent::__construct(
+			name: $name,
+			label: $label,
+			formOptions: $formOptions,
+			initialValue: $initialValue
+		);
 
 		if (!is_null($requiredError)) {
 			$this->addRule(new RequiredRule($requiredError));

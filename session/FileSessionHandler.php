@@ -7,23 +7,23 @@
 namespace framework\session;
 
 use framework\core\EnvironmentSettingsModel;
-use framework\core\HttpRequest;
+use framework\datacheck\Sanitizer;
 
 class FileSessionHandler extends AbstractSessionHandler
 {
 	private EnvironmentSettingsModel $environmentSettingsModel;
 
-	public function __construct(EnvironmentSettingsModel $environmentSettingsModel, HttpRequest $httpRequest)
+	public function __construct(EnvironmentSettingsModel $environmentSettingsModel)
 	{
 		$this->environmentSettingsModel = $environmentSettingsModel;
-		parent::__construct($environmentSettingsModel, $httpRequest);
+		parent::__construct(environmentSettingsModel: $environmentSettingsModel);
 	}
 
 	protected function executePreStartActions(): void
 	{
-		$sessionSavePath = $this->environmentSettingsModel->getSessionSettingsModel()->getSavePath();
-		if (!is_null($sessionSavePath) && trim($sessionSavePath) !== '') {
-			session_save_path($sessionSavePath);
+		$sessionSavePath = Sanitizer::trimmedString($this->environmentSettingsModel->getSessionSettingsModel()->getSavePath());
+		if ($sessionSavePath !== '') {
+			session_save_path(path: $sessionSavePath);
 		}
 	}
 }

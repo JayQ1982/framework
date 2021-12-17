@@ -66,7 +66,7 @@ abstract class FormRenderer
 		foreach ($formComponentWithErrors->getErrorsAsHtmlTextObjects() as $htmlText) {
 			$errorsHTML[] = $htmlText->render();
 		}
-		$divTag->addText(new HtmlText(implode('<br>', $errorsHTML), true));
+		$divTag->addText(HtmlText::encoded(implode('<br>', $errorsHTML)));
 		$parentHtmlTag->addTag($divTag);
 	}
 

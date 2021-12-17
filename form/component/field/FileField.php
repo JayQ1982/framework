@@ -7,6 +7,7 @@
 namespace framework\form\component\field;
 
 use DirectoryIterator;
+use framework\datacheck\Sanitizer;
 use framework\form\component\FormField;
 use framework\form\FormRenderer;
 use framework\form\listener\FileFieldListener;
@@ -52,10 +53,15 @@ class FileField extends FormField
 		}
 		$this->maxFileUploadCount = $maxFileUploadCount;
 		$this->uniqueSessFileStorePointer = $this->sanitizeUniqueID(uniqid(date('ymdHis') . '__', true));
-		$this->tooManyFilesErrMsg = is_null($tooManyFilesErrMsg) ? new HtmlText('Nur [max] Datei(en) möglich.', true) : $tooManyFilesErrMsg;
+		$this->tooManyFilesErrMsg = is_null($tooManyFilesErrMsg) ? HtmlText::encoded('Nur [max] Datei(en) möglich.') : $tooManyFilesErrMsg;
 
 		// To always handle value internally as array we force an empty array on initialization
-		parent::__construct($name, $label, [], new HtmlText('(max. ' . $maxFileUploadCount . ')', true));
+		parent::__construct(
+			name: $name,
+			label: $label,
+			value: [],
+			labelInfoText: HtmlText::encoded('(max. ' . $maxFileUploadCount . ')')
+		);
 
 		if (!is_null($requiredError)) {
 			$this->addRule(new RequiredRule($requiredError));
@@ -66,7 +72,11 @@ class FileField extends FormField
 	{
 		// We do not allow dangerous characters in the pointer, as it will become part of
 		//   an filesystem path; And we want to easily detect these later in the external input:
-		return preg_replace('/[^a-z0-9_]/', '', $uid);
+		return preg_replace(
+			pattern: '/[^a-z0-9_]/',
+			replacement: '',
+			subject: $uid
+		);
 	}
 
 	public function getDefaultRenderer(): FormRenderer
@@ -88,7 +98,7 @@ class FileField extends FormField
 
 			// The following two checks must be done before parent::validate() to have the required data available
 			if (isset($inputData[FileField::MNF_PREFIX]) && is_scalar($inputData[FileField::MNF_PREFIX])) {
-				$receivedUid = trim($inputData[FileField::MNF_PREFIX]);
+				$receivedUid = Sanitizer::trimmedString($inputData[FileField::MNF_PREFIX]);
 				// If that value is tampered by a "black hat hacker", he should just grab securely into an "empty bowl".
 				//   Therefore we look for only allowed characters given in sanitizeUniqueID():
 				$cleanedUid = $this->sanitizeUniqueID($receivedUid);
@@ -100,7 +110,7 @@ class FileField extends FormField
 
 			if (isset($inputData[FileField::MNF_PREFIX . '_removeAttachment']) && is_scalar($inputData[FileField::MNF_PREFIX . '_removeAttachment'])) {
 				// Referenced usage at FileFieldRenderer::prepare()
-				$this->deleteFileHash = trim($inputData[FileField::MNF_PREFIX . '_removeAttachment']);
+				$this->deleteFileHash = Sanitizer::trimmedString($inputData[FileField::MNF_PREFIX . '_removeAttachment']);
 			}
 		}
 
@@ -145,9 +155,9 @@ class FileField extends FormField
 			}
 
 			$fileDataModel = new FileDataModel(
-				trim($filesArr[FileField::VALUE_NAME][$i]),
-				trim($filesArr[FileField::VALUE_TMP_NAME][$i]),
-				trim($filesArr[FileField::VALUE_TYPE][$i]),
+				Sanitizer::trimmedString($filesArr[FileField::VALUE_NAME][$i]),
+				Sanitizer::trimmedString($filesArr[FileField::VALUE_TMP_NAME][$i]),
+				Sanitizer::trimmedString($filesArr[FileField::VALUE_TYPE][$i]),
 				(int)$filesArr[FileField::VALUE_ERROR][$i],
 				(int)$filesArr[FileField::VALUE_SIZE][$i]
 			);

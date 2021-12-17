@@ -7,8 +7,9 @@
 namespace framework\core;
 
 use Exception;
-use LogicException;
+use framework\datacheck\Sanitizer;
 use framework\html\HtmlDocument;
+use LogicException;
 
 class ContentHandler
 {
@@ -34,7 +35,7 @@ class ContentHandler
 		$this->core = $core;
 		$requestHandler = $core->getRequestHandler();
 
-		$defaultContentType = trim($requestHandler->getContentType());
+		$defaultContentType = Sanitizer::trimmedString($requestHandler->getContentType());
 		if ($defaultContentType !== '') {
 			$this->contentType = $defaultContentType;
 		}
@@ -129,13 +130,13 @@ class ContentHandler
 			return;
 		}
 
-		if (!is_subclass_of($phpClassName, 'framework\core\baseView')) {
-			throw new Exception('The class ' . $phpClassName . ' must extend framework\core\baseView.');
+		if (!is_subclass_of($phpClassName, 'framework\core\BaseView')) {
+			throw new Exception('The class ' . $phpClassName . ' must extend framework\core\BaseView.');
 		}
 
-		/** @var baseView $baseView */
+		/** @var BaseView $baseView */
 		$baseView = new $phpClassName($this->core);
-		if(!$this->hasContent()) {
+		if (!$this->hasContent()) {
 			$baseView->execute();
 		}
 	}

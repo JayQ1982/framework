@@ -11,11 +11,19 @@ use framework\html\HtmlText;
 
 class AmountField extends TextField
 {
-	public function __construct(string $name, HtmlText $label, bool $valueIsFloat, null|int|float $initialValue = null, ?HtmlText $individualInvalidError = null, ?HtmlText $requiredError = null)
-	{
-		parent::__construct($name, $label, $initialValue, $requiredError);
+	public function __construct(
+		string         $name,
+		HtmlText       $label,
+		bool           $valueIsFloat,
+		null|int|float $initialValue = null,
+		?HtmlText      $individualInvalidError = null,
+		?HtmlText      $requiredError = null
+	) {
+		parent::__construct(name: $name, label: $label, value: $initialValue, requiredError: $requiredError);
 
-		$invalidError = is_null($individualInvalidError) ? new HtmlText('Der angegebene Wert ist ungültig.', true) : $individualInvalidError;
-		$this->addRule(new ValidAmountRule($valueIsFloat, $invalidError));
+		$this->addRule(new ValidAmountRule(
+			valueIsFloat: $valueIsFloat,
+			errorMessage: is_null($individualInvalidError) ? HtmlText::encoded('Der angegebene Wert ist ungültig.') : $individualInvalidError
+		));
 	}
 }

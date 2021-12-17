@@ -6,6 +6,7 @@
 
 namespace framework\template\customtags;
 
+use framework\datacheck\Sanitizer;
 use framework\template\template\TagNode;
 use framework\template\template\TemplateEngine;
 use framework\template\htmlparser\ElementNode;
@@ -34,21 +35,20 @@ class ForgroupTag extends TemplateTag implements TagNode
 
 	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$var = $elementNode->getAttribute('var')->getValue();
-
+		$var = Sanitizer::trimmedString($elementNode->getAttribute('var')->getValue());
 		$entryNoArr = explode(':', $var);
 		$this->no = $entryNoArr[0];
 		$this->var = $entryNoArr[1];
 
 		$tplEngine->checkRequiredAttributes($elementNode, ['var']);
 
-		$replNode = new TextNode($tplEngine->getDomReader());
+		$replNode = new TextNode();
 
 		$varName = $this->var . $this->no;
 
-		$replNode->content = "<?php \$tmpGrpVal = \$this->getDataFromSelector('{$varName}', true);\n";
-		$replNode->content .= " if(\$tmpGrpVal !== null) {\n";
-		$replNode->content .= "\$this->addData('{$this->var}', \$tmpGrpVal, true); ?>";
+		$replNode->content = '<?php $tmpGrpVal = $this->getDataFromSelector(\'' . $varName . '\', true);' . PHP_EOL;
+		$replNode->content .= ' if($tmpGrpVal !== null) {' . PHP_EOL;
+		$replNode->content .= '$this->addData(\'' . $this->var . '\', $tmpGrpVal, true); ?>';
 		$replNode->content .= ForgroupTag::prepareHtml($elementNode->getInnerHtml());
 		$replNode->content .= "<?php } ?>";
 
@@ -57,7 +57,11 @@ class ForgroupTag extends TemplateTag implements TagNode
 
 	private function prepareHtml($html): array|string|null
 	{
-		$newHtml = preg_replace_callback('/{' . $this->var . '\.(.*?)}/', [$this, 'replace'], $html);
+		$newHtml = preg_replace_callback(
+			pattern: '/{' . $this->var . '\.(.*?)}/',
+			callback: [$this, 'replace'],
+			subject: $html
+		);
 
 		return preg_replace_callback('/{(\w+?)(?:\.([\w|.]+))?}/', [$this, 'replaceForeign'], $newHtml);
 	}
