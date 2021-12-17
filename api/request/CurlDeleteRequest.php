@@ -1,7 +1,7 @@
 <?php
 /**
- * @author    METANET <entwicklung@metanet.ch>
- * @copyright METANET AG, www.metanet.ch
+ * @author    Christof Moser <christof.moser@actra.ch>
+ * @copyright Copyright (c) 2021, Actra AG
  */
 
 namespace framework\api\request;

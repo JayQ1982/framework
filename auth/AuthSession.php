@@ -45,7 +45,7 @@ class AuthSession
 		$isLoggedIn = AuthSession::getFromSession($indicator);
 		if (is_null($isLoggedIn)) {
 			$isLoggedIn = false;
-			AuthSession::saveToSession($indicator, $isLoggedIn);
+			AuthSession::saveToSession($indicator, false);
 		}
 
 		return $isLoggedIn;
