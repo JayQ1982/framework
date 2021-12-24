@@ -97,8 +97,7 @@ class Core
 		$this->errorHandler = new ErrorHandler();
 		$this->sessionHandler = AbstractSessionHandler::getSessionHandler(environmentSettingsModel: $this->environmentSettingsModel);
 
-		$this->requestHandler = RequestHandler::getInstance();
-		$this->requestHandler->init(core: $this);
+		$this->requestHandler = RequestHandler::init(core: $this);
 
 		$this->localeHandler = LocaleHandler::getInstance();
 		$this->localeHandler->init(environmentSettingsModel: $this->environmentSettingsModel, requestHandler: $this->requestHandler);
@@ -140,11 +139,6 @@ class Core
 	public function getSessionHandler(): AbstractSessionHandler
 	{
 		return $this->sessionHandler;
-	}
-
-	public function getRequestHandler(): RequestHandler
-	{
-		return $this->requestHandler;
 	}
 
 	public function getLocaleHandler(): ?LocaleHandler

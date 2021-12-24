@@ -15,8 +15,7 @@ use stdClass;
 
 class RequestHandler
 {
-	private static ?RequestHandler $instance = null;
-	private bool $isInitialized = false;
+	private static RequestHandler $instance;
 
 	private array $pathParts;
 	private int $countPathParts;
@@ -38,47 +37,44 @@ class RequestHandler
 
 	public static function getInstance(): RequestHandler
 	{
-		if (is_null(RequestHandler::$instance)) {
-			RequestHandler::$instance = new RequestHandler();
-		}
-
 		return RequestHandler::$instance;
 	}
 
 	private function __construct() { }
 
-	public function init(Core $core)
+	public static function init(Core $core): RequestHandler
 	{
-		if ($this->isInitialized) {
+		if (isset(RequestHandler::$instance)) {
 			throw new LogicException(message: 'RequestHandler is already initialized');
 		}
-		$this->isInitialized = true;
 		$httpRequest = HttpRequest::getInstance();
 		$environmentSettingsModel = $core->getEnvironmentSettingsModel();
 		$settingsHandler = $core->getSettingsHandler();
 		$coreProperties = $core->getCoreProperties();
 		$sessionHandler = $core->getSessionHandler();
 
-		$this->checkDomain($httpRequest, $environmentSettingsModel->getAllowedDomains());
-		$this->pathParts = explode(separator: '/', string: $httpRequest->getPath());
-		$this->countPathParts = count(value: $this->pathParts);
-		$this->fileName = Sanitizer::trimmedString(input: $this->pathParts[$this->countPathParts - 1]);
+		$requestHandler = new RequestHandler();
+		$requestHandler->checkDomain($httpRequest, $environmentSettingsModel->getAllowedDomains());
+		$requestHandler->pathParts = explode(separator: '/', string: $httpRequest->getPath());
+		$requestHandler->countPathParts = count(value: $requestHandler->pathParts);
+		$requestHandler->fileName = Sanitizer::trimmedString(input: $requestHandler->pathParts[$requestHandler->countPathParts - 1]);
 		$routeSettings = $settingsHandler->get(property: 'routes');
-		$this->defaultRoutes = $this->initDefaultRoutes(routeSettings: $routeSettings, environmentSettingsModel: $environmentSettingsModel);
-		$this->route = $this->initRoute(
-			countPathParts: $this->countPathParts,
+		$requestHandler->defaultRoutes = $requestHandler->initDefaultRoutes(routeSettings: $routeSettings, environmentSettingsModel: $environmentSettingsModel);
+		$requestHandler->route = $requestHandler->initRoute(
+			countPathParts: $requestHandler->countPathParts,
 			httpRequest: $httpRequest,
 			routeSettings: $routeSettings,
 			core: $core
 		);
-		if (is_null($this->route)) {
+		if (is_null($requestHandler->route)) {
 			throw new NotFoundException();
 		}
-		$this->initPropertiesFromRouteSettings($routeSettings->routes->{$this->route}, $coreProperties, $environmentSettingsModel, $sessionHandler);
-		$this->setFileProperties();
-		if ($this->fileExtension !== $this->acceptedExtension) {
+		$requestHandler->initPropertiesFromRouteSettings($routeSettings->routes->{$requestHandler->route}, $coreProperties, $environmentSettingsModel, $sessionHandler);
+		$requestHandler->setFileProperties();
+		if ($requestHandler->fileExtension !== $requestHandler->acceptedExtension) {
 			throw new NotFoundException();
 		}
+		return RequestHandler::$instance = $requestHandler;
 	}
 
 	private function checkDomain(HttpRequest $httpRequest, array $allowedDomains): void

@@ -7,6 +7,7 @@
 namespace framework\html;
 
 use framework\core\Core;
+use framework\core\RequestHandler;
 use framework\datacheck\Sanitizer;
 use framework\exception\NotFoundException;
 use framework\security\CspNonce;
@@ -35,7 +36,7 @@ class HtmlDocument
 	private function __construct(Core $core)
 	{
 		$this->core = $core;
-		$requestHandler = $core->getRequestHandler();
+		$requestHandler = RequestHandler::getInstance();
 		$environmentSettingsModel = $core->getEnvironmentSettingsModel();
 
 		$fileTitle = Sanitizer::trimmedString($requestHandler->getFileTitle());
@@ -144,7 +145,7 @@ class HtmlDocument
 	public function render(): string
 	{
 		$core = $this->core;
-		$requestHandler = $core->getRequestHandler();
+		$requestHandler = RequestHandler::getInstance();
 		$contentFileDirectory = $requestHandler->getAreaDir() . 'html/';
 		if (!is_null($requestHandler->getFileGroup())) {
 			$contentFileDirectory .= $requestHandler->getFileGroup() . '/';

@@ -8,6 +8,7 @@ namespace framework\auth;
 
 use framework\core\Core;
 use framework\core\HttpRequest;
+use framework\core\RequestHandler;
 use framework\db\FrameworkDB;
 use framework\exception\UnauthorizedException;
 use LogicException;
@@ -209,7 +210,8 @@ class Authenticator
 	{
 		$hasAccess = $this->doAccessCheck($accessOnlyForLoggedInUsers, $requiredAccessRights);
 		if (!$hasAccess && $autoRedirect) {
-			if (in_array($this->core->getRequestHandler()->getRoute(), $this->core->getRequestHandler()->getDefaultRoutes())) {
+			$requestHandler = RequestHandler::getInstance();
+			if (in_array($requestHandler->getRoute(), $requestHandler->getDefaultRoutes())) {
 				$this->redirectToLoginPage();
 			}
 

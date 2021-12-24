@@ -44,7 +44,7 @@ abstract class BaseView
 		$this->mandatoryParams = $mandatoryParams;
 		$this->optionalParams = $optionalParams;
 
-		$requestHandler = $core->getRequestHandler();
+		$requestHandler = RequestHandler::getInstance();
 
 		$outputHelpContent = (
 			!is_null(value: $this->httpRequest->getInputString(keyName: BaseView::PARAM_HELP))
@@ -185,7 +185,7 @@ abstract class BaseView
 
 	protected function getPathVar(int $nr): ?string
 	{
-		$pathVars = $this->core->getRequestHandler()->getPathVars();
+		$pathVars = RequestHandler::getInstance()->getPathVars();
 
 		return $pathVars[$nr] ?? null;
 	}

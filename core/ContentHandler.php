@@ -33,7 +33,7 @@ class ContentHandler
 	private function __construct(Core $core)
 	{
 		$this->core = $core;
-		$requestHandler = $core->getRequestHandler();
+		$requestHandler = RequestHandler::getInstance();
 
 		$defaultContentType = Sanitizer::trimmedString($requestHandler->getContentType());
 		if ($defaultContentType !== '') {
@@ -65,8 +65,8 @@ class ContentHandler
 		ob_start();
 		ob_implicit_flush(false);
 
-		$this->loadLocalizedText($core->getRequestHandler(), $core->getLocaleHandler());
-		$this->executePHP($core);
+		$this->loadLocalizedText($core->getLocaleHandler());
+		$this->executePHP();
 		if (!$this->hasContent() && $this->contentType === HttpResponse::TYPE_HTML) {
 			$this->setContent(HtmlDocument::getInstance($core)->render());
 		}
@@ -99,8 +99,9 @@ class ContentHandler
 		return $this->content;
 	}
 
-	private function loadLocalizedText(RequestHandler $requestHandler, LocaleHandler $localeHandler): void
+	private function loadLocalizedText(LocaleHandler $localeHandler): void
 	{
+		$requestHandler = RequestHandler::getInstance();
 		$dir = $requestHandler->getAreaDir() . 'language/' . $requestHandler->getLanguage() . '/';
 		if (!is_dir($dir)) {
 			return;
@@ -118,9 +119,9 @@ class ContentHandler
 		}
 	}
 
-	private function executePHP(Core $core): void
+	private function executePHP(): void
 	{
-		$requestHandler = $core->getRequestHandler();
+		$requestHandler = RequestHandler::getInstance();
 		$phpClassName = 'site\\content\\' . $requestHandler->getArea() . '\\php\\';
 		if (!is_null($requestHandler->getFileGroup())) {
 			$phpClassName .= $requestHandler->getFileGroup() . '\\';
