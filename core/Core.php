@@ -207,7 +207,7 @@ class Core
 		$contentHandler = $this->contentHandler;
 		$contentType = $contentHandler->getContentType();
 		if (!$contentHandler->hasContent()) {
-			throw new NotFoundException(core: $this, withRedirectCheck: false);
+			throw new NotFoundException();
 		}
 		$content = $contentHandler->getContent();
 		$httpStatusCode = $contentHandler->getHttpStatusCode();

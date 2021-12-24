@@ -72,12 +72,12 @@ class RequestHandler
 			core: $core
 		);
 		if (is_null($this->route)) {
-			throw new NotFoundException(core: $core, withRedirectCheck: true);
+			throw new NotFoundException();
 		}
 		$this->initPropertiesFromRouteSettings($routeSettings->routes->{$this->route}, $coreProperties, $environmentSettingsModel, $sessionHandler);
 		$this->setFileProperties();
 		if ($this->fileExtension !== $this->acceptedExtension) {
-			throw new NotFoundException(core: $core, withRedirectCheck: true);
+			throw new NotFoundException();
 		}
 	}
 

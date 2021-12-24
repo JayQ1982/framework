@@ -151,12 +151,12 @@ class HtmlDocument
 		}
 
 		if ($this->contentFileName === '') {
-			throw new NotFoundException($core, false);
+			throw new NotFoundException();
 		}
 
 		$fullContentFilePath = $contentFileDirectory . $this->contentFileName . '.html';
 		if (!is_file($fullContentFilePath)) {
-			throw new NotFoundException($core, false);
+			throw new NotFoundException();
 		}
 		$this->addText('this', $fullContentFilePath, true);
 

@@ -20,7 +20,7 @@ class DomainValidator
 			return false;
 		}
 		// Domainname + '.' + TLD = minimum 5 characters
-		if (mb_strlen($input) <= 5) {
+		if (mb_strlen($input) < 5) {
 			return false;
 		}
 		$encodedData = StringUtils::utf8_to_punycode($input);

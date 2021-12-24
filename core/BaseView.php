@@ -147,7 +147,7 @@ abstract class BaseView
 				|| (is_array(value: $paramValue) && count(value: $paramValue) === 0)
 			) {
 				if ($contentType === HttpResponse::TYPE_HTML) {
-					throw new NotFoundException(core: $core, withRedirectCheck: false);
+					throw new NotFoundException();
 				}
 				$this->setErrorResponseContent(errorMessage: 'missing or empty mandatory parameter: ' . $mandatoryParam);
 
