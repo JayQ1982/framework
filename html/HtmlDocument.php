@@ -92,11 +92,16 @@ class HtmlDocument
 	}
 
 	/**
-	 * @param string     $placeholderName
-	 * @param HtmlText[] $textElementsArray
+	 * @param string          $placeholderName
+	 * @param null|HtmlText[] $textElementsArray
 	 */
-	public function addTextElementsArray(string $placeholderName, array $textElementsArray): void
+	public function addTextElementsArray(string $placeholderName, ?array $textElementsArray): void
 	{
+		if (is_null($textElementsArray)) {
+			$this->replacements[$placeholderName] = null;
+
+			return;
+		}
 		$this->replacements[$placeholderName] = [];
 		foreach ($textElementsArray as $htmlText) {
 			$this->replacements[$placeholderName][] = $htmlText->render();
