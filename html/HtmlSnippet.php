@@ -6,8 +6,6 @@
 
 namespace framework\html;
 
-use framework\core\CoreProperties;
-use framework\core\LocaleHandler;
 use framework\security\CspNonce;
 use framework\template\template\DirectoryTemplateCache;
 use framework\template\template\TemplateEngine;
@@ -36,16 +34,20 @@ class HtmlSnippet
 		$this->replacements[$placeholderName] = is_null($htmlDataObject) ? null : $htmlDataObject->getData();
 	}
 
-	public function render(LocaleHandler $localeHandler, CoreProperties $coreProperties, string $htmlSnippetFilePath): string
+	public function addRawPlaceholder(string $placeholderName, mixed $value): void
 	{
-		$this->replacements['_localeHandler'] = $localeHandler;
+		$this->replacements[$placeholderName] = $value;
+	}
+
+	public function render(string $cachePath, string $snippetBaseDirectory, string $htmlSnippetFilePath): string
+	{
 		if (!array_key_exists(key: 'cspNonce', array: $this->replacements)) {
 			$this->replacements['cspNonce'] = CspNonce::get();
 		}
 
 		$tplCache = new DirectoryTemplateCache(
-			cachePath: $coreProperties->getSiteCacheDir(),
-			baseDir: $coreProperties->getSiteContentDir()
+			cachePath: $cachePath,
+			templateBaseDirectory: $snippetBaseDirectory
 		);
 		$renderer = new TemplateEngine(tplCacheInterface: $tplCache, tplNsPrefix: 'tst');
 

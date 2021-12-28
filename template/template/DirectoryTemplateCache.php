@@ -8,16 +8,16 @@ namespace framework\template\template;
 
 class DirectoryTemplateCache extends TemplateCacheStrategy
 {
-	const CACHE_SUFFIX = '.php';
-	protected string $baseDir;
+	protected const CACHE_SUFFIX = '.php';
+	protected string $templateBaseDirectory;
 	protected int $baseDirLength;
 
-	function __construct(string $cachePath, string $baseDir = DIRECTORY_SEPARATOR)
+	function __construct(string $cachePath, string $templateBaseDirectory)
 	{
 		parent::__construct($cachePath);
 
-		$this->baseDir = $baseDir;
-		$this->baseDirLength = strlen($baseDir);
+		$this->templateBaseDirectory = $templateBaseDirectory;
+		$this->baseDirLength = strlen($templateBaseDirectory);
 	}
 
 	public function getCachedTplFile(string $tplFile): ?TemplateCacheEntry
@@ -61,7 +61,7 @@ class DirectoryTemplateCache extends TemplateCacheStrategy
 
 	protected function getCacheFileName(string $tplFile): string
 	{
-		$offset = str_contains($tplFile, $this->baseDir) ? $this->baseDirLength : 0;
+		$offset = str_contains($tplFile, $this->templateBaseDirectory) ? $this->baseDirLength : 0;
 
 		return preg_replace(
 			pattern: '/\.\w+$/',

@@ -172,7 +172,10 @@ class HtmlDocument
 			$templateFilePath = $fullContentFilePath;
 		}
 		$coreProperties = $core->getCoreProperties();
-		$tplCache = new DirectoryTemplateCache($coreProperties->getSiteCacheDir(), $coreProperties->getSiteContentDir());
+		$tplCache = new DirectoryTemplateCache(
+			cachePath: $coreProperties->getSiteCacheDir(),
+			templateBaseDirectory: $coreProperties->getSiteContentDir()
+		);
 		$tplEngine = new TemplateEngine($tplCache, 'tst');
 		$htmlAfterReplacements = $tplEngine->getResultAsHtml($templateFilePath, $this->replacements);
 
