@@ -6,59 +6,40 @@
 
 namespace framework\common;
 
+use framework\core\HttpResponse;
+
 class CSVFile
 {
-	private string $path;
-	/** @var resource|false */
-	private $fileResource;
+	private string $fileName;
+	private array $headersList;
 	private bool $utf8Encode;
-	private array $cols = [];
-	private array $data = [];
+	private string $delimiter;
+	private string $enclosure;
+	private array $rows = [];
 
-	public function __construct(string $fileName, bool $utf8Encode)
-	{
-		$this->path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $fileName;
+	public function __construct(
+		string $fileName,
+		array  $headersList = [],
+		bool   $utf8Encode = true,
+		string $delimiter = ';',
+		string $enclosure = '"'
+	) {
+		$this->fileName = $fileName;
+		$this->headersList = $headersList;
 		$this->utf8Encode = $utf8Encode;
-		$this->fileResource = fopen(filename: $this->path, mode: 'w');
-		$this->addBOM();
+		$this->delimiter = $delimiter;
+		$this->enclosure = $enclosure;
 	}
 
-	private function addBOM(): void
+	public function addRow(array $data): void
 	{
-		if (!$this->utf8Encode) {
-			return;
-		}
-		fputs(stream: $this->fileResource, data: (chr(codepoint: 0xEF) . chr(codepoint: 0xBB) . chr(codepoint: 0xBF)));
+		$this->rows[] = $data;
 	}
 
-	/**
-	 * @param $rowNumber : string or integer
-	 * @param $colName   : string or integer
-	 * @param $content   : any data (scalar)
-	 */
-	public function addField($rowNumber, $colName, $content): void
-	{
-		if (!isset($this->cols[$colName])) {
-			$this->cols[$colName] = $colName;
-		}
-		$this->data[$rowNumber][$colName] = $content;
-	}
-
-	public function load(string $delimiter = ';', string $enclosure = '"'): string
-	{
-		fputcsv(stream: $this->fileResource, fields: $this->cols, separator: $delimiter, enclosure: $enclosure);
-		foreach ($this->data as $row) {
-			fputcsv(stream: $this->fileResource, fields: $row, separator: $delimiter, enclosure: $enclosure);
-		}
-		fclose(stream: $this->fileResource);
-
-		return $this->path;
-	}
-
-	public function stringToArray(string $string, string $delimiter = ';', string $enclosure = '"', string $escape = '\\', string $terminator = "\n"): array
+	public static function stringToArray(string $string, string $delimiter = ';', string $enclosure = '"', string $escape = '\\', string $terminator = "\n"): array
 	{
 		$r = [];
-		$string = trim($string);
+		$string = trim(string: $string);
 		if ($string === '') {
 			return $r;
 		}
@@ -66,12 +47,37 @@ class CSVFile
 		$names = array_shift(array: $rows);
 		$r[] = str_getcsv(string: $names, separator: $delimiter, enclosure: $enclosure, escape: $escape);
 		foreach ($rows as $row) {
-			$row = trim($row);
+			$row = trim(string: $row);
 			if ($row !== '') {
 				$r[] = str_getcsv(string: $row, separator: $delimiter, enclosure: $enclosure, escape: $escape);
 			}
 		}
 
 		return $r;
+	}
+
+	public function pushDownloadAndExit(): void
+	{
+		$path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . date(format: 'YmdHis') . rand(min: 10000, max: 99999) . '.csv';
+		$fileResource = fopen(filename: $path, mode: 'w');
+		if ($this->utf8Encode) {
+			fputs(stream: $fileResource, data: (chr(codepoint: 0xEF) . chr(codepoint: 0xBB) . chr(codepoint: 0xBF))); // Byte Order Mark (BOM)
+		}
+
+		if (count($this->headersList) > 0) {
+			fputcsv(stream: $fileResource, fields: $this->headersList, separator: $this->delimiter, enclosure: $this->enclosure);
+		}
+		foreach ($this->rows as $row) {
+			fputcsv(stream: $fileResource, fields: $row, separator: $this->delimiter, enclosure: $this->enclosure);
+		}
+		fclose(stream: $fileResource);
+
+		$httpResponse = HttpResponse::createResponseFromFilePath(
+			absolutePathToFile: $path,
+			forceDownload: true,
+			individualFileName: $this->fileName,
+			maxAge: 0
+		);
+		$httpResponse->sendAndExit();
 	}
 }
