@@ -12,7 +12,17 @@ use framework\template\template\TemplateEngine;
 
 class HtmlSnippet
 {
+	private string $cachePath;
+	private string $snippetBaseDirectory;
+	private string $htmlSnippetFilePath;
 	private array $replacements = [];
+
+	public function __construct(string $cachePath, string $snippetBaseDirectory, string $htmlSnippetFilePath)
+	{
+		$this->cachePath = $cachePath;
+		$this->snippetBaseDirectory = $snippetBaseDirectory;
+		$this->htmlSnippetFilePath = $htmlSnippetFilePath;
+	}
 
 	public function addText(string $placeholderName, ?string $content, bool $isEncodedForRendering): void
 	{
@@ -39,19 +49,19 @@ class HtmlSnippet
 		$this->replacements[$placeholderName] = $value;
 	}
 
-	public function render(string $cachePath, string $snippetBaseDirectory, string $htmlSnippetFilePath): string
+	public function render(): string
 	{
 		if (!array_key_exists(key: 'cspNonce', array: $this->replacements)) {
 			$this->replacements['cspNonce'] = CspNonce::get();
 		}
 
 		$tplCache = new DirectoryTemplateCache(
-			cachePath: $cachePath,
-			templateBaseDirectory: $snippetBaseDirectory
+			cachePath: $this->cachePath,
+			templateBaseDirectory: $this->snippetBaseDirectory
 		);
 		$renderer = new TemplateEngine(tplCacheInterface: $tplCache, tplNsPrefix: 'tst');
 
-		return $renderer->getResultAsHtml(tplFile: $htmlSnippetFilePath, tplVars: $this->replacements);
+		return $renderer->getResultAsHtml(tplFile: $this->htmlSnippetFilePath, tplVars: $this->replacements);
 	}
 
 	/**
