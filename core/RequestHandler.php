@@ -71,9 +71,10 @@ class RequestHandler
 		}
 		$requestHandler->initPropertiesFromRouteSettings($routeSettings->routes->{$requestHandler->route}, $coreProperties, $environmentSettingsModel, $sessionHandler);
 		$requestHandler->setFileProperties();
-		if ($requestHandler->fileExtension !== $requestHandler->acceptedExtension) {
+		if (!is_null($requestHandler->acceptedExtension) && $requestHandler->fileExtension !== $requestHandler->acceptedExtension) {
 			throw new NotFoundException();
 		}
+
 		return RequestHandler::$instance = $requestHandler;
 	}
 
@@ -185,14 +186,16 @@ class RequestHandler
 		}
 
 		// Force filename if defined
-		if (isset($routeSettings->forceFilename) && $routeSettings->forceFilename !== '') {
-			$this->fileName = $routeSettings->forceFilename;
+		if (isset($routeSettings->forceFileName) && $routeSettings->forceFileName !== '') {
+			$this->fileName = $routeSettings->forceFileName;
 		}
 
 		$this->area = $routeSettings->area;
 		$this->areaDir = $coreProperties->getSiteContentDir() . $routeSettings->area . '/';
 		$this->defaultFileName = $routeSettings->defaultFileName ?? $this->defaultFileName;
-		$this->acceptedExtension = $routeSettings->acceptedExtension ?? $this->acceptedExtension;
+		if (property_exists($routeSettings, 'acceptedExtension')) {
+			$this->acceptedExtension = $routeSettings->acceptedExtension;
+		}
 		$this->language = $routeSettings->language ?? key($environmentSettingsModel->getAvailableLanguages());
 		if ($sessionHandler->getPreferredLanguage() !== $this->language) {
 			$sessionHandler->setPreferredLanguage(language: $this->language);
