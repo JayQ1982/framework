@@ -28,12 +28,12 @@ class ActionsColumn extends AbstractTableColumn
 
 	public function addEditActionLink(string $linkTarget, string $label = 'Bearbeiten'): void
 	{
-		$this->actionLinks['edit'] = '<li><a href="' . $linkTarget . '" class="edit">' . $label . '</a></li>';
+		$this->actionLinks['edit'] = '<a href="' . $linkTarget . '" class="edit">' . $label . '</a>';
 	}
 
 	public function addDeleteLink(string $linkTarget, string $label = 'Löschen', ?string $hideField = null, ?string $hideValue = null): void
 	{
-		$this->actionLinks['delete'] = '<li><a href="' . $linkTarget . '" class="delete">' . $label . '</a></li>';
+		$this->actionLinks['delete'] = '<a href="' . $linkTarget . '" class="delete">' . $label . '</a>';
 		$this->hideDeleteLinkField = $hideField;
 		$this->hideDeleteLinkValue = $hideValue;
 	}
@@ -58,6 +58,26 @@ class ActionsColumn extends AbstractTableColumn
 		foreach ($tableItemModel->getAllData() as $key => $val) {
 			$srcArr[] = '[' . $key . ']';
 			$rplArr[] = HtmlDocument::htmlEncode(value: $val, keepQuotes: false);
+		}
+
+		if (count($allActionLinks) === 1) {
+			return implode(
+				separator: PHP_EOL,
+				array: [
+					implode(
+						separator: PHP_EOL,
+						array: str_replace(
+							search: $srcArr,
+							replace: $rplArr,
+							subject: $allActionLinks
+						)
+					),
+				]
+			);
+		}
+
+		foreach ($allActionLinks as $key => $val) {
+			$allActionLinks[$key] = '<li>' . $val . '</li>';
 		}
 
 		return implode(
