@@ -20,7 +20,7 @@ class CurlResponse
 	private false|string $rawResponseBody;
 	private array $curlInfo;
 	private int $responseHttpCode;
-	private int $totalRequestTime;
+	private float $totalRequestTime;
 	private int $errorCode;
 	private string $errorMessage;
 
@@ -28,7 +28,7 @@ class CurlResponse
 		false|string $rawResponseBody,
 		array        $curlInfo,
 		int          $responseHttpCode,
-		int          $totalRequestTime,
+		float          $totalRequestTime,
 		int          $errorCode,
 		string       $errorMessage
 	) {
@@ -44,7 +44,7 @@ class CurlResponse
 	{
 		$rawResponseBody = curl_exec(handle: $preparedCurlHandle);
 		$curlInfo = curl_getinfo(handle: $preparedCurlHandle);
-		$responseHttpCode = (int)$curlInfo[CURLINFO_RESPONSE_CODE];
+		$responseHttpCode = $curlInfo['http_code'];
 		$errorCode = curl_errno(handle: $preparedCurlHandle);
 		$errorMessage = curl_error(handle: $preparedCurlHandle);
 
@@ -86,8 +86,8 @@ class CurlResponse
 		return new CurlResponse(
 			rawResponseBody: $rawResponseBody,
 			curlInfo: $curlInfo,
-			responseHttpCode: (int)$curlInfo[CURLINFO_RESPONSE_CODE],
-			totalRequestTime: (int)$curlInfo[CURLINFO_TOTAL_TIME],
+			responseHttpCode: $responseHttpCode,
+			totalRequestTime: $curlInfo['total_time'],
 			errorCode: $errorCode,
 			errorMessage: $errorMessage
 		);
@@ -111,7 +111,7 @@ class CurlResponse
 		return $this->responseHttpCode;
 	}
 
-	public function getTotalRequestTime(): int
+	public function getTotalRequestTime(): float
 	{
 		return $this->totalRequestTime;
 	}
