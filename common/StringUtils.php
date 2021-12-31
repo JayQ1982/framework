@@ -213,20 +213,18 @@ class StringUtils
 		return implode('@', $fragments) . '@' . StringUtils::punycode_to_utf8($lastFragment);
 	}
 
-	public static function formatBytes($bytes, int $precision = 2): float
+	public static function formatBytes($bytes, int $precision = 2): string
 	{
 		$units = ['B', 'KB', 'MB', 'GB', 'TB'];
 
 		$bytes = max($bytes, 0);
-		$pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-		$pow = min($pow, count($units) - 1);
+		$pow = floor(num: ($bytes ? log(num: $bytes) : 0) / log(num: 1024));
+		$pow = min($pow, count(value: $units) - 1);
 
 		// Uncomment one of the following alternatives
-		$bytes /= pow(1024, $pow);
+		$bytes /= pow(num: 1024, exponent: $pow);
 
-		// $bytes /= (1 << (10 * $pow));
-
-		return round($bytes, $precision) . ' ' . $units[$pow];
+		return round(num: $bytes, precision: $precision) . ' ' . $units[$pow];
 	}
 
 	/**

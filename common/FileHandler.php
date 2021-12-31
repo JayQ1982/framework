@@ -42,10 +42,10 @@ class FileHandler
 
 	public static function renderFileSize(string $filePath): string
 	{
-		if (!file_exists($filePath)) {
+		if (!file_exists(filename: $filePath)) {
 			return '0 KB';
 		}
 
-		return StringUtils::formatBytes(filesize($filePath));
+		return StringUtils::formatBytes(bytes: filesize(filename: $filePath));
 	}
 }
