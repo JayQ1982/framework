@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2021, Actra AG
+ * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\component\field;
@@ -14,6 +14,7 @@ use framework\html\HtmlText;
 abstract class OptionsField extends FormField
 {
 	private FormOptions $formOptions;
+	private array $listTagClasses = [];
 
 	public function __construct(string $name, HtmlText $label, FormOptions $formOptions, $initialValue)
 	{
@@ -33,5 +34,15 @@ abstract class OptionsField extends FormField
 	public function setFormOptions(FormOptions $formOptions): void
 	{
 		$this->formOptions = $formOptions;
+	}
+
+	public function addListTagClass(string $className): void
+	{
+		$this->listTagClasses[] = $className;
+	}
+
+	public function getListTagClasses(): array
+	{
+		return array_unique($this->listTagClasses);
 	}
 }

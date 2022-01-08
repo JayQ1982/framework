@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2021, Actra AG
+ * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\renderer;
@@ -120,7 +120,7 @@ class DefinitionListRenderer extends FormRenderer
 			FormRenderer::addFieldInfoToParentHtmlTag($formField, $ddTag);
 		}
 
-		$dlTag = new HtmlTag('dl', false, [new HtmlTagAttribute('class', 'clearfix', true)]);
+		$dlTag = new HtmlTag('dl', false);
 		$dlTag->addTag($dtTag);
 		$dlTag->addTag($ddTag);
 		$this->setHtmlTag($dlTag);

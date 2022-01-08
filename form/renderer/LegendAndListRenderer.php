@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2021, Actra AG
+ * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\renderer;
@@ -58,8 +58,7 @@ class LegendAndListRenderer extends FormRenderer
 		}
 
 		if ($formField->isRequired() && $formField->isRenderRequiredAbbr()) {
-			$abbrTag = new HtmlTag('abbr', false, [
-				new HtmlTagAttribute('title', 'Erforderliche Eingabe', true),
+			$abbrTag = new HtmlTag('span', false, [
 				new HtmlTagAttribute('class', 'required', true),
 			]);
 			$abbrTag->addText(HtmlText::encoded('*'));

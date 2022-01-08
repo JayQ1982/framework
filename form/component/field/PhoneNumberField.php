@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2021, Actra AG
+ * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\component\field;

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2021, Actra AG
+ * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
  * =============================================================
  * this class uses original source (10.2016) from:
  * http://www.pixelenvision.com/1708/zip-postal-code-validation-regex-php-code-for-12-countries/

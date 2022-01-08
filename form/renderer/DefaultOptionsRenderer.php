@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) 2021, Actra AG
+ * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\renderer;
@@ -34,9 +34,14 @@ abstract class DefaultOptionsRenderer extends FormRenderer
 			throw new LogicException('There must be at least one option!');
 		}
 
-		$htmlTagAttributes = [];
+		$listTagClasses = $optionsField->getListTagClasses();
 		if ($optionsField->hasErrors(withChildElements: true)) {
-			$htmlTagAttributes[] = new HtmlTagAttribute('class', 'list-has-error', true);
+			$listTagClasses[] = 'list-has-error';
+		}
+
+		$htmlTagAttributes = [];
+		if (count($listTagClasses) > 0) {
+			$htmlTagAttributes[] = new HtmlTagAttribute('class', implode(' ', $listTagClasses), true);
 		}
 
 		$ulTag = new HtmlTag('ul', false, $htmlTagAttributes);
