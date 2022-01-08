@@ -201,8 +201,7 @@ class ToggleField extends OptionsField
 		$legendTag->addText($this->getLabel());
 
 		if ($this->isRequired() && $this->isRenderRequiredAbbr()) {
-			$abbrTag = new HtmlTag('abbr', false, [
-				new HtmlTagAttribute('title', 'Erforderliche Eingabe', true),
+			$abbrTag = new HtmlTag('span', false, [
 				new HtmlTagAttribute('class', 'required', true),
 			]);
 			$abbrTag->addText(HtmlText::encoded('*'));
