@@ -15,17 +15,17 @@ class FormInfo extends FormComponent
 {
 	private HtmlText $title;
 	private HtmlText $content;
-	private string $dtClass;
-	private string $ddClass;
-	private bool $formInfoClass;
+	private array $dlClasses;
+	private array $dtClasses;
+	private array $ddClasses;
 
-	public function __construct(HtmlText $title, HtmlText $content, string $dtClass = '', string $ddClass = '', bool $formInfoClass = false)
+	public function __construct(HtmlText $title, HtmlText $content, array $dlClasses = [], array $dtClasses = [], array $ddClasses = [])
 	{
 		$this->title = $title;
 		$this->content = $content;
-		$this->dtClass = trim($dtClass);
-		$this->ddClass = trim($ddClass);
-		$this->formInfoClass = $formInfoClass;
+		$this->dlClasses = $dlClasses;
+		$this->dtClasses = $dtClasses;
+		$this->ddClasses = $ddClasses;
 
 		parent::__construct(uniqid());
 	}
@@ -40,19 +40,19 @@ class FormInfo extends FormComponent
 		return $this->content;
 	}
 
-	public function getDtClass(): string
+	public function getDlClasses(): array
 	{
-		return $this->dtClass;
+		return $this->dlClasses;
 	}
 
-	public function getDdClass(): string
+	public function getDtClasses(): array
 	{
-		return $this->ddClass;
+		return $this->dtClasses;
 	}
 
-	public function getFormInfoClass(): bool
+	public function getDdClasses(): array
 	{
-		return $this->formInfoClass;
+		return $this->ddClasses;
 	}
 
 	public function getDefaultRenderer(): FormRenderer

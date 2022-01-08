@@ -25,23 +25,24 @@ class FormInfoRenderer extends FormRenderer
 		$formInfo = $this->formInfo;
 
 		$dtTag = new HtmlTag('dt', false);
-		$dtTag->addText($formInfo->getTitle());
-		if ($formInfo->getDtClass() != '') {
-			$dtTag->addHtmlTagAttribute(new HtmlTagAttribute('class', $formInfo->getDtClass(), true));
+		$dtClasses = $formInfo->getDtClasses();
+		if (count($dtClasses)) {
+			$dtTag->addHtmlTagAttribute(new HtmlTagAttribute('class', implode(' ', $dtClasses), true));
 		}
+		$dtTag->addText($formInfo->getTitle());
 
 		$ddTag = new HtmlTag('dd', false);
+		$ddClasses = $formInfo->getDdClasses();
+		if (count($ddClasses)) {
+			$ddTag->addHtmlTagAttribute(new HtmlTagAttribute('class', implode(' ', $ddClasses), true));
+		}
 		$ddTag->addText($formInfo->getContent());
-		if ($formInfo->getDdClass() != '') {
-			$ddTag->addHtmlTagAttribute(new HtmlTagAttribute('class', $formInfo->getDdClass(), true));
-		}
 
-		if ($formInfo->getFormInfoClass()) {
-			$dlClasses = ['form-info'];
-		} else {
-			$dlClasses = ['clearfix'];
+		$dlTag = new HtmlTag('dl', false);
+		$dlClasses = $formInfo->getDlClasses();
+		if (count($dlClasses)) {
+			$dlTag->addHtmlTagAttribute(new HtmlTagAttribute('class', implode(' ', $dlClasses), true));
 		}
-		$dlTag = new HtmlTag('dl', false, [new HtmlTagAttribute('class', implode(' ', $dlClasses), true)]);
 		$dlTag->addTag($dtTag);
 		$dlTag->addTag($ddTag);
 
