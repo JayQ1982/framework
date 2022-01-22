@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\common;
@@ -10,25 +10,15 @@ use framework\core\HttpResponse;
 
 class CSVFile
 {
-	private string $fileName;
-	private array $headersList;
-	private bool $utf8Encode;
-	private string $delimiter;
-	private string $enclosure;
 	private array $rows = [];
 
 	public function __construct(
-		string $fileName,
-		array  $headersList = [],
-		bool   $utf8Encode = true,
-		string $delimiter = ';',
-		string $enclosure = '"'
+		private string $fileName,
+		private array  $headersList = [],
+		private bool   $utf8Encode = true,
+		private string $delimiter = ';',
+		private string $enclosure = '"'
 	) {
-		$this->fileName = $fileName;
-		$this->headersList = $headersList;
-		$this->utf8Encode = $utf8Encode;
-		$this->delimiter = $delimiter;
-		$this->enclosure = $enclosure;
 	}
 
 	public function addRow(array $data): void

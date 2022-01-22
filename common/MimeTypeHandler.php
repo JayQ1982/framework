@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\common;
@@ -41,7 +41,7 @@ class MimeTypeHandler
 
 	public static function mimeTypeByExtension(string $extension): string
 	{
-		// original list from : Debian 9 /etc/mime.types, reworked
+		// Original list from : Debian 9 /etc/mime.types, reworked
 		$mimeTypes = [
 			'323'         => 'text/h323',
 			'%'           => 'application/x-trash',
@@ -599,7 +599,7 @@ class MimeTypeHandler
 			'zip'         => 'application/zip',
 			'zmt'         => 'chemical/x-mopac-input',
 		];
-		$extension = mb_strtolower(trim($extension));
+		$extension = mb_strtolower(string: trim(string: $extension));
 
 		return $mimeTypes[$extension] ?? 'application/octet-stream'; // Default for unknown file types
 	}

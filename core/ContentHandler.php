@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\core;
@@ -70,7 +70,7 @@ class ContentHandler
 		if (!$this->hasContent() && $this->contentType === HttpResponse::TYPE_HTML) {
 			$this->setContent(HtmlDocument::getInstance($core)->render());
 		}
-		$outputBufferContents = trim(ob_get_clean());
+		$outputBufferContents = trim(string: ob_get_clean());
 		if ($outputBufferContents !== '') {
 			$this->setContent($outputBufferContents);
 		}
@@ -144,7 +144,7 @@ class ContentHandler
 
 	public function hasContent(): bool
 	{
-		return trim($this->content) !== '';
+		return trim(string: $this->content) !== '';
 	}
 
 	public function suppressCspHeader(): void

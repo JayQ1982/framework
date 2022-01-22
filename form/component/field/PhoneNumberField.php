@@ -1,18 +1,19 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\component\field;
 
-use framework\common\StringUtils;
 use framework\datacheck\Sanitizer;
 use framework\form\rule\PhoneNumberRule;
 use framework\form\rule\RequiredRule;
 use framework\html\HtmlDocument;
 use framework\html\HtmlText;
-use framework\vendor\libphonenumber\PhoneNumberUtil;
+use framework\phone\PhoneNumber;
+use framework\phone\PhoneParseException;
+use framework\phone\PhoneRenderer;
 
 class PhoneNumberField extends InputField
 {
@@ -22,16 +23,20 @@ class PhoneNumberField extends InputField
 	private string $countryCodeFieldName = 'countryCode';
 	private bool $renderInternalFormat = false;
 
-	public function __construct(string $name, HtmlText $label, ?string $value = null, ?HtmlText $requiredError = null, ?HtmlText $individualInvalidError = null)
-	{
+	public function __construct(
+		string    $name,
+		HtmlText  $label,
+		?string   $value,
+		HtmlText  $invalidErrorMessage,
+		?HtmlText $requiredErrorMessage = null
+	) {
 		parent::__construct(name: $name, label: $label, value: $value);
 
-		if (!is_null($requiredError)) {
-			$this->addRule(formRule: new RequiredRule($requiredError));
+		if (!is_null($requiredErrorMessage)) {
+			$this->addRule(formRule: new RequiredRule(defaultErrorMessage: $requiredErrorMessage));
 		}
 
-		$invalidError = is_null($individualInvalidError) ? HtmlText::encoded('Die eingegebene Telefonnummer ist ungültig.') : $individualInvalidError;
-		$this->addRule(formRule: new PhoneNumberRule($invalidError));
+		$this->addRule(formRule: new PhoneNumberRule(defaultErrorMessage: $invalidErrorMessage));
 	}
 
 	public function getCountryCode(): string
@@ -60,7 +65,7 @@ class PhoneNumberField extends InputField
 			$this->countryCode = $inputData[$this->countryCodeFieldName];
 		}
 
-		if (!parent::validate($inputData, $overwriteValue)) {
+		if (!parent::validate(inputData: $inputData, overwriteValue: $overwriteValue)) {
 			return false;
 		}
 
@@ -70,21 +75,33 @@ class PhoneNumberField extends InputField
 	public function renderValue(): string
 	{
 		if ($this->isValueEmpty()) {
-			return Sanitizer::trimmedString($this->getRawValue());
+			return '';
 		}
 
-		return HtmlDocument::htmlEncode(StringUtils::phoneNumber($this->getRawValue(), $this->countryCode, $this->renderInternalFormat));
+		$currentValue = $this->getRawValue();
+
+		try {
+			$phoneNumber = PhoneNumber::createFromString(input: $currentValue, defaultCountryCode: $this->countryCode);
+		} catch (PhoneParseException) {
+			return HtmlDocument::htmlEncode(value: $currentValue);
+		}
+
+		if ($this->renderInternalFormat) {
+			return PhoneRenderer::renderInternalFormat(phoneNumber: $phoneNumber);
+		}
+
+		return PhoneRenderer::renderInternationalFormat(phoneNumber: $phoneNumber);
 	}
 
 	public function valueHasChanged(): bool
 	{
-		$originalValue = Sanitizer::trimmedString($this->getOriginalValue());
+		$originalValue = Sanitizer::trimmedString(input: $this->getOriginalValue());
 		if ($originalValue !== '') {
-			$parsedOriginalValue = StringUtils::parsePhoneNumber($this->getOriginalValue(), $this->getCountryCode());
-			if (is_null($parsedOriginalValue)) {
+			try {
+				$parsedOriginalValue = PhoneNumber::createFromString(input: $this->getOriginalValue(), defaultCountryCode: $this->getCountryCode());
+				$originalValue = PhoneRenderer::renderInternalFormat(phoneNumber: $parsedOriginalValue);
+			} catch (PhoneParseException) {
 				$originalValue = '';
-			} else {
-				$originalValue = PhoneNumberUtil::PLUS_SIGN . $parsedOriginalValue->getCountryCode() . '.' . $parsedOriginalValue->getNationalNumber();
 			}
 		}
 

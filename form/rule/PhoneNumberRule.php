@@ -1,18 +1,18 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\rule;
 
-use LogicException;
-use framework\common\StringUtils;
-use framework\datacheck\Sanitizer;
 use framework\form\component\field\PhoneNumberField;
 use framework\form\component\FormField;
 use framework\form\FormRule;
-use framework\vendor\libphonenumber\PhoneNumberUtil;
+use framework\phone\PhoneNumber;
+use framework\phone\PhoneParseException;
+use framework\phone\PhoneRenderer;
+use LogicException;
 
 class PhoneNumberRule extends FormRule
 {
@@ -26,14 +26,13 @@ class PhoneNumberRule extends FormRule
 			return true;
 		}
 
-		$phone = Sanitizer::trimmedString($formField->getRawValue());
-
-		$phoneNumber = StringUtils::parsePhoneNumber($phone, $formField->getCountryCode());
-		if (is_null($phoneNumber)) {
+		try {
+			$phoneNumber = PhoneNumber::createFromString(input: $formField->getRawValue(), defaultCountryCode: $formField->getCountryCode());
+		} catch (PhoneParseException) {
 			return false;
 		}
 
-		$formField->setValue(PhoneNumberUtil::PLUS_SIGN . $phoneNumber->getCountryCode() . '.' . $phoneNumber->getNationalNumber());
+		$formField->setValue(value: PhoneRenderer::renderInternalFormat(phoneNumber: $phoneNumber));
 
 		return true;
 	}

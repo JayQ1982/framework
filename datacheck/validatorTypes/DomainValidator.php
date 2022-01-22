@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\datacheck\validatorTypes;
@@ -27,7 +27,7 @@ class DomainValidator
 		if ($encodedData === false) {
 			return false;
 		}
-		if (filter_var(value: 'http://' . $encodedData, filter: FILTER_VALIDATE_URL) === false) {
+		if (filter_var(value: 'https://' . $encodedData, filter: FILTER_VALIDATE_URL) === false) {
 			return false;
 		}
 		$pieces = explode('.', $input);

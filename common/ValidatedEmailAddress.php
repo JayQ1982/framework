@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\common;
@@ -28,7 +28,7 @@ class ValidatedEmailAddress
 	 */
 	private function silentlyReplaceInvalidWhitespaces(string $emailAddress): string
 	{
-		return trim(str_replace(
+		return trim(string: str_replace(
 			search: [
 				' ',
 				"\t",
@@ -57,6 +57,8 @@ class ValidatedEmailAddress
 		}
 
 		$forbiddenCharacters = [
+			'"',
+			'\'',
 			',',
 			';',
 			':',
@@ -89,9 +91,9 @@ class ValidatedEmailAddress
 			return false;
 		}
 
-		// We do NOT verify the name part, as this is too complex. Internal PHP filter does not let pass unicode name part, and external found abhorrent
-		// regex patterns promising that do also not work properly.
-		if (filter_var(value: 'abc@' . $domain, filter: FILTER_VALIDATE_EMAIL) === false) {
+		// We do NOT verify the name part, as this is too complex.
+		// We use the default php validation because same validation happens when we use the value in PHPMailer.
+		if (filter_var(value: $this->value, filter: FILTER_VALIDATE_EMAIL) === false) {
 			$this->lastErrorCode = 'invalidSyntax';
 			$this->lastErrorMessage = 'The FILTER_VALIDATE_EMAIL filter returned false due to an invalid syntax.';
 

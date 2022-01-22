@@ -1,13 +1,13 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\table\column;
 
-use framework\table\TableItemModel;
 use DateTime;
+use framework\table\TableItemModel;
 
 class DateColumn extends AbstractTableColumn
 {

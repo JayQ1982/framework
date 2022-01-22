@@ -1,13 +1,13 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form;
 
-use LogicException;
 use framework\form\renderer\DefaultCollectionRenderer;
+use LogicException;
 
 abstract class FormCollection extends FormComponent
 {

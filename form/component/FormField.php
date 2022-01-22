@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\component;
@@ -242,7 +242,7 @@ abstract class FormField extends FormComponent
 		}
 
 		if (is_scalar($this->value)) {
-			return (strlen(trim($this->value)) <= 0);
+			return (strlen(string: trim(string: $this->value)) <= 0);
 		} else if (is_array($this->value)) {
 			return (count(array_filter($this->value)) <= 0);
 		} else if ($this->value instanceof ArrayObject) {

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\common;
@@ -50,7 +50,7 @@ class SearchHelper
 
 	private function cleanQuery(string $string): string
 	{
-		return strip_tags(string: trim($string));
+		return strip_tags(string: trim(string: $string));
 	}
 
 	/**
@@ -203,7 +203,7 @@ class SearchHelper
 	 *
 	 * @param string $line
 	 *
-	 * @return array
+	 * @return string[]
 	 */
 	private function explodeRespectQuotes(string $line): array
 	{
@@ -407,7 +407,7 @@ class SearchHelper
 		$searchWordsQuery = [];
 
 		foreach ($searchWords as $sw) {
-			$searchWordsQuery[] = trim($sw);
+			$searchWordsQuery[] = trim(string: $sw);
 		}
 
 		$conds = $params = [];

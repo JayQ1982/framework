@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\core;
@@ -34,7 +34,7 @@ class Logger
 			$previousException = $exceptionToLog->getPrevious();
 			$realException = is_null($previousException) ? $exceptionToLog : $previousException;
 
-			if (trim($message) !== '') {
+			if (trim(string: $message) !== '') {
 				$message .= Logger::dnl;
 			}
 			$message .= get_class($realException) . ': (' . $realException->getCode() . ') "' . $realException->getMessage() . '"' . PHP_EOL;

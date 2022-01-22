@@ -1,18 +1,18 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\core;
 
-use LogicException;
 use framework\autoloader\Autoloader;
 use framework\autoloader\AutoloaderPathModel;
 use framework\exception\ExceptionHandler;
 use framework\exception\NotFoundException;
 use framework\security\CspNonce;
 use framework\session\AbstractSessionHandler;
+use LogicException;
 
 class Core
 {

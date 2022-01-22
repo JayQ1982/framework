@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  * =============================================================
  * this class uses original source (10.2016) from:
  * http://www.pixelenvision.com/1708/zip-postal-code-validation-regex-php-code-for-12-countries/
@@ -15,11 +15,11 @@
 
 namespace framework\form\rule;
 
-use LogicException;
 use framework\datacheck\Sanitizer;
 use framework\form\component\field\ZipCodeField;
 use framework\form\component\FormField;
 use framework\form\FormRule;
+use LogicException;
 
 class ZipCodeRule extends FormRule
 {

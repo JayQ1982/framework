@@ -1,18 +1,18 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\component\field;
 
-use LogicException;
 use framework\form\FormOptions;
 use framework\form\renderer\CheckboxItemRenderer;
 use framework\form\renderer\DefinitionListRenderer;
 use framework\form\renderer\LegendAndListRenderer;
 use framework\form\rule\RequiredRule;
 use framework\html\HtmlText;
+use LogicException;
 
 class CheckboxOptionsField extends OptionsField
 {

@@ -1,18 +1,18 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\template\template;
 
+use ArrayObject;
 use Exception;
 use framework\common\StringUtils;
-use framework\template\htmlparser\HtmlDoc;
-use framework\template\htmlparser\ElementNode;
-use framework\template\htmlparser\TextNode;
 use framework\template\htmlparser\CDataSectionNode;
-use ArrayObject;
+use framework\template\htmlparser\ElementNode;
+use framework\template\htmlparser\HtmlDoc;
+use framework\template\htmlparser\TextNode;
 use ReflectionProperty;
 use Throwable;
 

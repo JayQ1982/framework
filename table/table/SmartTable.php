@@ -1,15 +1,15 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\table\table;
 
-use LogicException;
 use framework\table\column\AbstractTableColumn;
 use framework\table\renderer\TableHeadRenderer;
 use framework\table\TableItemModel;
+use LogicException;
 
 // Can be extended or used directly to render a table with data from different sources
 class SmartTable

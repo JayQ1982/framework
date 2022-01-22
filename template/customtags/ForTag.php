@@ -1,17 +1,17 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\template\customtags;
 
+use framework\template\htmlparser\ElementNode;
+use framework\template\htmlparser\HtmlDoc;
+use framework\template\htmlparser\HtmlNode;
+use framework\template\htmlparser\TextNode;
 use framework\template\template\TagNode;
 use framework\template\template\TemplateEngine;
-use framework\template\htmlparser\ElementNode;
-use framework\template\htmlparser\TextNode;
-use framework\template\htmlparser\HtmlNode;
-use framework\template\htmlparser\HtmlDoc;
 use framework\template\template\TemplateTag;
 
 class ForTag extends TemplateTag implements TagNode

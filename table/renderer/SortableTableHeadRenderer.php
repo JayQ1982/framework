@@ -1,16 +1,16 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\table\renderer;
 
-use LogicException;
 use framework\table\column\AbstractTableColumn;
 use framework\table\table\DbResultTable;
 use framework\table\table\SmartTable;
 use framework\table\TableHelper;
+use LogicException;
 
 class SortableTableHeadRenderer extends TableHeadRenderer
 {

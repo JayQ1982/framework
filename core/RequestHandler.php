@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\core;
@@ -206,7 +206,7 @@ class RequestHandler
 
 	private function setFileProperties(): void
 	{
-		$fileName = (trim($this->fileName) === '') ? $this->defaultFileName : $this->fileName;
+		$fileName = (trim(string: $this->fileName) === '') ? $this->defaultFileName : $this->fileName;
 		$dotPos = strripos(haystack: $fileName, needle: '.');
 		if ($dotPos === false) {
 			$length = strlen(string: $fileName);

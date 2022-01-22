@@ -1,28 +1,42 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\mailer\attachment;
 
-use framework\vendor\PHPMailer\PHPMailer;
+use framework\mailer\MailerConstants;
+use framework\mailer\MailerException;
+use framework\mailer\MailerFunctions;
 
 class MailerStringAttachment
 {
 	private string $contentString;
 	private string $fileName;
-	private string $encoding;
 	private string $type;
-	private bool $dispositionInline;
+	private string $encoding = MailerConstants::ENCODING_BASE64;
 
-	public function __construct(string $contentString, string $forceFileName = '', string $encoding = PHPMailer::ENCODING_BASE64, string $type = '', bool $dispositionInline = false)
-	{
+	public function __construct(
+		string       $contentString,
+		string       $fileName,
+		string       $type,
+		private bool $dispositionInline = false
+	) {
+		$contentString = trim($contentString);
+		$fileName = trim($fileName);
+
+		if ($contentString === '' || $fileName === '') {
+			throw new MailerException(message: 'Empty contentString or fileName.');
+		}
+		$type = trim($type);
+		if ($type === '') {
+			$type = MailerFunctions::filenameToType(fileName: $fileName);
+		}
+
 		$this->contentString = $contentString;
-		$this->fileName = $forceFileName;
-		$this->encoding = $encoding;
+		$this->fileName = $fileName;
 		$this->type = $type;
-		$this->dispositionInline = $dispositionInline;
 	}
 
 	public function getContentString(): string

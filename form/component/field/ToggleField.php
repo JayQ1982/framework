@@ -1,12 +1,11 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\component\field;
 
-use LogicException;
 use framework\form\component\FormField;
 use framework\form\FormComponent;
 use framework\form\FormOptions;
@@ -16,6 +15,7 @@ use framework\form\rule\RequiredRule;
 use framework\html\HtmlTag;
 use framework\html\HtmlTagAttribute;
 use framework\html\HtmlText;
+use LogicException;
 
 class ToggleField extends OptionsField
 {

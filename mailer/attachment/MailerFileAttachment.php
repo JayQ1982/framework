@@ -1,28 +1,52 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\mailer\attachment;
 
-use framework\vendor\PHPMailer\PHPMailer;
+use framework\mailer\MailerConstants;
+use framework\mailer\MailerException;
+use framework\mailer\MailerFunctions;
 
 class MailerFileAttachment
 {
 	private string $path;
 	private string $fileName;
-	private string $encoding;
 	private string $type;
-	private bool $dispositionInline;
 
-	public function __construct(string $path, string $forceFileName = '', string $encoding = PHPMailer::ENCODING_BASE64, string $type = '', bool $dispositionInline = false)
-	{
+	public function __construct(
+		string         $path,
+		string         $fileName = '',
+		private string $encoding = MailerConstants::ENCODING_BASE64,
+		string         $type = '',
+		private bool   $dispositionInline = false
+	) {
+		if (!in_array(needle: $this->encoding, haystack: MailerConstants::ENCODING_LIST)) {
+			throw new MailerException(message: 'Invalid encoding "' . $this->encoding . '". See MailerConstants::ENCODING_LIST[].');
+		}
+
+		$path = trim($path);
+		if ($path === '') {
+			throw new MailerException(message: 'Empty path.');
+		}
+		if (!MailerFunctions::fileIsAccessible(path: $path)) {
+			throw new MailerException(message: 'Could not access file: ' . $path);
+		}
 		$this->path = $path;
-		$this->fileName = $forceFileName;
-		$this->encoding = $encoding;
+
+		$fileName = trim($fileName);
+		if ($fileName === '') {
+			$fileName = MailerFunctions::mb_pathinfo(path: $path, options: PATHINFO_BASENAME);
+		}
+		$this->fileName = $fileName;
+
+		$type = trim($type);
+		if ($type === '') {
+			$type = MailerFunctions::filenameToType(fileName: $path);
+		}
 		$this->type = $type;
-		$this->dispositionInline = $dispositionInline;
 	}
 
 	public function getPath(): string

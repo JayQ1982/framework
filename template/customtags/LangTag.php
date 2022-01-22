@@ -1,17 +1,17 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\template\customtags;
 
 use framework\core\LocaleHandler;
-use framework\template\template\TagNode;
-use framework\template\template\TagInline;
-use framework\template\template\TemplateEngine;
 use framework\template\htmlparser\ElementNode;
 use framework\template\htmlparser\TextNode;
+use framework\template\template\TagInline;
+use framework\template\template\TagNode;
+use framework\template\template\TemplateEngine;
 use framework\template\template\TemplateTag;
 
 class LangTag extends TemplateTag implements TagNode, TagInline

@@ -1,14 +1,14 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\table\filter;
 
-use LogicException;
 use framework\core\HttpRequest;
 use framework\datacheck\Sanitizer;
+use LogicException;
 
 class OptionsFilterField extends AbstractTableFilterField
 {
@@ -78,12 +78,15 @@ class OptionsFilterField extends AbstractTableFilterField
 			$html .= '<select name="' . $filterName . '" id="' . $filterId . '">';
 		}
 		foreach ($this->options as $filterOption) {
-			$attributes = ['value="' . $filterOption->getIdentifier() . '"'];
+			$attributes = [
+				'option',
+				'value="' . $filterOption->getIdentifier() . '"',
+			];
 			if ($filterOption->getIdentifier() === $this->selectedValue) {
 				$attributes[] = 'selected';
 			}
 
-			$html .= '<option ' . implode(' ', $attributes) . '>' . $filterOption->getLabel() . '</option>';
+			$html .= '<' . implode(' ', $attributes) . '>' . $filterOption->getLabel() . '</option>';
 		}
 		$html .= '</select>';
 

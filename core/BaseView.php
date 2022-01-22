@@ -1,14 +1,12 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\core;
 
-use LogicException;
 use framework\auth\Authenticator;
-use framework\common\CSVFile;
 use framework\common\JsonUtils;
 use framework\common\SimpleXMLExtended;
 use framework\datacheck\Sanitizer;
@@ -16,6 +14,7 @@ use framework\exception\NotFoundException;
 use framework\exception\UnauthorizedException;
 use framework\response\HttpErrorResponseContent;
 use framework\response\HttpSuccessResponseContent;
+use LogicException;
 use stdClass;
 
 abstract class BaseView
@@ -280,30 +279,5 @@ abstract class BaseView
 		};
 
 		$this->setContent(contentString: $httpSuccessResponseContent->getContent());
-	}
-
-	protected function setCsvContent(array $data, string $fileName, bool $forceDownload = false): void
-	{
-		if ($fileName === '') {
-			$fileName = 'csv_data_' . date(format: 'YmdHis') . '.csv';
-		}
-
-		$csv = new CSVFile(fileName: $fileName, utf8Encode: true);
-		foreach ($data as $rowNumber => $rowData) {
-			foreach ((array)$rowData as $cellNumber => $cellContent) {
-				$csv->addField(rowNumber: $rowNumber, colName: $cellNumber, content: $cellContent);
-			}
-		}
-		$path = $csv->load();
-		$httpResponse = HttpResponse::createResponseFromFilePath(
-			absolutePathToFile: $csv->load(),
-			forceDownload: $forceDownload,
-			individualFileName: null,
-			maxAge: 0
-		);
-		if (file_exists(filename: $path)) {
-			unlink(filename: $path);
-		}
-		$httpResponse->sendAndExit();
 	}
 }

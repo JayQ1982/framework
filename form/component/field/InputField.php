@@ -1,16 +1,16 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\component\field;
 
-use LogicException;
 use framework\form\component\FormField;
 use framework\form\FormRenderer;
 use framework\form\renderer\InputFieldRenderer;
 use framework\html\HtmlText;
+use LogicException;
 
 abstract class InputField extends FormField
 {

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\component;
@@ -13,20 +13,13 @@ use framework\html\HtmlText;
 
 class FormInfo extends FormComponent
 {
-	private HtmlText $title;
-	private HtmlText $content;
-	private array $dlClasses;
-	private array $dtClasses;
-	private array $ddClasses;
-
-	public function __construct(HtmlText $title, HtmlText $content, array $dlClasses = [], array $dtClasses = [], array $ddClasses = [])
-	{
-		$this->title = $title;
-		$this->content = $content;
-		$this->dlClasses = $dlClasses;
-		$this->dtClasses = $dtClasses;
-		$this->ddClasses = $ddClasses;
-
+	public function __construct(
+		private HtmlText $title,
+		private HtmlText $content,
+		private array    $dlClasses = [],
+		private array    $dtClasses = [],
+		private array    $ddClasses = []
+	) {
 		parent::__construct(uniqid());
 	}
 

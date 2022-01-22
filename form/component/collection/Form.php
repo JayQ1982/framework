@@ -1,13 +1,12 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\component\collection;
 
 use Exception;
-use LogicException;
 use framework\form\component\field\CsrfTokenField;
 use framework\form\component\FormField;
 use framework\form\FormCollection;
@@ -17,6 +16,7 @@ use framework\form\renderer\DefaultFormRenderer;
 use framework\form\rule\ValidCsrfTokenValue;
 use framework\html\HtmlText;
 use framework\security\CsrfToken;
+use LogicException;
 
 class Form extends FormCollection
 {
@@ -80,31 +80,6 @@ class Form extends FormCollection
 		}
 		$formField->setTopFormComponent($this);
 		$this->addChildComponent($formField);
-	}
-
-	/**
-	 * @param FormField[] $fields
-	 */
-	public function addFields(array $fields): void
-	{
-		foreach ($fields as $formField) {
-			$this->addField($formField);
-		}
-	}
-
-	public function addAssemblage(array $fieldsAndComponents): void
-	{
-		foreach ($fieldsAndComponents as $segment) {
-			if ($segment instanceof FormField) {
-				$this->addField($segment);
-				continue;
-			}
-			if ($segment instanceof FormComponent) {
-				$this->addComponent($segment);
-				continue;
-			}
-			throw new LogicException('Neither an instance of FormField nor FormComponent.');
-		}
 	}
 
 	public function hasField(string $name): bool

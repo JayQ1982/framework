@@ -1,12 +1,11 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\form\renderer;
 
-use LogicException;
 use framework\form\component\field\CheckboxOptionsField;
 use framework\form\component\field\RadioOptionsField;
 use framework\form\component\FormField;
@@ -14,6 +13,7 @@ use framework\form\FormRenderer;
 use framework\html\HtmlTag;
 use framework\html\HtmlTagAttribute;
 use framework\html\HtmlText;
+use LogicException;
 
 class LegendAndListRenderer extends FormRenderer
 {

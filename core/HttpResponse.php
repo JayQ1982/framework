@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\core;
@@ -36,14 +36,14 @@ class HttpResponse
 	private ?string $contentFilePath = null;
 
 	private function __construct(
-		string $eTag,
-		int $lastModifiedTimeStamp,
-		int $httpStatusCode,
+		string  $eTag,
+		int     $lastModifiedTimeStamp,
+		int     $httpStatusCode,
 		?string $downloadFileName,
-		string $responseType,
+		string  $responseType,
 		?string $contentString,
 		?string $contentFilePath,
-		?int $maxAge
+		?int    $maxAge
 	) {
 		$this->httpStatusCode = $httpStatusCode;
 		$this->setHeader('Etag', $eTag);
@@ -127,7 +127,7 @@ class HttpResponse
 			exit;
 		}
 
-		$lastModifiedTimeStamp = filemtime($realPath);
+		$lastModifiedTimeStamp = filemtime(filename: $realPath);
 		$fileName = is_null($individualFileName) ? basename($realPath) : $individualFileName;
 
 		$fileExtension = FileHandler::getExtension($fileName);
@@ -136,14 +136,14 @@ class HttpResponse
 		}
 
 		$httpResponse = new HttpResponse(
-			md5(trim($lastModifiedTimeStamp . $realPath)),
-			$lastModifiedTimeStamp,
-			HttpStatusCodes::HTTP_OK,
-			($forceDownload ? $fileName : null),
-			$fileExtension,
-			null,
-			$realPath,
-			$maxAge
+			etag: md5(string: $lastModifiedTimeStamp . $realPath),
+			lastModifiedTimeStamp: $lastModifiedTimeStamp,
+			httpStatusCode: HttpStatusCodes::HTTP_OK,
+			downloadFileName: ($forceDownload ? $fileName : null),
+			responseType: $fileExtension,
+			contentString: null,
+			contentFilePath: $realPath,
+			maxAge: $maxAge
 		);
 		$httpResponse->setHeader('Content-Length', filesize($realPath));
 		$httpResponse->setHeader('Expires', gmdate('r', time() + $maxAge));

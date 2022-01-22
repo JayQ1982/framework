@@ -1,15 +1,10 @@
 <?php
 /**
  * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Copyright (c) Actra AG, Rümlang, Switzerland
+ * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\common;
-
-use framework\vendor\libphonenumber\NumberParseException;
-use framework\vendor\libphonenumber\PhoneNumber;
-use framework\vendor\libphonenumber\PhoneNumberFormat;
-use framework\vendor\libphonenumber\PhoneNumberUtil;
 
 class StringUtils
 {
@@ -213,96 +208,16 @@ class StringUtils
 		return implode('@', $fragments) . '@' . StringUtils::punycode_to_utf8($lastFragment);
 	}
 
-	public static function formatBytes($bytes, int $precision = 2): string
+	public static function formatBytes(int|float $bytes, int $precision = 2): string
 	{
 		$units = ['B', 'KB', 'MB', 'GB', 'TB'];
 
 		$bytes = max($bytes, 0);
 		$pow = floor(num: ($bytes ? log(num: $bytes) : 0) / log(num: 1024));
 		$pow = min($pow, count(value: $units) - 1);
-
-		// Uncomment one of the following alternatives
 		$bytes /= pow(num: 1024, exponent: $pow);
 
 		return round(num: $bytes, precision: $precision) . ' ' . $units[$pow];
-	}
-
-	/**
-	 * Tries to sanitize/"nice format" a string, which is supposed to be a phone number, into an international format
-	 * If the given string does not represent a valid phone number, it will return the trimmed, but
-	 * otherwise unchanged string
-	 *
-	 * @param string $phone              The phone number
-	 * @param string $defaultCountryCode The default country code if no international number is given
-	 * @param bool   $internalFormat     Format the phone number to be used internally, for example in epp
-	 *
-	 * @return string Well formatted phone number in international format, if string was a valid phone number
-	 */
-	public static function phoneNumber(string $phone = '', string $defaultCountryCode = '', bool $internalFormat = false): string
-	{
-		$phone = trim($phone);
-		if ($phone === '') {
-			return '';
-		}
-
-		if ($defaultCountryCode === '') {
-			// If no international number is given, assume a swiss number or swiss as the default region, from where is being dialed
-			$defaultCountryCode = 'CH';
-		}
-
-		$phoneNumber = StringUtils::parsePhoneNumber($phone, $defaultCountryCode);
-
-		if (is_null($phoneNumber)) {
-			// Just return original value, if phone number parsing fails
-			return $phone;
-		}
-
-		if ($internalFormat) {
-			return PhoneNumberUtil::PLUS_SIGN . $phoneNumber->getCountryCode() . '.' . $phoneNumber->getNationalNumber();
-		} else {
-			$phoneNumberUtil = PhoneNumberUtil::getInstance();
-
-			return $phoneNumberUtil->format($phoneNumber, PhoneNumberFormat::INTERNATIONAL);
-		}
-	}
-
-	/**
-	 * @param string $phone
-	 * @param string $defaultCountryCode
-	 *
-	 * @return PhoneNumber|null : Parsed phone number or null if empty or no possible number
-	 */
-	public static function parsePhoneNumber(string $phone, string $defaultCountryCode): ?PhoneNumber
-	{
-		$phone = trim($phone);
-		if ($phone === '') {
-			return null;
-		}
-
-		if (str_starts_with($phone, '00')) {
-			$phone = '+' . substr($phone, 2);
-		}
-
-		$countryCode = null;
-		if (mb_strlen($phone) > 1 && mb_substr($phone, 0, 1) !== '+' && mb_substr($phone, 0, 2) !== '00') {
-			// If no international number is given, assume country code from phone number field as the default region
-			$countryCode = $defaultCountryCode;
-		}
-		$phoneNumberUtil = PhoneNumberUtil::getInstance();
-		try {
-			$phoneNumber = $phoneNumberUtil->parse($phone, $countryCode);
-			/*
-			 * NOTE: The following is a required fix when we use isPossibleNumber() instead of isValidNumber
-			 * We need to use isPossibleNumber() instead of isValidNumber() so +41.123456789 is also accepted
-			*/
-			if ($phoneNumber->getCountryCode() !== 39) {
-				$phoneNumber->setItalianLeadingZero(false);
-			}
-
-			return $phoneNumberUtil->isPossibleNumber($phoneNumber) ? $phoneNumber : null;
-		} catch (NumberParseException) {
-			return null;
-		}
 	}
 
 	/**
