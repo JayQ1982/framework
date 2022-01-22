@@ -15,36 +15,22 @@ use stdClass;
 class CurlResponse
 {
 	public const ERROR_BAD_HTTP_RESPONSE_CODE = 900;
-	public const ERROR_BAD_RESPONSE_DATA = 903;
-
-	private false|string $rawResponseBody;
-	private array $curlInfo;
-	private int $responseHttpCode;
-	private float $totalRequestTime;
-	private int $errorCode;
-	private string $errorMessage;
 
 	private function __construct(
-		false|string $rawResponseBody,
-		array        $curlInfo,
-		int          $responseHttpCode,
-		float          $totalRequestTime,
-		int          $errorCode,
-		string       $errorMessage
+		private false|string $rawResponseBody,
+		private array        $curlInfo,
+		private int          $responseHttpCode,
+		private float        $totalRequestTime,
+		private int          $errorCode,
+		private string       $errorMessage
 	) {
-		$this->rawResponseBody = $rawResponseBody;
-		$this->curlInfo = $curlInfo;
-		$this->responseHttpCode = $responseHttpCode;
-		$this->totalRequestTime = $totalRequestTime;
-		$this->errorCode = $errorCode;
-		$this->errorMessage = $errorMessage;
 	}
 
 	public static function createFromPreparedCurlHandle(CurlHandle $preparedCurlHandle, bool $acceptRedirectionResponseCode): CurlResponse
 	{
 		$rawResponseBody = curl_exec(handle: $preparedCurlHandle);
 		$curlInfo = curl_getinfo(handle: $preparedCurlHandle);
-		$responseHttpCode = $curlInfo['http_code'];
+		$responseHttpCode = (int)$curlInfo['http_code'];
 		$errorCode = curl_errno(handle: $preparedCurlHandle);
 		$errorMessage = curl_error(handle: $preparedCurlHandle);
 
@@ -87,7 +73,7 @@ class CurlResponse
 			rawResponseBody: $rawResponseBody,
 			curlInfo: $curlInfo,
 			responseHttpCode: $responseHttpCode,
-			totalRequestTime: $curlInfo['total_time'],
+			totalRequestTime: (float)$curlInfo['total_time'],
 			errorCode: $errorCode,
 			errorMessage: $errorMessage
 		);
@@ -98,9 +84,6 @@ class CurlResponse
 		return ($this->errorCode !== CURLE_OK);
 	}
 
-	/**
-	 * @return array
-	 */
 	public function getCurlInfo(): array
 	{
 		return $this->curlInfo;
@@ -128,7 +111,7 @@ class CurlResponse
 
 	public function getRawResponseBody(): false|string
 	{
-		return $this->rawResponseBody;
+		return is_string($this->rawResponseBody) ? $this->rawResponseBody : '';
 	}
 
 	public function getJsonResponse(): stdClass

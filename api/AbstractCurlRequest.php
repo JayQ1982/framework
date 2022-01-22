@@ -50,7 +50,7 @@ abstract class AbstractCurlRequest
 
 	protected function __construct(string $requestTargetUrl, array $requestTypeSpecificCurlOptions)
 	{
-		$this->instanceIndex = empty(AbstractCurlRequest::$instances) ? 1 : max(value: array_keys(array: AbstractCurlRequest::$instances)) + 1;
+		$this->instanceIndex = (count(AbstractCurlRequest::$instances) === 0) ? 1 : max(value: array_keys(array: AbstractCurlRequest::$instances)) + 1;
 		AbstractCurlRequest::$instances[$this->instanceIndex] = $this;
 		$this->curlOptions[CURLOPT_URL] = $requestTargetUrl;
 		foreach ($requestTypeSpecificCurlOptions as $key => $val) {
@@ -61,7 +61,7 @@ abstract class AbstractCurlRequest
 	public function __destruct()
 	{
 		unset(AbstractCurlRequest::$instances[$this->instanceIndex]);
-		if (empty(AbstractCurlRequest::$instances)) {
+		if (count(AbstractCurlRequest::$instances) === 0 && !is_null(AbstractCurlRequest::$curlHandle)) {
 			curl_close(handle: AbstractCurlRequest::$curlHandle);
 			AbstractCurlRequest::$curlHandle = null;
 		}
@@ -69,34 +69,34 @@ abstract class AbstractCurlRequest
 
 	protected function setPostBody(array $postData): void
 	{
-		$postFields = http_build_query(
+		$postFieldsString = http_build_query(
 			data: AbstractCurlRequest::convertAllDataToString(data: $postData),
 			encoding_type: PHP_QUERY_RFC3986
 		);
 		$this->httpHeaders[AbstractCurlRequest::CONTENT_TYPE] = 'application/x-www-form-urlencoded; charset=utf-8';
-		$this->httpHeaders[AbstractCurlRequest::CONTENT_LENGTH] = strlen($postFields);
-		$this->curlOptions[CURLOPT_POSTFIELDS] = $postFields;
+		$this->httpHeaders[AbstractCurlRequest::CONTENT_LENGTH] = strlen(string: $postFieldsString);
+		$this->curlOptions[CURLOPT_POSTFIELDS] = $postFieldsString;
 	}
 
 	protected function setXmlBody(string $xmlString): void
 	{
 		$this->httpHeaders[AbstractCurlRequest::CONTENT_TYPE] = 'text/xml; charset=utf-8';
 		$this->httpHeaders['HTTP_PRETTY_PRINT'] = 'TRUE';
-		$this->httpHeaders[AbstractCurlRequest::CONTENT_LENGTH] = strlen($xmlString);
+		$this->httpHeaders[AbstractCurlRequest::CONTENT_LENGTH] = strlen(string: $xmlString);
 		$this->curlOptions[CURLOPT_POSTFIELDS] = $xmlString;
 	}
 
 	protected function setJsonBody(string $jsonString): void
 	{
 		$this->httpHeaders[AbstractCurlRequest::CONTENT_TYPE] = 'application/json; charset=utf-8';
-		$this->httpHeaders[AbstractCurlRequest::CONTENT_LENGTH] = strlen($jsonString);
+		$this->httpHeaders[AbstractCurlRequest::CONTENT_LENGTH] = strlen(string: $jsonString);
 		$this->curlOptions[CURLOPT_POSTFIELDS] = $jsonString;
 	}
 
 	protected function setPlainTextBody(string $plainText): void
 	{
 		$this->httpHeaders[AbstractCurlRequest::CONTENT_TYPE] = 'text/plain; charset=utf-8';
-		$this->httpHeaders[AbstractCurlRequest::CONTENT_LENGTH] = strlen($plainText);
+		$this->httpHeaders[AbstractCurlRequest::CONTENT_LENGTH] = strlen(string: $plainText);
 		$this->curlOptions[CURLOPT_POSTFIELDS] = $plainText;
 	}
 
@@ -118,7 +118,7 @@ abstract class AbstractCurlRequest
 		$this->httpHeaders[$key] = $value;
 	}
 
-	public function setCurlOption(int $optionIdentifier, null|string|int|bool $newValue)
+	public function setCurlOption(int $optionIdentifier, null|string|int|bool $newValue): void
 	{
 		if (in_array(needle: $optionIdentifier, haystack: AbstractCurlRequest::PROTECTED_CURL_OPTIONS)) {
 			throw new LogicException(message: 'You are not allowed to overwrite the cURL-Option ' . $optionIdentifier);
@@ -191,9 +191,9 @@ abstract class AbstractCurlRequest
 
 		if (is_object(value: $data)) {
 			$arrPrepared = [];
-			foreach (get_object_vars($data) as $strKey => $val) {
-				$strKey = AbstractCurlRequest::convertAllDataToString($strKey);
-				$val = AbstractCurlRequest::convertAllDataToString($val);
+			foreach (get_object_vars(object: $data) as $strKey => $val) {
+				$strKey = AbstractCurlRequest::convertAllDataToString(data: $strKey);
+				$val = AbstractCurlRequest::convertAllDataToString(data: $val);
 				$arrPrepared[$strKey] = $val;
 			}
 
@@ -203,8 +203,8 @@ abstract class AbstractCurlRequest
 		if (is_array(value: $data)) {
 			$arrPrepared = [];
 			foreach ($data as $strKey => $val) {
-				$strKey = AbstractCurlRequest::convertAllDataToString($strKey);
-				$val = AbstractCurlRequest::convertAllDataToString($val);
+				$strKey = AbstractCurlRequest::convertAllDataToString(data: $strKey);
+				$val = AbstractCurlRequest::convertAllDataToString(data: $val);
 				$arrPrepared[$strKey] = $val;
 			}
 
