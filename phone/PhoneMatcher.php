@@ -21,6 +21,27 @@ class PhoneMatcher
 		$this->subject = $subject;
 	}
 
+	public function find(): bool
+	{
+		if (preg_match(
+				pattern: '/' . $this->pattern . '/ui',
+				subject: $this->subject,
+				matches: $groups,
+				flags: PREG_OFFSET_CAPTURE
+			) !== 1
+		) {
+			return false;
+		}
+		foreach ($groups as $group) {
+			$this->groups[] = [
+				$group[0],
+				mb_strlen(string: mb_strcut(string: $this->subject, start: 0, length: $group[1])),
+			];
+		}
+
+		return true;
+	}
+
 	public function lookingAt(): bool
 	{
 		if (preg_match(
@@ -60,6 +81,11 @@ class PhoneMatcher
 		}
 
 		return true;
+	}
+
+	public function start(): ?int
+	{
+		return isset($this->groups[0]) ? $this->groups[0][1] : null;
 	}
 
 	public function end(): ?int

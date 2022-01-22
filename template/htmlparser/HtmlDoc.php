@@ -30,10 +30,10 @@ class HtmlDoc
 
 		$this->namespace = $namespace;
 
-		if ($namespace !== null) {
-			$this->tagPattern = '/(?:<!--.+?-->|<!\[CDATA\[.+?\]\]>|<(\/)?(' . $this->namespace . '\:\w+?)((?:\s+[^=]+="[^"]*")*?)?(\s*\/)?\s*>)/ims';
+		if (!is_null(value: $namespace)) {
+			$this->tagPattern = '/<!--.+?-->|<!\[CDATA\[.+?]]>|<(\/)?(' . $this->namespace . ':\w+?)((?:\s+[^=]+="[^"]*")*?)?(\s*\/)?\s*>/ims';
 		} else {
-			$this->tagPattern = '/(?:<!--.+?-->|<!\[CDATA\[.+?\]\]>|<(\/)?(\w+?)((?:\s+[^=]+="[^"]*")*?)?(\s*\/)?\s*>)/ims';
+			$this->tagPattern = '/<!--.+?-->|<!\[CDATA\[.+?]]>|<(\/)?(\w+?)((?:\s+[^=]+="[^"]*")*?)?(\s*\/)?\s*>/imsx';
 		}
 	}
 

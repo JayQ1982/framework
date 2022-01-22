@@ -78,7 +78,7 @@ class PhoneValidator
 			return PhoneValidator::INVALID_LENGTH;
 		}
 		$actualLength = mb_strlen(string: $number);
-		if (in_array($actualLength, $localLengths)) {
+		if (in_array(needle: $actualLength, haystack: $localLengths)) {
 			return PhoneValidator::IS_POSSIBLE_LOCAL_ONLY;
 		}
 		$minimumLength = (int)reset(array: $possibleLengths);
@@ -100,21 +100,24 @@ class PhoneValidator
 		return in_array(needle: $actualLength, haystack: $possibleLengths) ? PhoneValidator::IS_POSSIBLE : PhoneValidator::INVALID_LENGTH;
 	}
 
-	public static function isPossibleNumber(PhoneNumber $number): bool
+	public static function isPossibleNumber(PhoneNumber $phoneNumber): bool
 	{
-		$result = PhoneValidator::isPossibleNumberWithReason($number);
+		$result = PhoneValidator::isPossibleNumberWithReason(phoneNumber: $phoneNumber);
 
-		return $result === PhoneValidator::IS_POSSIBLE || $result === PhoneValidator::IS_POSSIBLE_LOCAL_ONLY;
+		return ($result === PhoneValidator::IS_POSSIBLE || $result === PhoneValidator::IS_POSSIBLE_LOCAL_ONLY);
 	}
 
-	private static function isPossibleNumberWithReason(PhoneNumber $number): int
+	private static function isPossibleNumberWithReason(PhoneNumber $phoneNumber): int
 	{
-		$nationalNumber = $number->getNationalSignificantNumber();
-		$countryCode = $number->getCountryCode();
-		$regionCode = PhoneRegionCountryCodeMap::getRegionCodeForCountryCode($countryCode);
+		$nationalNumber = $phoneNumber->getNationalSignificantNumber();
+		$countryCode = $phoneNumber->getCountryCode();
+		$regionCode = PhoneRegionCountryCodeMap::getRegionCodeForCountryCode(countryCallingCode: $countryCode);
 		// Metadata cannot be null because the country calling code is valid.
-		$metadata = PhoneMetaData::getForRegionOrCallingCode($countryCode, $regionCode);
+		$phoneMetaData = PhoneMetaData::getForRegionOrCallingCode(countryCallingCode: $countryCode, regionCode: $regionCode);
 
-		return PhoneValidator::testNumberLength($nationalNumber, $metadata);
+		return PhoneValidator::testNumberLength(
+			number: $nationalNumber,
+			phoneMetaData: $phoneMetaData
+		);
 	}
 }

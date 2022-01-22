@@ -11,6 +11,7 @@ namespace framework\phone;
  */
 class PhonePatterns
 {
+	public const REGEX_FLAGS = 'ui'; //Unicode and case-insensitive
 	public const VALID_START_CHAR_PATTERN = '[' . PhoneConstants::PLUS_CHARS . PhoneConstants::DIGITS . ']';
 	public const UNWANTED_END_CHAR_PATTERN = "[[\\P{N}&&\\P{L}]&&[^#]]+$";
 	public const SECOND_NUMBER_START_PATTERN = '[\\\\/] *x';
@@ -24,4 +25,5 @@ class PhonePatterns
 	public const PLUS_CHARS_PATTERN = '[' . PhoneConstants::PLUS_CHARS . ']+';
 	public const VALID_ALPHA_PHONE_PATTERN = '(?:.*?[A-Za-z]){3}.*';
 	public const CAPTURING_DIGIT_PATTERN = '(' . PhoneConstants::DIGITS . ')';
+	public const EXTN_PATTERN = '/' . PhonePatterns::EXTN_PATTERNS_FOR_PARSING . '$/' . PhonePatterns::REGEX_FLAGS;
 }

@@ -32,7 +32,7 @@ class PhoneNumberField extends InputField
 	) {
 		parent::__construct(name: $name, label: $label, value: $value);
 
-		if (!is_null($requiredErrorMessage)) {
+		if (!is_null(value: $requiredErrorMessage)) {
 			$this->addRule(formRule: new RequiredRule(defaultErrorMessage: $requiredErrorMessage));
 		}
 
@@ -61,15 +61,11 @@ class PhoneNumberField extends InputField
 
 	public function validate(array $inputData, bool $overwriteValue = true): bool
 	{
-		if (array_key_exists($this->countryCodeFieldName, $inputData)) {
+		if (array_key_exists(key: $this->countryCodeFieldName, array: $inputData)) {
 			$this->countryCode = $inputData[$this->countryCodeFieldName];
 		}
 
-		if (!parent::validate(inputData: $inputData, overwriteValue: $overwriteValue)) {
-			return false;
-		}
-
-		return true;
+		return parent::validate(inputData: $inputData, overwriteValue: $overwriteValue);
 	}
 
 	public function renderValue(): string

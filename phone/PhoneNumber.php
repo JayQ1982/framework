@@ -23,7 +23,7 @@ class PhoneNumber
 	public static function createFromString(string $input, ?string $defaultCountryCode): PhoneNumber
 	{
 		$phoneNumber = (PhoneParser::getInstance())->parse(numberToParse: $input, defaultCountryCode: $defaultCountryCode);
-		if (!PhoneValidator::isPossibleNumber(number: $phoneNumber)) {
+		if (!PhoneValidator::isPossibleNumber(phoneNumber: $phoneNumber)) {
 			throw new PhoneParseException(message: 'The supplied phone number is not possible.', code: -1);
 		}
 
@@ -60,7 +60,7 @@ class PhoneNumber
 		// If leading zero(s) have been set, we prefix this now. Note this is not a national prefix.
 		$nationalNumber = '';
 		if ($this->isItalianLeadingZero() && $this->getNumberOfLeadingZeros() > 0) {
-			$zeros = str_repeat('0', $this->getNumberOfLeadingZeros());
+			$zeros = str_repeat(string: '0', times: $this->getNumberOfLeadingZeros());
 			$nationalNumber .= $zeros;
 		}
 		$nationalNumber .= $this->getNationalNumber();
