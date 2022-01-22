@@ -19,43 +19,20 @@ use stdClass;
 
 abstract class BaseView
 {
-	public const PARAM_HELP = 'help';
-	private Core $core;
-	private HttpRequest $httpRequest;
-	private ?Authenticator $authenticator;
-	private array $mandatoryParams;
-	private array $optionalParams;
-
 	protected function __construct(
-		Core           $core,
-		array          $ipWhitelist,
-		?Authenticator $authenticator,
-		array          $requiredAccessRights,
-		string         $contentDescription = '',
-		array          $mandatoryParams = [],
-		array          $optionalParams = [],
-		array          $returnParams = [],
-		?string        $individualContentType = null
+		private Core           $core,
+		array                  $ipWhitelist,
+		private ?Authenticator $authenticator,
+		array                  $requiredAccessRights,
+		private array          $mandatoryParams = [],
+		private array          $optionalParams = [],
+		?string                $individualContentType = null
 	) {
-		$this->core = $core;
-		$this->httpRequest = HttpRequest::getInstance();
-		$this->authenticator = $authenticator;
-		$this->mandatoryParams = $mandatoryParams;
-		$this->optionalParams = $optionalParams;
-
-		$requestHandler = RequestHandler::getInstance();
-
-		$outputHelpContent = (
-			!is_null(value: $this->httpRequest->getInputString(keyName: BaseView::PARAM_HELP))
-			&& $requestHandler->isDisplayHelpContent()
-		);
-		if ($outputHelpContent) {
-			$this->setContentType(contentType: HttpResponse::TYPE_TXT);
-		} else if (!is_null($individualContentType)) {
+		if (!is_null($individualContentType)) {
 			$this->setContentType($individualContentType);
 		}
 
-		if (count(value: $ipWhitelist) > 0 && !in_array(needle: $this->httpRequest->getRemoteAddress(), haystack: $ipWhitelist)) {
+		if (count(value: $ipWhitelist) > 0 && !in_array(needle: HttpRequest::getInstance()->getRemoteAddress(), haystack: $ipWhitelist)) {
 			throw new UnauthorizedException();
 		}
 
@@ -67,65 +44,12 @@ abstract class BaseView
 			);
 		}
 
-		if ($outputHelpContent) {
-			$this->setHelpContent(
-				contentDescription: $contentDescription,
-				mandatoryParams: $mandatoryParams,
-				optionalParams: $optionalParams,
-				returnParams: $returnParams,
-				ipWhitelist: $ipWhitelist,
-				requiredAccessRights: $requiredAccessRights
-			);
-
-			return;
-		}
-
 		$this->checkMandatoryParameters(core: $core, mandatoryParams: $mandatoryParams);
 	}
 
 	protected function setContentType(string $contentType): void
 	{
 		$this->core->getContentHandler()->setContentType(contentType: $contentType);
-	}
-
-	private function setHelpContent(
-		string $contentDescription,
-		array  $mandatoryParams,
-		array  $optionalParams,
-		array  $returnParams,
-		array  $ipWhitelist,
-		array  $requiredAccessRights
-	): void {
-		$helpLines = ['--- HELP ---'];
-
-		if ($contentDescription !== '') {
-			$helpLines[] = $contentDescription;
-			$helpLines[] = '';
-		}
-
-		foreach ($mandatoryParams as $mandatoryParam => $paramDescription) {
-			$helpLines[] = "@param string '" . $mandatoryParam . "': (Mandatory) " . $paramDescription;
-		}
-
-		foreach ($optionalParams as $optionalParam => $paramDescription) {
-			$helpLines[] = "@param string '" . $optionalParam . "': (optional) " . $paramDescription;
-		}
-
-		foreach ($returnParams as $returnParam => $paramDescription) {
-			$helpLines[] = "@return string '" . $returnParam . "': " . $paramDescription;
-		}
-
-		if (!empty($ipWhitelist)) {
-			$helpLines[] = '';
-			$helpLines[] = 'IP restrictions: ' . implode(', ', $ipWhitelist);
-		}
-
-		if (!empty($requiredAccessRights)) {
-			$helpLines[] = '';
-			$helpLines[] = 'Required access rights: ' . implode(', ', $requiredAccessRights);
-		}
-
-		$this->setContent(contentString: implode(separator: PHP_EOL, array: $helpLines));
 	}
 
 	protected function setContent(string $contentString): void
@@ -135,7 +59,7 @@ abstract class BaseView
 
 	private function checkMandatoryParameters(Core $core, array $mandatoryParams): void
 	{
-		$httpRequest = $this->httpRequest;
+		$httpRequest = HttpRequest::getInstance();
 		$contentType = $core->getContentHandler()->getContentType();
 
 		foreach ($mandatoryParams as $mandatoryParam => $paramDescription) {
@@ -200,7 +124,7 @@ abstract class BaseView
 	{
 		$this->onlyDefinedInputParametersAllowed(parameterName: $keyName);
 
-		return $this->httpRequest->getInputString(keyName: $keyName);
+		return HttpRequest::getInstance()->getInputString(keyName: $keyName);
 	}
 
 	public function getInputDomain(string $keyName): ?string
@@ -218,21 +142,21 @@ abstract class BaseView
 	{
 		$this->onlyDefinedInputParametersAllowed(parameterName: $keyName);
 
-		return $this->httpRequest->getInputInteger(keyName: $keyName);
+		return HttpRequest::getInstance()->getInputInteger(keyName: $keyName);
 	}
 
 	public function getInputFloat(string $keyName): ?float
 	{
 		$this->onlyDefinedInputParametersAllowed(parameterName: $keyName);
 
-		return $this->httpRequest->getInputFloat(keyName: $keyName);
+		return HttpRequest::getInstance()->getInputFloat(keyName: $keyName);
 	}
 
 	public function getInputArray(string $keyName): ?array
 	{
 		$this->onlyDefinedInputParametersAllowed(parameterName: $keyName);
 
-		return $this->httpRequest->getInputArray(keyName: $keyName);
+		return HttpRequest::getInstance()->getInputArray(keyName: $keyName);
 	}
 
 	protected function setContentByXmlObject(SimpleXMLExtended $xmlObject): void

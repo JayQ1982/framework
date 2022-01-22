@@ -33,7 +33,6 @@ class RequestHandler
 	private ?string $fileTitle = null;
 	private ?array $pathVars = null;
 	private ?string $fileExtension = null;
-	private bool $displayHelpContent = false;
 
 	public static function getInstance(): RequestHandler
 	{
@@ -201,7 +200,6 @@ class RequestHandler
 			$sessionHandler->setPreferredLanguage(language: $this->language);
 		}
 		$this->contentType = $routeSettings->contentType ?? null;
-		$this->displayHelpContent = $routeSettings->displayHelpContent ?? ($routeSettings->area === 'api');
 	}
 
 	private function setFileProperties(): void
@@ -304,10 +302,5 @@ class RequestHandler
 	public function getFileExtension(): ?string
 	{
 		return $this->fileExtension;
-	}
-
-	public function isDisplayHelpContent(): bool
-	{
-		return $this->displayHelpContent;
 	}
 }
