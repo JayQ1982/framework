@@ -51,11 +51,10 @@ abstract class AbstractTableFilter
 
 	public function validate(DbResultTable $dbResultTable): void
 	{
-		$httpRequest = HttpRequest::getInstance();
-		if (!is_null(value: $httpRequest->getInputString(keyName: AbstractTableFilter::PARAM_RESET))) {
+		if (!is_null(value: HttpRequest::getInputString(keyName: AbstractTableFilter::PARAM_RESET))) {
 			$this->reset();
 		}
-		if ($httpRequest->getInputString(keyName: AbstractTableFilter::PARAM_FIND) === $this->getIdentifier()) {
+		if (HttpRequest::getInputString(keyName: AbstractTableFilter::PARAM_FIND) === $this->getIdentifier()) {
 			$this->reset();
 			$this->checkInput(dbResultTable: $dbResultTable);
 		}

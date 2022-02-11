@@ -46,22 +46,20 @@ class RequestHandler
 		if (isset(RequestHandler::$instance)) {
 			throw new LogicException(message: 'RequestHandler is already initialized');
 		}
-		$httpRequest = HttpRequest::getInstance();
 		$environmentSettingsModel = $core->getEnvironmentSettingsModel();
 		$settingsHandler = $core->getSettingsHandler();
 		$coreProperties = $core->getCoreProperties();
 		$sessionHandler = $core->getSessionHandler();
 
 		$requestHandler = new RequestHandler();
-		$requestHandler->checkDomain($httpRequest, $environmentSettingsModel->getAllowedDomains());
-		$requestHandler->pathParts = explode(separator: '/', string: $httpRequest->getPath());
+		$requestHandler->checkDomain($environmentSettingsModel->getAllowedDomains());
+		$requestHandler->pathParts = explode(separator: '/', string: Httprequest::getPath());
 		$requestHandler->countPathParts = count(value: $requestHandler->pathParts);
 		$requestHandler->fileName = Sanitizer::trimmedString(input: $requestHandler->pathParts[$requestHandler->countPathParts - 1]);
 		$routeSettings = $settingsHandler->get(property: 'routes');
 		$requestHandler->defaultRoutes = $requestHandler->initDefaultRoutes(routeSettings: $routeSettings, environmentSettingsModel: $environmentSettingsModel);
 		$requestHandler->route = $requestHandler->initRoute(
 			countPathParts: $requestHandler->countPathParts,
-			httpRequest: $httpRequest,
 			routeSettings: $routeSettings,
 			core: $core
 		);
@@ -77,9 +75,9 @@ class RequestHandler
 		return RequestHandler::$instance = $requestHandler;
 	}
 
-	private function checkDomain(HttpRequest $httpRequest, array $allowedDomains): void
+	private function checkDomain(array $allowedDomains): void
 	{
-		$host = $httpRequest->getHost();
+		$host = HttpRequest::getHost();
 
 		if (count(value: $allowedDomains) === 0) {
 			throw new Exception(message: 'Please define at least one allowed domain');
@@ -108,7 +106,7 @@ class RequestHandler
 		return $defaultRoutes;
 	}
 
-	private function initRoute(int $countPathParts, HttpRequest $httpRequest, stdClass $routeSettings, Core $core): ?string
+	private function initRoute(int $countPathParts, stdClass $routeSettings, Core $core): ?string
 	{
 		$countDirectories = $countPathParts - 2;
 		$route = '/';
@@ -120,7 +118,7 @@ class RequestHandler
 			return $route;
 		}
 
-		$requestedPath = $httpRequest->getPath();
+		$requestedPath = Httprequest::getPath();
 		$routes = (array)$routeSettings->routes;
 		foreach ($routes as $dynamicRoute => $dynamicRouteSettings) {
 			if (preg_match_all(
@@ -153,7 +151,7 @@ class RequestHandler
 			return $dynamicRoute;
 		}
 
-		if ($httpRequest->getURI() === '/') {
+		if (HttpRequest::getURI() === '/') {
 			$defaultRoutes = (array)$routeSettings->default;
 			$preferredLanguage = $core->getSessionHandler()->getPreferredLanguage();
 			if (!is_null(value: $preferredLanguage)) {
@@ -164,7 +162,7 @@ class RequestHandler
 				}
 			}
 
-			foreach ($httpRequest->getLanguages() as $language) {
+			foreach (Httprequest::getLanguages() as $language) {
 				if (array_key_exists(key: $language, array: $defaultRoutes)) {
 					$core->redirect(relativeOrAbsoluteUri: $defaultRoutes[$language]);
 				}

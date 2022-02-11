@@ -223,7 +223,7 @@ class Authenticator
 
 	public function redirectToLoginPage(): void
 	{
-		$pageAfterLogin = base64_encode(HttpRequest::getInstance()->getURI());
+		$pageAfterLogin = base64_encode(HttpRequest::getURI());
 		$this->core->redirect($this->authSettings->getLoginPage() . '?pageAfterLogin=' . $pageAfterLogin);
 	}
 

@@ -10,7 +10,7 @@ use stdClass;
 
 class AuthSession
 {
-	private const MNF = 'mnf_usersession';
+	private const SESSION_KEY = 'auth_userSession';
 	private static string $isLoggedInIndicator = 'isLoggedIn';
 	private static string $userDataIndicator = 'userData';
 	private static string $rightsIndicator = 'rights';
@@ -18,20 +18,20 @@ class AuthSession
 
 	private static function saveToSession(string $key, mixed $value): void
 	{
-		$_SESSION[AuthSession::MNF][$key] = $value;
+		$_SESSION[AuthSession::SESSION_KEY][$key] = $value;
 	}
 
 	private static function getFromSession(string $key): null|bool|array|stdClass|int
 	{
-		if (!array_key_exists(AuthSession::MNF, $_SESSION)) {
-			$_SESSION[AuthSession::MNF] = [];
+		if (!array_key_exists(AuthSession::SESSION_KEY, $_SESSION)) {
+			$_SESSION[AuthSession::SESSION_KEY] = [];
 		}
 
-		if (!array_key_exists($key, $_SESSION[AuthSession::MNF])) {
-			$_SESSION[AuthSession::MNF][$key] = null;
+		if (!array_key_exists($key, $_SESSION[AuthSession::SESSION_KEY])) {
+			$_SESSION[AuthSession::SESSION_KEY][$key] = null;
 		}
 
-		return $_SESSION[AuthSession::MNF][$key];
+		return $_SESSION[AuthSession::SESSION_KEY][$key];
 	}
 
 	final public static function setIsLoggedIn(bool $isLoggedIn): void
@@ -97,8 +97,8 @@ class AuthSession
 
 	final public static function resetSession(): void
 	{
-		if (array_key_exists(AuthSession::MNF, $_SESSION)) {
-			unset($_SESSION[AuthSession::MNF]);
+		if (array_key_exists(AuthSession::SESSION_KEY, $_SESSION)) {
+			unset($_SESSION[AuthSession::SESSION_KEY]);
 		}
 	}
 }

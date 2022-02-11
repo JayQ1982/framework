@@ -9,7 +9,7 @@ namespace framework\table\filter;
 use framework\common\SearchHelper;
 use framework\core\HttpRequest;
 use framework\datacheck\Sanitizer;
-use framework\html\HtmlDocument;
+use framework\html\HtmlEncoder;
 
 class TextFilterField extends AbstractTableFilterField
 {
@@ -38,7 +38,7 @@ class TextFilterField extends AbstractTableFilterField
 
 	public function checkInput(): void
 	{
-		$inputValue = HttpRequest::getInstance()->getInputString(keyName: $this->getIdentifier());
+		$inputValue = HttpRequest::getInputString(keyName: $this->getIdentifier());
 		$this->value = Sanitizer::trimmedString($inputValue);
 		$this->saveToSession(index: $this->getIdentifier(), value: $this->value);
 	}
@@ -64,7 +64,7 @@ class TextFilterField extends AbstractTableFilterField
 
 	protected function renderField(): string
 	{
-		return $this->label . '<input type="text" class="text" name="' . $this->getIdentifier() . '" id="filter-' . $this->getIdentifier() . '" value="' . HtmlDocument::htmlEncode(value: $this->value) . '">';
+		return $this->label . '<input type="text" class="text" name="' . $this->getIdentifier() . '" id="filter-' . $this->getIdentifier() . '" value="' . HtmlEncoder::encode(value: $this->value) . '">';
 	}
 
 	protected function highLightLabel(): bool

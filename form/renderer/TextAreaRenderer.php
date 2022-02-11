@@ -8,7 +8,7 @@ namespace framework\form\renderer;
 
 use framework\form\component\field\TextAreaField;
 use framework\form\FormRenderer;
-use framework\html\HtmlDocument;
+use framework\html\HtmlEncoder;
 use framework\html\HtmlTag;
 use framework\html\HtmlTagAttribute;
 use framework\html\HtmlText;
@@ -49,11 +49,11 @@ class TextAreaRenderer extends FormRenderer
 		if (is_array($value)) {
 			$rows = [];
 			foreach ($value as $row) {
-				$rows[] = HtmlDocument::htmlEncode($row);
+				$rows[] = HtmlEncoder::encode(value: $row);
 			}
 			$html = implode(PHP_EOL, $rows);
 		} else {
-			$html = HtmlDocument::htmlEncode($value);
+			$html = HtmlEncoder::encode(value: $value);
 		}
 
 		$textareaTag->addText(HtmlText::encoded($html));

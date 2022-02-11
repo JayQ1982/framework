@@ -8,7 +8,7 @@ namespace framework\form\renderer;
 
 use framework\form\component\field\FileField;
 use framework\form\FormRenderer;
-use framework\html\HtmlDocument;
+use framework\html\HtmlEncoder;
 use framework\html\HtmlTag;
 use framework\html\HtmlTagAttribute;
 use framework\html\HtmlText;
@@ -54,7 +54,7 @@ class FileFieldRenderer extends FormRenderer
 			]);
 			$htmlContent = '';
 			foreach ($alreadyUploadedFiles as $hash => $fileDataModel) {
-				$htmlContent .= '<li class="clearfix"><b>' . HtmlDocument::htmlEncode($fileDataModel->getName()) . '</b> <button type="submit" name="' . FileField::MNF_PREFIX . '_removeAttachment" value="' . HtmlDocument::htmlEncode($hash) . '">löschen</button>';
+				$htmlContent .= '<li class="clearfix"><b>' . HtmlEncoder::encode(value: $fileDataModel->getName()) . '</b> <button type="submit" name="' . FileField::FIELD_PREFIX . '_removeAttachment" value="' . HtmlEncoder::encode(value: $hash) . '">löschen</button>';
 			}
 			$fileListBox->addText(HtmlText::encoded($htmlContent));
 			$wrapper->addTag($fileListBox);
@@ -73,7 +73,7 @@ class FileFieldRenderer extends FormRenderer
 		// Add the fileStore-Pointer-ID for the SESSION as hidden field
 		$wrapper->addTag(new HtmlTag('input', true, [
 			new HtmlTagAttribute('type', 'hidden', true),
-			new HtmlTagAttribute('name', FileField::MNF_PREFIX, true),
+			new HtmlTagAttribute('name', FileField::FIELD_PREFIX, true),
 			new HtmlTagAttribute('value', $fileField->getUniqueSessFileStorePointer(), true),
 		]));
 

@@ -18,7 +18,6 @@ class SearchHelper
 
 	private string $sessionRootName = 'searchHelper';
 	private string $instanceName;
-	private HttpRequest $httpRequest;
 	/** @var SearchHelper[] */
 	private static array $instances = [];
 
@@ -34,7 +33,6 @@ class SearchHelper
 	private function __construct(string $instanceName)
 	{
 		$this->instanceName = $instanceName;
-		$this->httpRequest = HttpRequest::getInstance();
 	}
 
 	public function getBooleanQuery(string $spaceSeparatedFieldNames, string $query_text, $splitFields = true): string
@@ -270,11 +268,10 @@ class SearchHelper
 	{
 		$sessionRootName = $this->sessionRootName;
 		$instanceName = $this->instanceName;
-		$httpRequest = $this->httpRequest;
 		if (
 			!isset($_SESSION[$sessionRootName][$instanceName][$fieldName])
-			|| !is_null($httpRequest->getInputString(keyName: SearchHelper::PARAM_RESET))
-			|| !is_null($httpRequest->getInputString(keyName: SearchHelper::PARAM_FIND))
+			|| !is_null(HttpRequest::getInputString(keyName: SearchHelper::PARAM_RESET))
+			|| !is_null(HttpRequest::getInputString(keyName: SearchHelper::PARAM_FIND))
 		) {
 			$_SESSION[$sessionRootName][$instanceName][$fieldName] = $default;
 		}
@@ -286,7 +283,7 @@ class SearchHelper
 		$instanceName = $this->instanceName;
 		$this->resetField(fieldName: $fieldName, default: $default);
 
-		$userInput = $this->httpRequest->getInputString(keyName: $fieldName);
+		$userInput = HttpRequest::getInputString(keyName: $fieldName);
 		if (!is_null($userInput)) {
 			$_SESSION[$sessionRootName][$instanceName][$fieldName] = $userInput;
 		}
@@ -300,7 +297,7 @@ class SearchHelper
 		$instanceName = $this->instanceName;
 		$this->resetField(fieldName: $fieldName, default: $default);
 
-		$userInput = $this->httpRequest->getInputString(keyName: $fieldName);
+		$userInput = HttpRequest::getInputString(keyName: $fieldName);
 		if (!is_null($userInput) && array_key_exists($userInput, $array)) {
 			$_SESSION[$sessionRootName][$instanceName][$fieldName] = $userInput;
 		}
@@ -317,12 +314,12 @@ class SearchHelper
 
 		if (isset($_GET[SearchHelper::PARAM_RESET]) || isset($_GET[SearchHelper::PARAM_FIND])) {
 			foreach ($array as $key => $val) {
-				$userInput = $this->httpRequest->getInputArray(keyName: $fieldName);
+				$userInput = HttpRequest::getInputArray(keyName: $fieldName);
 				if (!is_null($userInput) && in_array(needle: $key, haystack: $userInput)) {
 					$_SESSION[$this->sessionRootName][$instanceName][$fieldName][] = $key;
 				}
 			}
-			$requestedValue = $this->httpRequest->getInputString(keyName: $fieldName . 'ID');
+			$requestedValue = HttpRequest::getInputString(keyName: $fieldName . 'ID');
 
 			if (!is_null(value: $requestedValue)) {
 				$_SESSION[$this->sessionRootName][$instanceName][$fieldName][] = $requestedValue;
@@ -363,8 +360,8 @@ class SearchHelper
 			$_SESSION[$this->sessionRootName][$instanceName][$toField] = ($defaultTo === null) ? $dateRange['maxDate'] : $defaultTo;
 		}
 
-		$inputFrom = $this->httpRequest->getInputString(keyName: $fromField);
-		$inputTo = $this->httpRequest->getInputString(keyName: $toField);
+		$inputFrom = HttpRequest::getInputString(keyName: $fromField);
+		$inputTo = HttpRequest::getInputString(keyName: $toField);
 
 		$dateFromStr = is_null($inputFrom) ? $_SESSION[$this->sessionRootName][$instanceName][$fromField] : $inputFrom;
 		$dateToStr = is_null($inputTo) ? $_SESSION[$this->sessionRootName][$instanceName][$toField] : $inputTo;

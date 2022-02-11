@@ -42,7 +42,7 @@ class DateFilterField extends AbstractTableFilterField
 
 	public function checkInput(): void
 	{
-		$inputValue = Sanitizer::trimmedString(input: HttpRequest::getInstance()->getInputString(keyName: $this->getIdentifier()));
+		$inputValue = Sanitizer::trimmedString(input: HttpRequest::getInputString(keyName: $this->getIdentifier()));
 
 		if ($inputValue === '') {
 			$this->reset();

@@ -29,7 +29,7 @@ class HtmlTagAttribute extends HtmlElement
 			return $this->getName();
 		}
 
-		$renderValue = $this->valueIsEncodedForRendering ? $this->value : HtmlDocument::htmlEncode($this->value);
+		$renderValue = $this->valueIsEncodedForRendering ? $this->value : HtmlEncoder::encode(value: $this->value);
 
 		return $this->getName() . '="' . $renderValue . '"';
 	}

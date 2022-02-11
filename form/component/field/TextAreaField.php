@@ -10,7 +10,7 @@ use framework\form\component\FormField;
 use framework\form\FormRenderer;
 use framework\form\renderer\TextAreaRenderer;
 use framework\form\rule\RequiredRule;
-use framework\html\HtmlDocument;
+use framework\html\HtmlEncoder;
 use framework\html\HtmlText;
 
 class TextAreaField extends FormField
@@ -76,12 +76,12 @@ class TextAreaField extends FormField
 		if (is_array($currentValue)) {
 			$htmlArray = [];
 			foreach ($currentValue as $row) {
-				$htmlArray[] = HtmlDocument::htmlEncode($row);
+				$htmlArray[] = HtmlEncoder::encode(value: $row);
 			}
 
 			return implode(PHP_EOL, $htmlArray);
 		}
 
-		return HtmlDocument::htmlEncode($currentValue);
+		return HtmlEncoder::encode(value: $currentValue);
 	}
 }

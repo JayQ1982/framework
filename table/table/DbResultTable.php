@@ -28,7 +28,6 @@ class DbResultTable extends SmartTable
 	public const pagination = '[pagination]';
 
 	private FrameworkDB $db;
-	private HttpRequest $httpRequest;
 	private bool $filledDataBySelectQuery = false;
 	private ?AbstractTableColumn $defaultSortColumn = null;
 	private string $selectQuery;
@@ -62,7 +61,6 @@ class DbResultTable extends SmartTable
 		$this->setFullHtml(fullHtml: DbResultTable::filter . SmartTable::totalAmount . DbResultTable::pagination . '<div class="table-global-wrap">' . SmartTable::table . '</div>' . DbResultTable::pagination);
 
 		$this->db = $db;
-		$this->httpRequest = HttpRequest::getInstance();
 		$this->selectQuery = $selectQuery;
 		$this->params = $params;
 		$this->abstractTableFilter = $abstractTableFilter;
@@ -134,12 +132,11 @@ class DbResultTable extends SmartTable
 			return;
 		}
 
-		$httpRequest = $this->httpRequest;
 		if (!is_null($this->abstractTableFilter)) {
 			$this->abstractTableFilter->validate(dbResultTable: $this);
 		}
-		$this->initSorting(httpRequest: $httpRequest);
-		$this->initPaginationPage(httpRequest: $httpRequest);
+		$this->initSorting();
+		$this->initPaginationPage();
 
 		$orderBySql = '';
 		$sortColumn = $this->getCurrentSortColumn();
@@ -165,7 +162,7 @@ class DbResultTable extends SmartTable
 		$this->filledAmount = count($res);
 	}
 
-	private function initSorting(HttpRequest $httpRequest): void
+	private function initSorting(): void
 	{
 		$availableSortOptions = [];
 		foreach ($this->getColumns() as $abstractTableColumn) {
@@ -174,7 +171,7 @@ class DbResultTable extends SmartTable
 			}
 		}
 
-		$requestedSorting = Sanitizer::trimmedString($httpRequest->getInputString(DbResultTable::PARAM_SORT));
+		$requestedSorting = Sanitizer::trimmedString(HttpRequest::getInputString(DbResultTable::PARAM_SORT));
 		if ($requestedSorting !== '') {
 			$requestedSortingArr = explode(separator: '|', string: $requestedSorting);
 			if (count(value: $requestedSortingArr) === 3) {
@@ -193,7 +190,7 @@ class DbResultTable extends SmartTable
 			}
 		}
 
-		if (empty($this->getCurrentSortColumn()) || !is_null($httpRequest->getInputString(keyName: DbResultTable::PARAM_RESET))) {
+		if (empty($this->getCurrentSortColumn()) || !is_null(HttpRequest::getInputString(keyName: DbResultTable::PARAM_RESET))) {
 			$defaultSortColumn = $this->defaultSortColumn;
 			if (is_null($defaultSortColumn)) {
 				DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->getIdentifier(), index: 'sort_column', value: current(array: $this->getColumns())->getIdentifier());
@@ -205,9 +202,9 @@ class DbResultTable extends SmartTable
 		}
 	}
 
-	private function initPaginationPage(HttpRequest $httpRequest): void
+	private function initPaginationPage(): void
 	{
-		$inputPageArr = explode(separator: '|', string: Sanitizer::trimmedString($httpRequest->getInputString(keyName: DbResultTable::PARAM_PAGE)));
+		$inputPageArr = explode(separator: '|', string: Sanitizer::trimmedString(HttpRequest::getInputString(keyName: DbResultTable::PARAM_PAGE)));
 		$inputPage = (int)$inputPageArr[0];
 		$inputTable = Sanitizer::trimmedString($inputPageArr[1] ?? '');
 		if ($inputTable === $this->getIdentifier() && $inputPage > 0) {
@@ -216,8 +213,8 @@ class DbResultTable extends SmartTable
 
 		if (
 			$this->getCurrentPaginationPage() < 1
-			|| !is_null($httpRequest->getInputString(keyName: DbResultTable::PARAM_FIND))
-			|| !is_null($httpRequest->getInputString(keyName: DbResultTable::PARAM_RESET))
+			|| !is_null(HttpRequest::getInputString(keyName: DbResultTable::PARAM_FIND))
+			|| !is_null(HttpRequest::getInputString(keyName: DbResultTable::PARAM_RESET))
 		) {
 			DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->getIdentifier(), index: 'pagination_page', value: 1);
 		}

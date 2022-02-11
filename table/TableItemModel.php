@@ -6,7 +6,7 @@
 
 namespace framework\table;
 
-use framework\html\HtmlDocument;
+use framework\html\HtmlEncoder;
 use stdClass;
 
 class TableItemModel
@@ -31,10 +31,10 @@ class TableItemModel
 		}
 
 		if ($renderNewLines) {
-			return nl2br(HtmlDocument::htmlEncode(str_replace('<br>', "\n", $value), true));
+			return nl2br(string: HtmlEncoder::encodeKeepQuotes(value: str_replace(search: '<br>', replace: "\n", subject: $value)));
 		}
 
-		return HtmlDocument::htmlEncode($value, true);
+		return HtmlEncoder::encodeKeepQuotes(value: $value);
 	}
 
 	public function getAllData(): array

@@ -13,7 +13,7 @@ use framework\form\FormComponent;
 use framework\form\FormRule;
 use framework\form\listener\FormFieldListener;
 use framework\form\rule\RequiredRule;
-use framework\html\HtmlDocument;
+use framework\html\HtmlEncoder;
 use framework\html\HtmlText;
 use UnexpectedValueException;
 
@@ -157,7 +157,7 @@ abstract class FormField extends FormComponent
 
 	public function renderValue(): string
 	{
-		return HtmlDocument::htmlEncode($this->getRawValue());
+		return HtmlEncoder::encode(value: $this->getRawValue());
 	}
 
 	public function getOriginalValue()

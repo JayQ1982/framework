@@ -25,7 +25,7 @@ class HtmlDataObject
 			return;
 		}
 
-		$this->data->{$propertyName} = $isEncodedForRendering ? $content : HtmlDocument::htmlEncode($content);
+		$this->data->{$propertyName} = $isEncodedForRendering ? $content : HtmlEncoder::encode(value: $content);
 	}
 
 	public function addDataObject(string $propertyName, ?HtmlDataObject $htmlDataObject)

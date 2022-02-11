@@ -9,7 +9,7 @@ namespace framework\form\component\field;
 use framework\datacheck\Sanitizer;
 use framework\form\rule\PhoneNumberRule;
 use framework\form\rule\RequiredRule;
-use framework\html\HtmlDocument;
+use framework\html\HtmlEncoder;
 use framework\html\HtmlText;
 use framework\phone\PhoneNumber;
 use framework\phone\PhoneParseException;
@@ -79,7 +79,7 @@ class PhoneNumberField extends InputField
 		try {
 			$phoneNumber = PhoneNumber::createFromString(input: $currentValue, defaultCountryCode: $this->countryCode);
 		} catch (PhoneParseException) {
-			return HtmlDocument::htmlEncode(value: $currentValue);
+			return HtmlEncoder::encode(value: $currentValue);
 		}
 
 		if ($this->renderInternalFormat) {

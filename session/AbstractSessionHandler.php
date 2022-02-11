@@ -46,21 +46,20 @@ abstract class AbstractSessionHandler extends SessionHandler
 
 	protected function __construct(EnvironmentSettingsModel $environmentSettingsModel)
 	{
-		$httpRequest = HttpRequest::getInstance();
 		$this->currentTime = time();
 		$this->maxLifeTime = $environmentSettingsModel->getSessionSettingsModel()->getMaxLifeTime();
-		$this->clientRemoteAddress = $httpRequest->getRemoteAddress();
-		$this->clientUserAgent = $httpRequest->getUserAgent();
+		$this->clientRemoteAddress = HttpRequest::getRemoteAddress();
+		$this->clientUserAgent = HttpRequest::getUserAgent();
 		$this->availableLanguages = $environmentSettingsModel->getAvailableLanguages();
 
-		$this->start(sessionSettingsModel: $environmentSettingsModel->getSessionSettingsModel(), httpRequest: $httpRequest);
+		$this->start(sessionSettingsModel: $environmentSettingsModel->getSessionSettingsModel());
 	}
 
-	private function start(SessionSettingsModel $sessionSettingsModel, HttpRequest $httpRequest): void
+	private function start(SessionSettingsModel $sessionSettingsModel): void
 	{
 		$this->setDefaultConfigurationOptions(maxLifeTime: $sessionSettingsModel->getMaxLifeTime());
 		$this->setDefaultSecuritySettings(isSameSiteStrict: $sessionSettingsModel->isSameSiteStrict());
-		$this->setSessionName(individualName: $sessionSettingsModel->getIndividualName(), httpRequest: $httpRequest);
+		$this->setSessionName(individualName: $sessionSettingsModel->getIndividualName());
 		$this->executePreStartActions();
 		session_set_save_handler($this, true); // TODO: Named parameters not working in PHP 8.0
 		if (!session_start()) {
@@ -106,14 +105,14 @@ abstract class AbstractSessionHandler extends SessionHandler
 		ini_set(option: 'session.cookie_samesite', value: $isSameSiteStrict ? 'Strict' : 'Lax');
 	}
 
-	private function setSessionName(?string $individualName, HttpRequest $httpRequest): void
+	private function setSessionName(?string $individualName): void
 	{
 		$individualName = Sanitizer::trimmedString(input: $individualName);
 		if ($individualName !== '') {
 			$sn = $individualName;
 
 			// Overwrite session id in cookie when provided by get-Parameter
-			$requestedSessionID = $httpRequest->getInputString(keyName: $sn);
+			$requestedSessionID = HttpRequest::getInputString(keyName: $sn);
 			if (!empty($requestedSessionID) && isset($_COOKIE[$sn]) && $_COOKIE[$sn] !== $requestedSessionID) {
 				$_COOKIE[$sn] = $requestedSessionID;
 				session_id(id: $requestedSessionID);

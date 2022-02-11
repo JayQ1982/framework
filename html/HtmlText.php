@@ -35,6 +35,6 @@ class HtmlText extends HtmlElement
 	 */
 	public function render(): string
 	{
-		return $this->isEncodedForRendering ? $this->textContent : HtmlDocument::htmlEncode(value: $this->textContent);
+		return $this->isEncodedForRendering ? $this->textContent : HtmlEncoder::encode(value: $this->textContent);
 	}
 }

@@ -6,7 +6,7 @@
 
 namespace framework\table\column;
 
-use framework\html\HtmlDocument;
+use framework\html\HtmlEncoder;
 use framework\table\TableItemModel;
 
 class StripHtmlTagsColumn extends AbstractTableColumn
@@ -15,6 +15,6 @@ class StripHtmlTagsColumn extends AbstractTableColumn
 	{
 		$strippedTags = strip_tags($tableItemModel->getRawValue($this->getIdentifier()));
 
-		return HtmlDocument::htmlEncode($strippedTags, true);
+		return HtmlEncoder::encodeKeepQuotes(value: $strippedTags);
 	}
 }

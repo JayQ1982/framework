@@ -32,7 +32,7 @@ abstract class BaseView
 			$this->setContentType($individualContentType);
 		}
 
-		if (count(value: $ipWhitelist) > 0 && !in_array(needle: HttpRequest::getInstance()->getRemoteAddress(), haystack: $ipWhitelist)) {
+		if (count(value: $ipWhitelist) > 0 && !in_array(needle: HttpRequest::getRemoteAddress(), haystack: $ipWhitelist)) {
 			throw new UnauthorizedException();
 		}
 
@@ -59,11 +59,10 @@ abstract class BaseView
 
 	private function checkMandatoryParameters(Core $core, array $mandatoryParams): void
 	{
-		$httpRequest = HttpRequest::getInstance();
 		$contentType = $core->getContentHandler()->getContentType();
 
 		foreach ($mandatoryParams as $mandatoryParam => $paramDescription) {
-			$paramValue = $httpRequest->getInputValue(keyName: $mandatoryParam);
+			$paramValue = HttpRequest::getInputValue(keyName: $mandatoryParam);
 			if (
 				is_null($paramValue)
 				|| (!is_array(value: $paramValue) && Sanitizer::trimmedString(input: $paramValue) === '')
@@ -124,7 +123,7 @@ abstract class BaseView
 	{
 		$this->onlyDefinedInputParametersAllowed(parameterName: $keyName);
 
-		return HttpRequest::getInstance()->getInputString(keyName: $keyName);
+		return HttpRequest::getInputString(keyName: $keyName);
 	}
 
 	public function getInputDomain(string $keyName): ?string
@@ -142,21 +141,21 @@ abstract class BaseView
 	{
 		$this->onlyDefinedInputParametersAllowed(parameterName: $keyName);
 
-		return HttpRequest::getInstance()->getInputInteger(keyName: $keyName);
+		return HttpRequest::getInputInteger(keyName: $keyName);
 	}
 
 	public function getInputFloat(string $keyName): ?float
 	{
 		$this->onlyDefinedInputParametersAllowed(parameterName: $keyName);
 
-		return HttpRequest::getInstance()->getInputFloat(keyName: $keyName);
+		return HttpRequest::getInputFloat(keyName: $keyName);
 	}
 
 	public function getInputArray(string $keyName): ?array
 	{
 		$this->onlyDefinedInputParametersAllowed(parameterName: $keyName);
 
-		return HttpRequest::getInstance()->getInputArray(keyName: $keyName);
+		return HttpRequest::getInputArray(keyName: $keyName);
 	}
 
 	protected function setContentByXmlObject(SimpleXMLExtended $xmlObject): void

@@ -6,7 +6,6 @@
 
 namespace framework\core;
 
-use DateTime;
 use Exception;
 use framework\common\StringUtils;
 
@@ -15,85 +14,130 @@ class HttpRequest
 	public const PROTOCOL_HTTP = 'http';
 	public const PROTOCOL_HTTPS = 'https';
 
-	private static ?HttpRequest $instance = null;
+	private static ?string $host = null;
+	private static ?string $protocol = null;
+	private static ?array $languages = null;
 
-	private array $inputData;
-	private array $cookies;
-	private string $host;
-	private string $uri;
-	private string $path;
-	private int $port;
-	private string $protocol;
-	private string $query;
-	private DateTime $requestTime;
-	private string $requestMethod;
-	private string $userAgent;
-	private array $languages;
-	private string $remoteAddress;
-	private string $referrer;
-
-	public static function getInstance(): HttpRequest
+	public static function hasScalarInputValue(string $keyName): bool
 	{
-		if (is_null(HttpRequest::$instance)) {
-			HttpRequest::$instance = new HttpRequest();
+		$inputData = HttpRequest::getInputData();
+
+		return (isset($inputData[$keyName]) && is_scalar(value: $inputData[$keyName]));
+	}
+
+	public static function getInputString(string $keyName): ?string
+	{
+		$inputData = HttpRequest::getInputData();
+
+		return (HttpRequest::hasScalarInputValue(keyName: $keyName)) ? trim(string: $inputData[$keyName]) : null;
+	}
+
+	public static function getInputInteger(string $keyName): ?int
+	{
+		$inputData = HttpRequest::getInputData();
+
+		return (HttpRequest::hasScalarInputValue(keyName: $keyName)) ? (int)$inputData[$keyName] : null;
+	}
+
+	public static function getInputFloat(string $keyName): ?float
+	{
+		$inputData = HttpRequest::getInputData();
+
+		return (HttpRequest::hasScalarInputValue(keyName: $keyName)) ? (float)$inputData[$keyName] : null;
+	}
+
+	public static function getInputArray(string $keyName): ?array
+	{
+		$inputData = HttpRequest::getInputData();
+
+		return (isset($inputData[$keyName]) && is_array(value: $inputData[$keyName])) ? $inputData[$keyName] : null;
+	}
+
+	public static function getInputValue(string $keyName)
+	{
+		$inputData = HttpRequest::getInputData();
+
+		return $inputData[$keyName] ?? null;
+	}
+
+	public static function getCookies(): array
+	{
+		return $_COOKIE;
+	}
+
+	public static function getHost(): string
+	{
+		if (!is_null(HttpRequest::$host)) {
+			return HttpRequest::$host;
 		}
-
-		return HttpRequest::$instance;
-	}
-
-	private function __construct()
-	{
-		$this->inputData = array_merge($_GET, $_POST);
-		$this->cookies = $_COOKIE;
-		$this->host = $this->initHost();
-		$this->uri = $_SERVER['REQUEST_URI'];
-		$this->path = StringUtils::beforeFirst(str: $this->uri, before: '?');
-		$this->port = (int)$_SERVER['SERVER_PORT'];
-		$this->protocol = $this->initProtocol();
-		$this->query = $_SERVER['QUERY_STRING'];
-		$this->requestTime = new DateTime();
-		$this->requestTime->setTimestamp(timestamp: $_SERVER['REQUEST_TIME']);
-		$this->requestMethod = $_SERVER['REQUEST_METHOD'];
-		$this->userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-		$this->languages = $this->initLanguages();
-		$this->remoteAddress = $_SERVER['REMOTE_ADDR'] ?? '';
-		$this->referrer = $_SERVER['HTTP_REFERER'] ?? '';
-	}
-
-	private function initHost(): string
-	{
 		if (isset($_SERVER['HTTP_HOST'])) {
-			return $_SERVER['HTTP_HOST'];
+			return HttpRequest::$host = $_SERVER['HTTP_HOST'];
 		}
 
 		if (isset($_SERVER['SERVER_NAME'])) {
-			return $_SERVER['SERVER_NAME'];
+			return HttpRequest::$host = $_SERVER['SERVER_NAME'];
 		}
 		throw new Exception(message: 'HTTP_HOST and SERVER_NAME are not defined');
 	}
 
-	private function initProtocol(): string
+	public static function getURI(): string
 	{
+		return $_SERVER['REQUEST_URI'];
+	}
+
+	public static function getPath(): string
+	{
+		return StringUtils::beforeFirst(str: HttpRequest::getURI(), before: '?');
+	}
+
+	public static function getPort(): int
+	{
+		return (int)$_SERVER['SERVER_PORT'];
+	}
+
+	public static function getProtocol(): string
+	{
+		if (!is_null(HttpRequest::$protocol)) {
+			return HttpRequest::$protocol;
+		}
 		if (isset($_SERVER['HTTPS']) && (int)$_SERVER['HTTPS'] === 1) {
 			// Apache
-			return HttpRequest::PROTOCOL_HTTPS;
+			return HttpRequest::$protocol = HttpRequest::PROTOCOL_HTTPS;
 		}
 
 		if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
 			// IIS
-			return HttpRequest::PROTOCOL_HTTPS;
+			return HttpRequest::$protocol = HttpRequest::PROTOCOL_HTTPS;
 		}
 
-		if ($this->port === 443) {
+		if (HttpRequest::getPort() === 443) {
 			// Others
-			return HttpRequest::PROTOCOL_HTTPS;
+			return HttpRequest::$protocol = HttpRequest::PROTOCOL_HTTPS;
 		}
 
-		return HttpRequest::PROTOCOL_HTTP;
+		return HttpRequest::$protocol = HttpRequest::PROTOCOL_HTTP;
 	}
 
-	private function initLanguages(): array
+	public static function getQuery(): string
 	{
+		return $_SERVER['QUERY_STRING'];
+	}
+
+	public static function getRequestMethod(): string
+	{
+		return $_SERVER['REQUEST_METHOD'];
+	}
+
+	public static function getUserAgent(): string
+	{
+		return $_SERVER['HTTP_USER_AGENT'] ?? '';
+	}
+
+	public static function getLanguages(): array
+	{
+		if (!is_null(HttpRequest::$languages)) {
+			return HttpRequest::$languages;
+		}
 		$languages = [];
 		$langsRates = explode(separator: ',', string: $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '');
 
@@ -107,111 +151,31 @@ class HttpRequest
 		}
 		krsort(array: $languages);
 
-		return $languages;
+		return HttpRequest::$languages = $languages;
 	}
 
-	public function hasScalarInputValue(string $keyName): bool
+	public static function getRemoteAddress(): string
 	{
-		return (isset($this->inputData[$keyName]) && is_scalar(value: $this->inputData[$keyName]));
+		return $_SERVER['REMOTE_ADDR'] ?? '';
 	}
 
-	public function getInputString(string $keyName): ?string
+	private static function getInputData(): array
 	{
-		return ($this->hasScalarInputValue(keyName: $keyName)) ? trim(string: $this->inputData[$keyName]) : null;
+		return array_merge($_GET, $_POST);
 	}
 
-	public function getInputInteger(string $keyName): ?int
+	public static function getReferrer(): string
 	{
-		return ($this->hasScalarInputValue(keyName: $keyName)) ? (int)$this->inputData[$keyName] : null;
+		return $_SERVER['HTTP_REFERER'] ?? '';
 	}
 
-	public function getInputFloat(string $keyName): ?float
-	{
-		return ($this->hasScalarInputValue(keyName: $keyName)) ? (float)$this->inputData[$keyName] : null;
-	}
-
-	public function getInputArray(string $keyName): ?array
-	{
-		return (isset($this->inputData[$keyName]) && is_array(value: $this->inputData[$keyName])) ? $this->inputData[$keyName] : null;
-	}
-
-	public function getInputValue(string $keyName)
-	{
-		return $this->inputData[$keyName] ?? null;
-	}
-
-	public function getCookies(): array
-	{
-		return $this->cookies;
-	}
-
-	public function getHost(): string
-	{
-		return $this->host;
-	}
-
-	public function getURI(): string
-	{
-		return $this->uri;
-	}
-
-	public function getPath(): string
-	{
-		return $this->path;
-	}
-
-	public function getPort(): int
-	{
-		return $this->port;
-	}
-
-	public function getProtocol(): string
-	{
-		return $this->protocol;
-	}
-
-	public function getQuery(): string
-	{
-		return $this->query;
-	}
-
-	public function getRequestTime(): DateTime
-	{
-		return $this->requestTime;
-	}
-
-	public function getRequestMethod(): string
-	{
-		return $this->requestMethod;
-	}
-
-	public function getUserAgent(): string
-	{
-		return $this->userAgent;
-	}
-
-	public function getLanguages(): array
-	{
-		return $this->languages;
-	}
-
-	public function getRemoteAddress(): string
-	{
-		return $this->remoteAddress;
-	}
-
-	public function getReferrer(): string
-	{
-		return $this->referrer;
-	}
-
-	public function getURL(?string $protocol = null): string
+	public static function getURL(?string $protocol = null): string
 	{
 		if (is_null(value: $protocol)) {
-			$protocol = $this->protocol;
+			$protocol = HttpRequest::getProtocol();
 		}
 
-		return $protocol . '://' . $this->host . $this->uri;
+		return $protocol . '://' . HttpRequest::getHost() . HttpRequest::getURI();
 	}
 
 	/**
@@ -221,7 +185,7 @@ class HttpRequest
 	 *
 	 * @return array|null Returns the information about the file or null if it does not exist
 	 */
-	public function getFile(string $name): ?array
+	public static function getFile(string $name): ?array
 	{
 		return $_FILES[$name] ?? null;
 	}
@@ -235,9 +199,9 @@ class HttpRequest
 	 *
 	 * @return array Returns an array with the information about the files
 	 */
-	public function getFiles(string $name): array
+	public static function getFiles(string $name): array
 	{
-		$filesArr = $this->getFile(name: $name);
+		$filesArr = HttpRequest::getFile(name: $name);
 
 		$files = [];
 		$filesCount = count(value: $filesArr['name']);

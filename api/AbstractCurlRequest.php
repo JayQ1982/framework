@@ -46,7 +46,6 @@ abstract class AbstractCurlRequest
 	];
 	private bool $acceptRedirectionResponseCode = false;
 	private bool $isExecuted = false;
-	private CurlResponse $curlResponse;
 
 	protected function __construct(string $requestTargetUrl, array $requestTypeSpecificCurlOptions)
 	{
@@ -100,14 +99,13 @@ abstract class AbstractCurlRequest
 		$this->curlOptions[CURLOPT_POSTFIELDS] = $plainText;
 	}
 
-	public function setConnectTimeoutInSeconds(int $connectTimeoutInSeconds): void
-	{
-		$this->curlOptions[CURLOPT_CONNECTTIMEOUT] = $connectTimeoutInSeconds;
-	}
+	public function setTimeoutInSeconds(int $connectTimeOut, int $requestTimeOut): void {
+		if ($connectTimeOut > $requestTimeOut) {
+			throw new LogicException(message: 'Connect timeout cannot be more than request timeout.');
+		}
 
-	public function setRequestTimeoutInSeconds(int $requestTimeoutInSeconds): void
-	{
-		$this->curlOptions[CURLOPT_TIMEOUT] = $requestTimeoutInSeconds;
+		$this->curlOptions[CURLOPT_CONNECTTIMEOUT] = $connectTimeOut;
+		$this->curlOptions[CURLOPT_TIMEOUT] = $requestTimeOut;
 	}
 
 	public function setHttpHeader(string $key, string $value): void
@@ -151,7 +149,7 @@ abstract class AbstractCurlRequest
 		$this->curlOptions[CURLOPT_USERPWD] = $authUserNamePassword;
 	}
 
-	public function execute(): bool
+	public function execute(): CurlResponse
 	{
 		if ($this->isExecuted) {
 			throw new LogicException(message: 'This cURL-Request is already executed.');
@@ -170,17 +168,11 @@ abstract class AbstractCurlRequest
 		}
 		$this->curlOptions[CURLOPT_HTTPHEADER] = $httpHeaders;
 		curl_setopt_array(handle: AbstractCurlRequest::$curlHandle, options: $this->curlOptions);
-		$this->curlResponse = CurlResponse::createFromPreparedCurlHandle(
+
+		return CurlResponse::createFromPreparedCurlHandle(
 			preparedCurlHandle: AbstractCurlRequest::$curlHandle,
 			acceptRedirectionResponseCode: $this->acceptRedirectionResponseCode
 		);
-
-		return !$this->curlResponse->hasErrors();
-	}
-
-	public function getCurlResponse(): CurlResponse
-	{
-		return $this->curlResponse;
 	}
 
 	private static function convertAllDataToString(mixed $data): array|string

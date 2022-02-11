@@ -14,24 +14,24 @@ use framework\form\listener\FileFieldListener;
 use framework\form\model\FileDataModel;
 use framework\form\renderer\FileFieldRenderer;
 use framework\form\rule\RequiredRule;
-use framework\html\HtmlDocument;
+use framework\html\HtmlEncoder;
 use framework\html\HtmlText;
 
 class FileField extends FormField
 {
-	const MNF_PREFIX = 'mnf_fs';
+	public const FIELD_PREFIX = 'form_fileField';
 
-	const VALUE_NAME = 'name';
-	const VALUE_TMP_NAME = 'tmp_name';
-	const VALUE_TYPE = 'type';
-	const VALUE_ERROR = 'error';
-	const VALUE_SIZE = 'size';
+	public const VALUE_NAME = 'name';
+	public const VALUE_TMP_NAME = 'tmp_name';
+	public const VALUE_TYPE = 'type';
+	public const VALUE_ERROR = 'error';
+	public const VALUE_SIZE = 'size';
 
 	// Hint: We need searchable Strings outside this class, therefore please do NOT insert dynamic Strings into them:
-	const ERRMSG_FILE_EMPTY = 'Die Datei war leer: ';
-	const ERRMSG_FILE_INCOMPLETE = 'Die Datei wurde unvollständig hochgeladen: ';
-	const ERRMSG_FILE_TOO_BIG = 'Die Datei war zu gross: ';
-	const ERRMSG_FILE_TECHERROR = 'Es ist ein technischer Fehler beim Hochladen der Datei aufgetreten: ';
+	public const ERRMSG_FILE_EMPTY = 'Die Datei war leer: ';
+	public const ERRMSG_FILE_INCOMPLETE = 'Die Datei wurde unvollständig hochgeladen: ';
+	public const ERRMSG_FILE_TOO_BIG = 'Die Datei war zu gross: ';
+	public const ERRMSG_FILE_TECHERROR = 'Es ist ein technischer Fehler beim Hochladen der Datei aufgetreten: ';
 
 	private int $maxFileUploadCount;
 	private string $uniqueSessFileStorePointer;
@@ -97,8 +97,8 @@ class FileField extends FormField
 			$this->removeOldFiles();
 
 			// The following two checks must be done before parent::validate() to have the required data available
-			if (isset($inputData[FileField::MNF_PREFIX]) && is_scalar($inputData[FileField::MNF_PREFIX])) {
-				$receivedUid = Sanitizer::trimmedString($inputData[FileField::MNF_PREFIX]);
+			if (isset($inputData[FileField::FIELD_PREFIX]) && is_scalar($inputData[FileField::FIELD_PREFIX])) {
+				$receivedUid = Sanitizer::trimmedString($inputData[FileField::FIELD_PREFIX]);
 				// If that value is tampered by a "black hat hacker", he should just grab securely into an "empty bowl".
 				//   Therefore we look for only allowed characters given in sanitizeUniqueID():
 				$cleanedUid = $this->sanitizeUniqueID($receivedUid);
@@ -108,9 +108,9 @@ class FileField extends FormField
 				}
 			}
 
-			if (isset($inputData[FileField::MNF_PREFIX . '_removeAttachment']) && is_scalar($inputData[FileField::MNF_PREFIX . '_removeAttachment'])) {
+			if (isset($inputData[FileField::FIELD_PREFIX . '_removeAttachment']) && is_scalar($inputData[FileField::FIELD_PREFIX . '_removeAttachment'])) {
 				// Referenced usage at FileFieldRenderer::prepare()
-				$this->deleteFileHash = Sanitizer::trimmedString($inputData[FileField::MNF_PREFIX . '_removeAttachment']);
+				$this->deleteFileHash = Sanitizer::trimmedString($inputData[FileField::FIELD_PREFIX . '_removeAttachment']);
 			}
 		}
 
@@ -243,7 +243,7 @@ class FileField extends FormField
 		$newFileArray = $originalFileArray;
 
 		foreach ($convertedMultiFileArray as $fileDataModel) {
-			$encodedFileName = HtmlDocument::htmlEncode($fileDataModel->getName());
+			$encodedFileName = HtmlEncoder::encode(value: $fileDataModel->getName());
 			// If upload was okay:
 			if ($fileDataModel->getError() === UPLOAD_ERR_OK) {
 				// Special case from LIVE/PROD:
@@ -286,7 +286,7 @@ class FileField extends FormField
 	 */
 	private function getTempRootDirectory(): string
 	{
-		$rootDirectory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . FileField::MNF_PREFIX . '__' . $_SERVER['SERVER_NAME'];
+		$rootDirectory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . FileField::FIELD_PREFIX . '__' . $_SERVER['SERVER_NAME'];
 		if (!is_dir($rootDirectory)) {
 			mkdir($rootDirectory);
 		}

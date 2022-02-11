@@ -78,7 +78,7 @@ class HtmlDocument
 
 			return;
 		}
-		$this->replacements[$placeholderName] = $isEncodedForRendering ? $content : HtmlDocument::htmlEncode($content);
+		$this->replacements[$placeholderName] = $isEncodedForRendering ? $content : HtmlEncoder::encode(value: $content);
 	}
 
 	public function addBooleanValue(string $placeholderName, bool $booleanValue): void
@@ -195,31 +195,5 @@ class HtmlDocument
 
 		// The id is within activeHtmlIds, so we need to add the "active" class
 		return $m[1] . ' class="' . (isset($m[3]) ? $m[4] . ' ' : '') . 'active"';
-	}
-
-	/**
-	 * @param      $value
-	 * @param bool $keepQuotes
-	 *
-	 * @return mixed
-	 * @todo Make separate methods for separate input/return types.
-	 */
-	public static function htmlEncode($value, bool $keepQuotes = false): mixed
-	{
-		if (is_null($value)) {
-			return ''; // It's for display, not for value-processing
-		}
-
-		if (is_scalar($value)) {
-			return htmlspecialchars($value, ($keepQuotes ? ENT_NOQUOTES : ENT_QUOTES));
-		}
-
-		if (is_array($value)) {
-			foreach ($value as $key => $val) {
-				$value[$key] = HtmlDocument::htmlEncode($val);
-			}
-		}
-
-		return $value;
 	}
 }

@@ -37,10 +37,9 @@ class CspPolicySettingsModel
 		string $frameSrc = "'none'",
 		string $frameAncestors = "'none'",
 	) {
-		$httpRequest = HttpRequest::getInstance();
 		$this->defaultSrc = str_replace(
 			search: [CspPolicySettingsModel::PROTOCOL_PLACEHOLDER, CspPolicySettingsModel::HOST_PLACEHOLDER],
-			replace: [$httpRequest->getProtocol(), $httpRequest->getHost()],
+			replace: [HttpRequest::getProtocol(), HttpRequest::getHost()],
 			subject: $defaultSrc
 		);
 		$this->styleSrc = $styleSrc;

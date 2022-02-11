@@ -6,7 +6,7 @@
 
 namespace framework\table\column;
 
-use framework\html\HtmlDocument;
+use framework\html\HtmlEncoder;
 use framework\table\TableItemModel;
 
 class ActionsColumn extends AbstractTableColumn
@@ -57,7 +57,7 @@ class ActionsColumn extends AbstractTableColumn
 		$rplArr = [];
 		foreach ($tableItemModel->getAllData() as $key => $val) {
 			$srcArr[] = '[' . $key . ']';
-			$rplArr[] = HtmlDocument::htmlEncode(value: $val, keepQuotes: false);
+			$rplArr[] = HtmlEncoder::encode(value: $val);
 		}
 
 		if (count($allActionLinks) === 1) {

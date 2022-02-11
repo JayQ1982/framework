@@ -31,7 +31,7 @@ class HtmlSnippet
 
 			return;
 		}
-		$this->replacements[$placeholderName] = $isEncodedForRendering ? $content : HtmlDocument::htmlEncode(value: $content);
+		$this->replacements[$placeholderName] = $isEncodedForRendering ? $content : HtmlEncoder::encode(value: $content);
 	}
 
 	public function addBooleanValue(string $placeholderName, bool $booleanValue): void
@@ -79,6 +79,18 @@ class HtmlSnippet
 		$this->replacements[$placeholderName] = [];
 		foreach ($htmlDataObjectsArray as $htmlDataObject) {
 			$this->replacements[$placeholderName][] = $htmlDataObject->getData();
+		}
+	}
+
+	/**
+	 * @param string     $placeholderName
+	 * @param HtmlText[] $textElementsArray
+	 */
+	public function addTextElementsArray(string $placeholderName, array $textElementsArray): void
+	{
+		$this->replacements[$placeholderName] = [];
+		foreach ($textElementsArray as $htmlText) {
+			$this->replacements[$placeholderName][] = $htmlText->render();
 		}
 	}
 }

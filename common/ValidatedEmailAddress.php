@@ -91,8 +91,6 @@ class ValidatedEmailAddress
 			return false;
 		}
 
-		// We do NOT verify the name part, as this is too complex.
-		// We use the default php validation because same validation happens when we use the value in PHPMailer.
 		if (filter_var(value: $this->value, filter: FILTER_VALIDATE_EMAIL) === false) {
 			$this->lastErrorCode = 'invalidSyntax';
 			$this->lastErrorMessage = 'The FILTER_VALIDATE_EMAIL filter returned false due to an invalid syntax.';

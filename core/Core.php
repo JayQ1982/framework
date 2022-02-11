@@ -21,7 +21,6 @@ class Core
 	private bool $isHttpResponsePrepared = false;
 	private Autoloader $autoloader;
 	private CoreProperties $coreProperties;
-	private HttpRequest $httpRequest;
 	private SettingsHandler $settingsHandler;
 	private EnvironmentSettingsModel $environmentSettingsModel;
 	private Logger $logger;
@@ -75,9 +74,8 @@ class Core
 	{
 		$this->autoloader = $autoloader;
 		$this->coreProperties = $coreProperties;
-		$this->httpRequest = HttpRequest::getInstance();
-		if ($this->httpRequest->getProtocol() === HttpRequest::PROTOCOL_HTTP) {
-			$this->redirect($this->httpRequest->getURL(protocol: HttpRequest::PROTOCOL_HTTPS));
+		if (HttpRequest::getProtocol() === HttpRequest::PROTOCOL_HTTP) {
+			$this->redirect(Httprequest::getURL(protocol: HttpRequest::PROTOCOL_HTTPS));
 		}
 	}
 
@@ -88,7 +86,7 @@ class Core
 		}
 		$this->isHttpResponsePrepared = true;
 
-		$this->settingsHandler = new SettingsHandler(coreProperties: $this->coreProperties, host: $this->httpRequest->getHost());
+		$this->settingsHandler = new SettingsHandler(coreProperties: $this->coreProperties, host: HttpRequest::getHost());
 		$this->environmentSettingsModel = $environmentSettingsModel;
 		$this->logger = new Logger(environmentSettingsModel: $this->environmentSettingsModel, coreProperties: $this->coreProperties);
 		set_exception_handler(callback: [
@@ -177,10 +175,10 @@ class Core
 			} else if (!str_contains(haystack: $relativeOrAbsoluteUri, needle: '/')) {
 				$directory = $this->requestHandler->getRoute();
 			} else {
-				$directory = dirname(path: $this->httpRequest->getURI());
+				$directory = dirname(path: HttpRequest::getURI());
 				$directory = ($directory === '/' || $directory === '\\') ? '/' : $directory . '/';
 			}
-			$absoluteUri = $this->httpRequest->getProtocol() . '://' . $this->httpRequest->getHost() . $directory . $relativeOrAbsoluteUri;
+			$absoluteUri = Httprequest::getProtocol() . '://' . HttpRequest::getHost() . $directory . $relativeOrAbsoluteUri;
 		} else {
 			$absoluteUri = $relativeOrAbsoluteUri;
 		}
