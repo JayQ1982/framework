@@ -51,7 +51,7 @@ class RequestHandler
 		$coreProperties = $core->getCoreProperties();
 		$sessionHandler = $core->getSessionHandler();
 
-		$requestHandler = new RequestHandler();
+		$requestHandler = RequestHandler::$instance = new RequestHandler();
 		$requestHandler->checkDomain($environmentSettingsModel->getAllowedDomains());
 		$requestHandler->pathParts = explode(separator: '/', string: Httprequest::getPath());
 		$requestHandler->countPathParts = count(value: $requestHandler->pathParts);
@@ -72,7 +72,7 @@ class RequestHandler
 			throw new NotFoundException();
 		}
 
-		return RequestHandler::$instance = $requestHandler;
+		return $requestHandler;
 	}
 
 	private function checkDomain(array $allowedDomains): void
