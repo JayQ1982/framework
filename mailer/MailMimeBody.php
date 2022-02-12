@@ -334,7 +334,7 @@ class MailMimeBody
 
 		$mime[] = '--' . $boundary . '--' . MailerConstants::CRLF;
 
-		return implode(array: $mime);
+		return implode(separator: '', array: $mime); // TODO: PHP 8.1 throws error if we remove redundant separator argument
 	}
 
 	private function endBoundary(string $boundary): string
