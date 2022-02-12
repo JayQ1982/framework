@@ -166,7 +166,7 @@ class MailerAddress
 			array: [
 				MailerFunctions::encodeHeaderPhrase(
 					string: MailerFunctions::secureHeader(string: $this->addressName),
-					defaultCharset: $defaultCharSet
+					defaultCharSet: $defaultCharSet
 				),
 				' <' . $preparedEmailAddress . '>',
 			]

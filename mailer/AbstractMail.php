@@ -477,7 +477,7 @@ abstract class AbstractMail
 	): void {
 		$subject = MailerFunctions::encodeHeaderText(
 			string: MailerFunctions::secureHeader(string: $subject),
-			defaultCharset: $defaultCharSet
+			defaultCharSet: $defaultCharSet
 		);
 		if (is_null(value: $params)) {
 			$result = mail(

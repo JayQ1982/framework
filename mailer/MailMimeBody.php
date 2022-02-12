@@ -15,7 +15,7 @@ use framework\mailer\attachment\MailerStringAttachment;
 class MailMimeBody
 {
 	private string $body;
-	private string $defaultCharset;
+	private string $defaultCharSet;
 	private string $defaultContentType;
 	private string $defaultEncoding;
 
@@ -45,7 +45,7 @@ class MailMimeBody
 		string $boundary3,
 		array  $attachments
 	) {
-		$this->defaultCharset = $charSet;
+		$this->defaultCharSet = $charSet;
 		$this->defaultContentType = $contentType;
 		$this->defaultEncoding = $encoding;
 
@@ -247,7 +247,7 @@ class MailMimeBody
 	{
 		$result = '';
 		if ($charSet === '') {
-			$charSet = $this->defaultCharset;
+			$charSet = $this->defaultCharSet;
 		}
 		if ($contentType === '') {
 			$contentType = $this->defaultContentType;
@@ -301,7 +301,7 @@ class MailMimeBody
 			$mime[] = 'Content-Type: ' . $type . '; name=' . $this->quotedString(
 					string: MailerFunctions::encodeHeaderText(
 						string: MailerFunctions::secureHeader(string: $fileName),
-						defaultCharset: $this->defaultCharset
+						defaultCharSet: $this->defaultCharSet
 					)
 				) . MailerConstants::CRLF;
 			// RFC1341 part 5 says 7bit is assumed if not specified
@@ -313,13 +313,13 @@ class MailMimeBody
 			if ($dispositionInline) {
 				$mime[] = 'Content-ID: <' . MailerFunctions::encodeHeaderText(
 						string: MailerFunctions::secureHeader(string: $fileName),
-						defaultCharset: $this->defaultCharset
+						defaultCharSet: $this->defaultCharSet
 					) . '>' . MailerConstants::CRLF;
 			}
 
 			$encodedName = MailerFunctions::encodeHeaderText(
 				string: MailerFunctions::secureHeader(string: $fileName),
-				defaultCharset: $this->defaultCharset
+				defaultCharSet: $this->defaultCharSet
 			);
 			$disposition = $dispositionInline ? 'inline' : 'attachment';
 			$mime[] = 'Content-Disposition: ' . $disposition . '; filename=' . $this->quotedString($encodedName) . MailerConstants::CRLF . MailerConstants::CRLF;
