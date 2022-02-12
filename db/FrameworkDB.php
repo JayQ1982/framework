@@ -10,6 +10,7 @@ use LogicException;
 use PDO;
 use PDOException;
 use PDOStatement;
+use ReturnTypeWillChange;
 use RuntimeException;
 use stdClass;
 use Throwable;
@@ -266,7 +267,7 @@ class FrameworkDB extends PDO
 		return DbQueryLogList::getLog();
 	}
 
-	public function lastInsertId($name = null): int
+	#[ReturnTypeWillChange] public function lastInsertId($name = null): int
 	{
 		return (int)parent::lastInsertId($name);
 	}

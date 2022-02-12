@@ -6,6 +6,7 @@
 
 namespace framework\common;
 
+use ReturnTypeWillChange;
 use SimpleXMLElement;
 use stdClass;
 use Throwable;
@@ -32,9 +33,9 @@ class SimpleXMLExtended extends SimpleXMLElement
 	 * @param null   $value
 	 * @param null   $namespace
 	 *
-	 * @return SimpleXMLExtended
+	 * @return SimpleXmlElement
 	 */
-	public function addChild(string $qualifiedName, $value = null, $namespace = null): SimpleXmlElement
+	#[ReturnTypeWillChange] public function addChild(string $qualifiedName, $value = null, $namespace = null): SimpleXmlElement
 	{
 		$new_child = parent::addChild($qualifiedName, null, $namespace);
 
@@ -47,7 +48,7 @@ class SimpleXMLExtended extends SimpleXMLElement
 		return $new_child;
 	}
 
-	public function addArray(array|stdClass $array, SimpleXMLExtended $xml = null, bool $include_null = true): bool
+	public function addArray(array|stdClass $array, SimpleXMLElement $xml = null, bool $include_null = true): bool
 	{
 		if ($xml === null) {
 			$xml = $this;
