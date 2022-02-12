@@ -145,6 +145,14 @@ class Form extends FormCollection
 		return !$this->hasErrors(withChildElements: true);
 	}
 
+	public function render(): string
+	{
+		if ($this->hasErrors(withChildElements: true) && !$this->hasErrors(withChildElements: false) && !is_null($this->globalErrorMessage)) {
+			$this->addErrorAsHtmlTextObject($this->globalErrorMessage);
+		}
+		return parent::render();
+	}
+
 	private function validateCsrf(array $inputData): void
 	{
 		if (!$this->hasChildComponent(CsrfToken::getFieldName())) {
