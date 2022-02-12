@@ -93,9 +93,22 @@ class HttpResponse
 		exit;
 	}
 
-	public static function createHtmlResponse(int $httpStatusCode, string $htmlContent, ?CspPolicySettingsModel $cspPolicySettingsModel, ?string $nonce): HttpResponse
-	{
-		$httpResponse = new HttpResponse(md5($htmlContent), time(), $httpStatusCode, null, HttpResponse::TYPE_HTML, $htmlContent, null, null);
+	public static function createHtmlResponse(
+		int                     $httpStatusCode,
+		string                  $htmlContent,
+		?CspPolicySettingsModel $cspPolicySettingsModel,
+		?string                 $nonce
+	): HttpResponse {
+		$httpResponse = new HttpResponse(
+			eTag: md5($htmlContent),
+			lastModifiedTimeStamp: time(),
+			httpStatusCode: $httpStatusCode,
+			downloadFileName: null,
+			responseType: HttpResponse::TYPE_HTML,
+			contentString: $htmlContent,
+			contentFilePath: null,
+			maxAge: null
+		);
 		if (!is_null($cspPolicySettingsModel)) {
 			$httpResponse->setHeader('Content-Security-Policy', $cspPolicySettingsModel->getHttpHeaderDataString($nonce));
 		}
@@ -110,7 +123,16 @@ class HttpResponse
 			throw new LogicException('Use HttpResponse::createHtmlResponse() instead');
 		}
 
-		return new HttpResponse(md5($contentString), time(), $httpStatusCode, null, $contentType, $contentString, null, null);
+		return new HttpResponse(
+			eTag: md5($contentString),
+			lastModifiedTimeStamp: time(),
+			httpStatusCode: $httpStatusCode,
+			downloadFileName: null,
+			responseType: $contentType,
+			contentString: $contentString,
+			contentFilePath: null,
+			maxAge: null
+		);
 	}
 
 	public static function createResponseFromFilePath(string $absolutePathToFile, ?bool $forceDownload, ?string $individualFileName, ?int $maxAge): HttpResponse
@@ -136,7 +158,7 @@ class HttpResponse
 		}
 
 		$httpResponse = new HttpResponse(
-			etag: md5(string: $lastModifiedTimeStamp . $realPath),
+			eTag: md5(string: $lastModifiedTimeStamp . $realPath),
 			lastModifiedTimeStamp: $lastModifiedTimeStamp,
 			httpStatusCode: HttpStatusCodes::HTTP_OK,
 			downloadFileName: ($forceDownload ? $fileName : null),

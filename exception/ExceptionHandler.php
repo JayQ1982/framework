@@ -136,10 +136,10 @@ class ExceptionHandler
 		$contentType = $this->contentType;
 		if ($contentType === HttpResponse::TYPE_HTML) {
 			$httpResponse = HttpResponse::createHtmlResponse(
-				$httpStatusCode,
-				$this->getHtmlContent($core, $htmlFileName, $placeholders),
-				$core->getEnvironmentSettingsModel()->getCspPolicySettingsModel(),
-				CspNonce::get()
+				httpStatusCode: $httpStatusCode,
+				htmlContent: $this->getHtmlContent($core, $htmlFileName, $placeholders),
+				cspPolicySettingsModel: $core->getEnvironmentSettingsModel()->getCspPolicySettingsModel(),
+				nonce: CspNonce::get()
 			);
 			$httpResponse->sendAndExit();
 		}
