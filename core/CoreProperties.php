@@ -14,7 +14,7 @@ class CoreProperties
 	private string $siteCacheDir;
 	private string $siteLogsDir;
 	private string $siteSettingsDir;
-	private string $siteContentDir;
+	private string $siteViewsDir;
 
 	public function __construct(string $documentRoot, string $fwRoot, string $siteRoot)
 	{
@@ -25,7 +25,7 @@ class CoreProperties
 		$this->siteCacheDir = $siteRoot . 'cache/';
 		$this->siteLogsDir = $siteRoot . 'logs/';
 		$this->siteSettingsDir = $siteRoot . 'settings/';
-		$this->siteContentDir = $siteRoot . 'content/';
+		$this->siteViewsDir = $siteRoot . 'view/';
 	}
 
 	public function getDocumentRoot(): string
@@ -58,8 +58,8 @@ class CoreProperties
 		return $this->siteSettingsDir;
 	}
 
-	public function getSiteContentDir(): string
+	public function getSiteViewsDir(): string
 	{
-		return $this->siteContentDir;
+		return $this->siteViewsDir;
 	}
 }

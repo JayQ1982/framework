@@ -151,7 +151,7 @@ class HtmlDocument
 	{
 		$core = $this->core;
 		$requestHandler = RequestHandler::getInstance();
-		$contentFileDirectory = $requestHandler->getAreaDir() . 'html/';
+		$contentFileDirectory = $requestHandler->getViewDirectory() . 'html/';
 		if (!is_null($requestHandler->getFileGroup())) {
 			$contentFileDirectory .= $requestHandler->getFileGroup() . '/';
 		}
@@ -167,14 +167,14 @@ class HtmlDocument
 		$this->addText('this', $fullContentFilePath, true);
 
 		$templateName = $this->templateName;
-		$templateFilePath = $requestHandler->getAreaDir() . 'templates/' . $templateName . '.html';
+		$templateFilePath = $requestHandler->getViewDirectory() . 'templates/' . $templateName . '.html';
 		if ($templateName === '' || !is_file($templateFilePath)) {
 			$templateFilePath = $fullContentFilePath;
 		}
 		$coreProperties = $core->getCoreProperties();
 		$tplCache = new DirectoryTemplateCache(
 			cachePath: $coreProperties->getSiteCacheDir(),
-			templateBaseDirectory: $coreProperties->getSiteContentDir()
+			templateBaseDirectory: $coreProperties->getSiteViewsDir()
 		);
 		$tplEngine = new TemplateEngine($tplCache, 'tst');
 		$htmlAfterReplacements = $tplEngine->getResultAsHtml($templateFilePath, $this->replacements);

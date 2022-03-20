@@ -102,7 +102,7 @@ class ContentHandler
 	private function loadLocalizedText(LocaleHandler $localeHandler): void
 	{
 		$requestHandler = RequestHandler::getInstance();
-		$dir = $requestHandler->getAreaDir() . 'language/' . $requestHandler->getLanguage() . '/';
+		$dir = $requestHandler->getViewDirectory() . 'language/' . $requestHandler->getLanguage() . '/';
 		if (!is_dir($dir)) {
 			return;
 		}
@@ -122,7 +122,7 @@ class ContentHandler
 	private function executePHP(): void
 	{
 		$requestHandler = RequestHandler::getInstance();
-		$phpClassName = 'site\\content\\' . $requestHandler->getArea() . '\\php\\';
+		$phpClassName = 'site\\view\\' . $requestHandler->getViewGroup() . '\\php\\';
 		if (!is_null($requestHandler->getFileGroup())) {
 			$phpClassName .= $requestHandler->getFileGroup() . '\\';
 		}

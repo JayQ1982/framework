@@ -211,7 +211,7 @@ class Authenticator
 		$hasAccess = $this->doAccessCheck($accessOnlyForLoggedInUsers, $requiredAccessRights);
 		if (!$hasAccess && $autoRedirect) {
 			$requestHandler = RequestHandler::getInstance();
-			if (in_array($requestHandler->getRoute(), $requestHandler->getDefaultRoutes())) {
+			if ($requestHandler->getRoute() === $requestHandler->getDefaultRoutesByLanguageCode()[$requestHandler->getLanguage()]) {
 				$this->redirectToLoginPage();
 			}
 

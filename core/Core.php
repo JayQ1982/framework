@@ -79,8 +79,18 @@ class Core
 		}
 	}
 
-	public function prepareHttpResponse(EnvironmentSettingsModel $environmentSettingsModel, ?ExceptionHandler $individualExceptionHandler): void
-	{
+	/**
+	 * @param EnvironmentSettingsModel $environmentSettingsModel
+	 * @param ExceptionHandler|null    $individualExceptionHandler
+	 * @param Route[]                  $allRoutes
+	 *
+	 * @return void
+	 */
+	public function prepareHttpResponse(
+		EnvironmentSettingsModel $environmentSettingsModel,
+		?ExceptionHandler        $individualExceptionHandler,
+		array                    $allRoutes
+	): void {
 		if ($this->isHttpResponsePrepared) {
 			throw new LogicException(message: 'The response is already prepared');
 		}
@@ -95,7 +105,7 @@ class Core
 		$this->errorHandler = new ErrorHandler();
 		$this->sessionHandler = AbstractSessionHandler::getSessionHandler(environmentSettingsModel: $this->environmentSettingsModel);
 
-		$this->requestHandler = RequestHandler::init(core: $this);
+		$this->requestHandler = RequestHandler::init(core: $this, allRoutes: $allRoutes);
 
 		$this->localeHandler = LocaleHandler::getInstance();
 		$this->localeHandler->init(environmentSettingsModel: $this->environmentSettingsModel, requestHandler: $this->requestHandler);
@@ -173,7 +183,7 @@ class Core
 			if (isset($relativeOrAbsoluteUri[0]) && $relativeOrAbsoluteUri[0] == '/') {
 				$directory = '';
 			} else if (!str_contains(haystack: $relativeOrAbsoluteUri, needle: '/')) {
-				$directory = $this->requestHandler->getRoute();
+				$directory = $this->requestHandler->getRoute()->getPath();
 			} else {
 				$directory = dirname(path: HttpRequest::getURI());
 				$directory = ($directory === '/' || $directory === '\\') ? '/' : $directory . '/';
