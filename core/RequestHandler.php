@@ -149,10 +149,10 @@ class RequestHandler
 			if ($routePath === $requestedDirectories) {
 				return $route;
 			}
-			if (preg_match_all(pattern: '#\${+(.*?)}#', subject: $routePath, matches: $matches1) === 0) {
+			if (preg_match_all(pattern: '#\${(.*?)}#', subject: $routePath, matches: $matches1) === 0) {
 				continue;
 			}
-			$pattern = '#^' . str_replace(search: $matches1[0], replace: '(.*?)', subject: $routePath) . '$#';
+			$pattern = '#^' . str_replace(search: $matches1[0], replace: '(.*)', subject: $routePath) . '$#';
 			if (preg_match(
 					pattern: $pattern,
 					subject: $requestedPath,
