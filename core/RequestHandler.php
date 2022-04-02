@@ -197,7 +197,7 @@ class RequestHandler
 			}
 
 			// Redirect to first default route if none is available in accepted languages
-			$core->redirect(relativeOrAbsoluteUri: current(array: $defaultRoutesByLanguageCode));
+			$core->redirect(relativeOrAbsoluteUri: current(array: $defaultRoutesByLanguageCode)->getPath());
 		}
 
 		return null;
