@@ -1,12 +1,11 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\db;
 
-use framework\datacheck\Sanitizer;
 use LogicException;
 
 class DbSettingsModel
@@ -19,43 +18,28 @@ class DbSettingsModel
 	public const IDX_USERNAME = 'username';
 	public const IDX_PASSWORD = 'password';
 
-	private string $identifier;
-	private string $hostName;
-	private string $databaseName;
-	private string $userName;
-	private string $password;
-	private string $charset;
-	private ?string $timeNamesLanguage;
-	private bool $sqlSafeUpdates;
-
 	public function __construct(
-		string $identifier,
-		string $hostName,
-		string $databaseName,
-		string $userName,
-		string $password,
-		?string $charset,
-		?string $timeNamesLanguage,
-		bool $sqlSafeUpdates
+		private string  $identifier,
+		private string  $hostName,
+		private string  $databaseName,
+		private string  $userName,
+		private string  $password,
+		private ?string $charset,
+		private ?string $timeNamesLanguage,
+		private bool    $sqlSafeUpdates
 	) {
-		if (array_key_exists($identifier, DbSettingsModel::$instances)) {
-			throw new LogicException('There is already an instance with the identifier ' . $identifier);
+		if (array_key_exists(key: $identifier, array: DbSettingsModel::$instances)) {
+			throw new LogicException(message: 'There is already an instance with the identifier ' . $identifier);
 		}
 		DbSettingsModel::$instances[$identifier] = $this;
 
-		$charset = Sanitizer::trimmedString($charset ?? 'utf8');
-		if (mb_strtolower($charset) === 'utf-8') {
-			throw new LogicException('Faulty charset setting string "utf-8". Must be "utf8" for PDO driver.');
+		$this->charset = trim(string: (string)$this->charset);
+		if ($this->charset === '') {
+			$this->charset = 'utf8';
 		}
-
-		$this->identifier = $identifier;
-		$this->hostName = $hostName;
-		$this->databaseName = $databaseName;
-		$this->userName = $userName;
-		$this->password = $password;
-		$this->charset = $charset;
-		$this->timeNamesLanguage = $timeNamesLanguage;
-		$this->sqlSafeUpdates = $sqlSafeUpdates;
+		if (mb_strtolower(string: $this->charset) === 'utf-8') {
+			throw new LogicException(message: 'Faulty charset setting string "utf-8". Must be "utf8" for PDO driver.');
+		}
 	}
 
 	public function getIdentifier(): string

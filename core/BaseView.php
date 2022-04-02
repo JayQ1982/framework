@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -187,13 +187,8 @@ abstract class BaseView
 		$this->setContent(contentString: $httpErrorResponseContent->getContent());
 	}
 
-	protected function setSuccessResponseContent(?stdClass $resultDataObject = null): void
+	protected function setSuccessResponseContent(stdClass $resultDataObject = new stdClass()): void
 	{
-		if (is_null($resultDataObject)) {
-			// @todo: With PHP 8.1 it is possible to set stdClass instead of null as default value for the resultDataObject argument
-			$resultDataObject = new stdClass();
-		}
-
 		$contentType = $this->core->getContentHandler()->getContentType();
 		$httpSuccessResponseContent = match ($contentType) {
 			HttpResponse::TYPE_JSON => HttpSuccessResponseContent::createJsonResponseContent(resultDataObject: $resultDataObject),

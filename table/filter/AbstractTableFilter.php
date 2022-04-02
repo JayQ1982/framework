@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 

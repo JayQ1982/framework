@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -17,25 +17,25 @@ class Sanitizer
 {
 	public static function domain($input): string
 	{
-		return DomainSanitizer::sanitize($input);
+		return DomainSanitizer::sanitize(input: $input);
 	}
 
 	public static function trimmedString(null|string|float|int|bool $input): string
 	{
-		if (is_null($input)) {
+		if (is_null(value: $input)) {
 			return '';
 		}
 
-		return trim($input);
+		return trim(string: $input);
 	}
 
 	public static function integer($input): int
 	{
-		return IntegerSanitizer::sanitize($input);
+		return IntegerSanitizer::sanitize(input: $input);
 	}
 
 	public static function float($input): float
 	{
-		return FloatSanitizer::sanitize($input);
+		return FloatSanitizer::sanitize(input: $input);
 	}
 }

@@ -1,14 +1,14 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
+ * .
+ * Adapted work based on https://github.com/giggsey/libphonenumber-for-php , which was published
+ * with "Apache License Version 2.0, January 2004" ( http://www.apache.org/licenses/ )
  */
 
 namespace framework\phone;
 
-/**
- * Adapted from https://github.com/google/libphonenumber
- */
 class PhoneRegionCountryCodeMap
 {
 	public static function getSupportedRegions(): array

@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -18,9 +18,9 @@ class DateFilterField extends AbstractTableFilterField
 	private string $dataTableColumnReference;
 	private bool $mustBeLaterThan;
 
-	public function __construct(string $identifier, string $label, string $dataTableColumnReference, bool $mustBeLaterThan)
+	public function __construct(AbstractTableFilter $parentFilter, string $identifier, string $label, string $dataTableColumnReference, bool $mustBeLaterThan)
 	{
-		parent::__construct(identifier: $identifier);
+		parent::__construct(parentFilter: $parentFilter, filterFieldIdentifier: $identifier);
 		$this->label = $label;
 		$this->dataTableColumnReference = $dataTableColumnReference;
 		$this->mustBeLaterThan = $mustBeLaterThan;

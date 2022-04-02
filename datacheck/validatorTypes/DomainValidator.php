@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -13,38 +13,27 @@ class DomainValidator
 {
 	public static function validate(string $input): bool
 	{
-		if (!Validator::stringWithoutWhitespaces($input)) {
+		if (!Validator::stringWithoutWhitespaces(input: $input)) {
 			return false;
 		}
-		if (!str_contains($input, '.')) {
+		$pieces = explode(separator: '.', string: $input);
+		if ($pieces < 2) {
 			return false;
 		}
 		// Domainname + '.' + TLD = minimum 5 characters
-		if (mb_strlen($input) < 5) {
+		if (mb_strlen(string: $input) < 5) {
 			return false;
 		}
-		$encodedData = StringUtils::utf8_to_punycode($input);
+		$realTld = array_pop($pieces);
+		if (!TldValidator::validate(input: $realTld)) {
+			return false;
+		}
+		$encodedData = StringUtils::utf8_to_punycode(string: $input);
 		if ($encodedData === false) {
 			return false;
 		}
 		if (filter_var(value: 'https://' . $encodedData, filter: FILTER_VALIDATE_URL) === false) {
 			return false;
-		}
-		$pieces = explode('.', $input);
-		$realTld = array_pop($pieces);
-		if (!TldValidator::validate($realTld)) {
-			return false;
-		}
-		foreach ($pieces as $fragment) {
-			if (strlen($fragment) > 64) {
-				return false;
-			}
-			if (str_starts_with($fragment, '-') || str_ends_with($fragment, '-')) {
-				return false;
-			}
-			if (substr_count($fragment, '--') > 1) {
-				return false;
-			}
 		}
 
 		return true;

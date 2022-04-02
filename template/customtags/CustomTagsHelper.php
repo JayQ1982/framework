@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -68,5 +68,24 @@ class CustomTagsHelper
 		$html .= '</ul>';
 
 		return $html;
+	}
+
+	public static function replaceRadioOrCheckboxFieldNode(ElementNode $elementNode, bool $isRadio): void
+	{
+		$sels = $elementNode->getAttribute(name: 'selection')->getValue();
+		$selsStr = '$this->getDataFromSelector(\'' . $sels . '\')';
+		$value = $elementNode->getAttribute(name: 'value')->getValue();
+		$elementNode->removeAttribute(name: 'selection');
+
+		$elementNode->namespace = null;
+		$elementNode->tagName = 'input';
+		if ($sels !== null) {
+			$elementNode->tagExtension = ' <?php echo ((is_array(' . $selsStr . ') && in_array(' . $value . ', ' . $selsStr . ')) || (' . $selsStr . ' == \'' . $value . '\'))?\' checked\':null; ?>';
+		}
+		$elementNode->addAttribute(htmlTagAttribute: new HtmlTagAttribute(
+			name: 'type',
+			value: $isRadio ? 'radio' : 'checkbox',
+			valueIsEncodedForRendering: true
+		));
 	}
 }

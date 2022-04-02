@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -18,6 +18,8 @@ use Throwable;
 
 class TemplateEngine
 {
+	public const ERR_MISSING_TEMPLATEVARIABLE = 1;
+
 	protected ?HtmlDoc $htmlDoc = null;
 	protected string $tplNsPrefix;
 	protected ArrayObject $dataPool;
@@ -438,7 +440,7 @@ class TemplateEngine
 	}
 
 	/**
-	 * Register a new tag for the this TemplateEngine instance
+	 * Register a new tag for this TemplateEngine instance
 	 *
 	 * @param string $tagName  The name of the tag
 	 * @param string $tagClass The class name of the tag
@@ -463,7 +465,10 @@ class TemplateEngine
 
 		if ($this->dataPool->offsetExists($firstPart) === false) {
 			if ($returnNull === false) {
-				throw new Exception('The data with offset "' . $currentSel . '" does not exist for template file ' . $this->currentTemplateFile);
+				throw new Exception(
+					message: 'The data with offset "' . $currentSel . '" does not exist for template file ' . $this->currentTemplateFile . '. Check, if the correct BaseView class has been found/executed and set the correct replacements.',
+					code: TemplateEngine::ERR_MISSING_TEMPLATEVARIABLE
+				);
 			}
 
 			return null;

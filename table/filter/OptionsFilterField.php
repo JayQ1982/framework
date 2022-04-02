@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -18,9 +18,9 @@ class OptionsFilterField extends AbstractTableFilterField
 	private string $selectedValue = '';
 	private bool $chosenEnhancedDropDown;
 
-	public function __construct(string $identifier, string $label, array $options, bool $chosenEnhancedDropDown = false)
+	public function __construct(AbstractTableFilter $parentFilter, string $identifier, string $label, array $options, bool $chosenEnhancedDropDown = false)
 	{
-		parent::__construct(identifier: $identifier);
+		parent::__construct(parentFilter: $parentFilter, filterFieldIdentifier: $identifier);
 		$this->label = $label;
 
 		foreach ($options as $option) {

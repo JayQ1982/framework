@@ -1,14 +1,26 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Actra AG, Rümlang, Switzerland
+ * Derived work from PHPMailer, reduced to the code needed by this Framework.
+ * For original full library, please see:
+ *
+ * @see       https://github.com/PHPMailer/PHPMailer/ The PHPMailer GitHub project
+ * @author    Marcus Bointon (Synchro/coolbru) <phpmailer@synchromedia.co.uk>
+ * @author    Jim Jagielski (jimjag) <jimjag@gmail.com>
+ * @author    Andy Prevost (codeworxtech) <codeworxtech@users.sourceforge.net>
+ * @author    Brent R. Matzelle (original founder)
+ * @author    Actra AG (for derived, reduced code) <framework@actra.ch>
+ * @copyright 2012 - 2020 Marcus Bointon
+ * @copyright 2010 - 2012 Jim Jagielski
+ * @copyright 2004 - 2009 Andy Prevost
+ * @copyright 2022 Actra AG
+ * @license   http://www.gnu.org/copyleft/lesser.html GNU Lesser General Public License
+ * @note      This program is distributed in the hope that it will be useful - WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.
  */
 
 namespace framework\mailer;
 
-/**
- * Adapted from https://github.com/PHPMailer/PHPMailer
- */
 class MailerConstants
 {
 	public const CHARSET_ASCII = 'us-ascii';

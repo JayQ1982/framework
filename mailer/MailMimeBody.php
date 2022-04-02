@@ -1,7 +1,22 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
- * @copyright Actra AG, Rümlang, Switzerland
+ * Derived work from PHPMailer, reduced to the code needed by this Framework.
+ * For original full library, please see:
+ *
+ * @see       https://github.com/PHPMailer/PHPMailer/ The PHPMailer GitHub project
+ * @author    Marcus Bointon (Synchro/coolbru) <phpmailer@synchromedia.co.uk>
+ * @author    Jim Jagielski (jimjag) <jimjag@gmail.com>
+ * @author    Andy Prevost (codeworxtech) <codeworxtech@users.sourceforge.net>
+ * @author    Brent R. Matzelle (original founder)
+ * @author    Actra AG (for derived, reduced code) <framework@actra.ch>
+ * @copyright 2012 - 2020 Marcus Bointon
+ * @copyright 2010 - 2012 Jim Jagielski
+ * @copyright 2004 - 2009 Andy Prevost
+ * @copyright 2022 Actra AG
+ * @license   http://www.gnu.org/copyleft/lesser.html GNU Lesser General Public License
+ * @note      This program is distributed in the hope that it will be useful - WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.
  */
 
 namespace framework\mailer;
@@ -9,9 +24,6 @@ namespace framework\mailer;
 use framework\mailer\attachment\MailerFileAttachment;
 use framework\mailer\attachment\MailerStringAttachment;
 
-/**
- * Adapted from https://github.com/PHPMailer/PHPMailer
- */
 class MailMimeBody
 {
 	private string $body;
@@ -88,16 +100,24 @@ class MailMimeBody
 		switch ($messageType) {
 			case 'inline':
 				$body .= $mimePreamble;
-				$body .= $this->getBoundary($boundary1, $bodyCharSet, '', $bodyEncoding);
-				$body .= MailerFunctions::encodeString(string: $rawBody, encoding: $bodyEncoding);
-				$body .= MailerConstants::CRLF;
+				$body .= $this->getBoundary(
+					boundary: $boundary1,
+					charSet: $bodyCharSet,
+					contentType: '',
+					encoding: $bodyEncoding,
+					stringToEncode: $rawBody
+				);
 				$body .= $this->attachAll($attachments, 'inline', $boundary1);
 				break;
 			case 'attach':
 				$body .= $mimePreamble;
-				$body .= $this->getBoundary($boundary1, $bodyCharSet, '', $bodyEncoding);
-				$body .= MailerFunctions::encodeString(string: $rawBody, encoding: $bodyEncoding);
-				$body .= MailerConstants::CRLF;
+				$body .= $this->getBoundary(
+					boundary: $boundary1,
+					charSet: $bodyCharSet,
+					contentType: '',
+					encoding: $bodyEncoding,
+					stringToEncode: $rawBody
+				);
 				$body .= $this->attachAll($attachments, 'attachment', $boundary1);
 				break;
 			case 'inline_attach':
@@ -107,9 +127,13 @@ class MailMimeBody
 				$body .= MailerFunctions::textLine(value: ' boundary="' . $boundary2 . '";');
 				$body .= MailerFunctions::textLine(value: ' type="' . MailerConstants::CONTENT_TYPE_TEXT_HTML . '"');
 				$body .= MailerConstants::CRLF;
-				$body .= $this->getBoundary($boundary2, $bodyCharSet, '', $bodyEncoding);
-				$body .= MailerFunctions::encodeString(string: $rawBody, encoding: $bodyEncoding);
-				$body .= MailerConstants::CRLF;
+				$body .= $this->getBoundary(
+					boundary: $boundary2,
+					charSet: $bodyCharSet,
+					contentType: '',
+					encoding: $bodyEncoding,
+					stringToEncode: $rawBody
+				);
 				$body .= $this->attachAll($attachments, 'inline', $boundary2);
 				$body .= MailerConstants::CRLF;
 				$body .= $this->attachAll($attachments, 'attachment', $boundary1);
@@ -117,49 +141,34 @@ class MailMimeBody
 			case 'alt':
 				$body .= $mimePreamble;
 				$body .= $this->getBoundary(
-					$boundary1,
-					$altBodyCharSet,
-					MailerConstants::CONTENT_TYPE_PLAINTEXT,
-					$altBodyEncoding
+					boundary: $boundary1,
+					charSet: $altBodyCharSet,
+					contentType: MailerConstants::CONTENT_TYPE_PLAINTEXT,
+					encoding: $altBodyEncoding,
+					stringToEncode: $alternativeBody
 				);
-				$body .= MailerFunctions::encodeString(string: $alternativeBody, encoding: $altBodyEncoding);
-				$body .= MailerConstants::CRLF;
 				$body .= $this->getBoundary(
-					$boundary1,
-					$bodyCharSet,
-					MailerConstants::CONTENT_TYPE_TEXT_HTML,
-					$bodyEncoding
+					boundary: $boundary1,
+					charSet: $bodyCharSet,
+					contentType: MailerConstants::CONTENT_TYPE_TEXT_HTML,
+					encoding: $bodyEncoding,
+					stringToEncode: $rawBody
 				);
-				$body .= MailerFunctions::encodeString(string: $rawBody, encoding: $bodyEncoding);
-				$body .= MailerConstants::CRLF;
 				$body .= $this->endBoundary($boundary1);
 				break;
 			case 'alt_inline':
 				$body .= $mimePreamble;
-				$body .= $this->getBoundary(
-					$boundary1,
-					$altBodyCharSet,
-					MailerConstants::CONTENT_TYPE_PLAINTEXT,
-					$altBodyEncoding
+				$body .= $this->inlineAlternativeBody(
+					firstBoundary: $boundary1,
+					secondBoundary: $boundary2,
+					alternativeBody: $alternativeBody,
+					alternativeBodyCharSet: $altBodyCharSet,
+					alternativeBodyEncoding: $altBodyEncoding,
+					bodyCharSet: $bodyCharSet,
+					bodyEncoding: $bodyEncoding,
+					rawBody: $rawBody,
+					attachments: $attachments
 				);
-				$body .= MailerFunctions::encodeString(string: $alternativeBody, encoding: $altBodyEncoding);
-				$body .= MailerConstants::CRLF;
-				$body .= MailerFunctions::textLine(value: '--' . $boundary1);
-				$body .= MailerFunctions::headerLine(name: 'Content-Type', value: MailerConstants::CONTENT_TYPE_MULTIPART_RELATED . ';');
-				$body .= MailerFunctions::textLine(value: ' boundary="' . $boundary2 . '";');
-				$body .= MailerFunctions::textLine(value: ' type="' . MailerConstants::CONTENT_TYPE_TEXT_HTML . '"');
-				$body .= MailerConstants::CRLF;
-				$body .= $this->getBoundary(
-					$boundary2,
-					$bodyCharSet,
-					MailerConstants::CONTENT_TYPE_TEXT_HTML,
-					$bodyEncoding
-				);
-				$body .= MailerFunctions::encodeString(string: $rawBody, encoding: $bodyEncoding);
-				$body .= MailerConstants::CRLF;
-				$body .= $this->attachAll($attachments, 'inline', $boundary2);
-				$body .= MailerConstants::CRLF;
-				$body .= $this->endBoundary($boundary1);
 				break;
 			case 'alt_attach':
 				$body .= $mimePreamble;
@@ -168,21 +177,19 @@ class MailMimeBody
 				$body .= MailerFunctions::textLine(value: ' boundary="' . $boundary2 . '"');
 				$body .= MailerConstants::CRLF;
 				$body .= $this->getBoundary(
-					$boundary2,
-					$altBodyCharSet,
-					MailerConstants::CONTENT_TYPE_PLAINTEXT,
-					$altBodyEncoding
+					boundary: $boundary2,
+					charSet: $altBodyCharSet,
+					contentType: MailerConstants::CONTENT_TYPE_PLAINTEXT,
+					encoding: $altBodyEncoding,
+					stringToEncode: $alternativeBody
 				);
-				$body .= MailerFunctions::encodeString(string: $alternativeBody, encoding: $altBodyEncoding);
-				$body .= MailerConstants::CRLF;
 				$body .= $this->getBoundary(
-					$boundary2,
-					$bodyCharSet,
-					MailerConstants::CONTENT_TYPE_TEXT_HTML,
-					$bodyEncoding
+					boundary: $boundary2,
+					charSet: $bodyCharSet,
+					contentType: MailerConstants::CONTENT_TYPE_TEXT_HTML,
+					encoding: $bodyEncoding,
+					stringToEncode: $rawBody
 				);
-				$body .= MailerFunctions::encodeString(string: $rawBody, encoding: $bodyEncoding);
-				$body .= MailerConstants::CRLF;
 				$body .= $this->endBoundary($boundary2);
 				$body .= MailerConstants::CRLF;
 				$body .= $this->attachAll($attachments, 'attachment', $boundary1);
@@ -193,30 +200,17 @@ class MailMimeBody
 				$body .= MailerFunctions::headerLine(name: 'Content-Type', value: MailerConstants::CONTENT_TYPE_MULTIPART_ALTERNATIVE . ';');
 				$body .= MailerFunctions::textLine(value: ' boundary="' . $boundary2 . '"');
 				$body .= MailerConstants::CRLF;
-				$body .= $this->getBoundary(
-					$boundary2,
-					$altBodyCharSet,
-					MailerConstants::CONTENT_TYPE_PLAINTEXT,
-					$altBodyEncoding
+				$body .= $this->inlineAlternativeBody(
+					firstBoundary: $boundary2,
+					secondBoundary: $boundary3,
+					alternativeBody: $alternativeBody,
+					alternativeBodyCharSet: $altBodyCharSet,
+					alternativeBodyEncoding: $altBodyEncoding,
+					bodyCharSet: $bodyCharSet,
+					bodyEncoding: $bodyEncoding,
+					rawBody: $rawBody,
+					attachments: $attachments
 				);
-				$body .= MailerFunctions::encodeString(string: $alternativeBody, encoding: $altBodyEncoding);
-				$body .= MailerConstants::CRLF;
-				$body .= MailerFunctions::textLine(value: '--' . $boundary2);
-				$body .= MailerFunctions::headerLine(name: 'Content-Type', value: MailerConstants::CONTENT_TYPE_MULTIPART_RELATED . ';');
-				$body .= MailerFunctions::textLine(value: ' boundary="' . $boundary3 . '";');
-				$body .= MailerFunctions::textLine(value: ' type="' . MailerConstants::CONTENT_TYPE_TEXT_HTML . '"');
-				$body .= MailerConstants::CRLF;
-				$body .= $this->getBoundary(
-					$boundary3,
-					$bodyCharSet,
-					MailerConstants::CONTENT_TYPE_TEXT_HTML,
-					$bodyEncoding
-				);
-				$body .= MailerFunctions::encodeString(string: $rawBody, encoding: $bodyEncoding);
-				$body .= MailerConstants::CRLF;
-				$body .= $this->attachAll($attachments, 'inline', $boundary3);
-				$body .= MailerConstants::CRLF;
-				$body .= $this->endBoundary($boundary2);
 				$body .= MailerConstants::CRLF;
 				$body .= $this->attachAll($attachments, 'attachment', $boundary1);
 				break;
@@ -243,8 +237,13 @@ class MailMimeBody
 		);
 	}
 
-	private function getBoundary(string $boundary, string $charSet, string $contentType, string $encoding): string
-	{
+	private function getBoundary(
+		string $boundary,
+		string $charSet,
+		string $contentType,
+		string $encoding,
+		string $stringToEncode
+	): string {
 		$result = '';
 		if ($charSet === '') {
 			$charSet = $this->defaultCharSet;
@@ -263,6 +262,8 @@ class MailMimeBody
 		if (MailerConstants::ENCODING_7BIT !== $encoding) {
 			$result .= MailerFunctions::headerLine(name: 'Content-Transfer-Encoding', value: $encoding);
 		}
+		$result .= MailerConstants::CRLF;
+		$result .= MailerFunctions::encodeString(string: $stringToEncode, encoding: $encoding);
 		$result .= MailerConstants::CRLF;
 
 		return $result;
@@ -364,5 +365,42 @@ class MailMimeBody
 		}
 
 		return MailerFunctions::encodeString(string: $file_buffer, encoding: $encoding);
+	}
+
+	private function inlineAlternativeBody(
+		string $firstBoundary,
+		string $secondBoundary,
+		string $alternativeBody,
+		string $alternativeBodyCharSet,
+		string $alternativeBodyEncoding,
+		string $bodyCharSet,
+		string $bodyEncoding,
+		string $rawBody,
+		array  $attachments
+	): string {
+		$string = $this->getBoundary(
+			boundary: $firstBoundary,
+			charSet: $alternativeBodyCharSet,
+			contentType: MailerConstants::CONTENT_TYPE_PLAINTEXT,
+			encoding: $alternativeBodyEncoding,
+			stringToEncode: $alternativeBody
+		);
+		$string .= MailerFunctions::textLine(value: '--' . $firstBoundary);
+		$string .= MailerFunctions::headerLine(name: 'Content-Type', value: MailerConstants::CONTENT_TYPE_MULTIPART_RELATED . ';');
+		$string .= MailerFunctions::textLine(value: ' boundary="' . $secondBoundary . '";');
+		$string .= MailerFunctions::textLine(value: ' type="' . MailerConstants::CONTENT_TYPE_TEXT_HTML . '"');
+		$string .= MailerConstants::CRLF;
+		$string .= $this->getBoundary(
+			boundary: $secondBoundary,
+			charSet: $bodyCharSet,
+			contentType: MailerConstants::CONTENT_TYPE_TEXT_HTML,
+			encoding: $bodyEncoding,
+			stringToEncode: $rawBody
+		);
+		$string .= $this->attachAll(attachments: $attachments, dispositionInline: 'inline', boundary: $secondBoundary);
+		$string .= MailerConstants::CRLF;
+		$string .= $this->endBoundary(boundary: $firstBoundary);
+
+		return $string;
 	}
 }

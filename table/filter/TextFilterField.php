@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -13,16 +13,16 @@ use framework\html\HtmlEncoder;
 
 class TextFilterField extends AbstractTableFilterField
 {
-	private string $label;
 	private string $value = '';
-	private string $dataTableColumnReference;
 	private array $sqlParams = [];
 
-	public function __construct(string $identifier, string $label, string $dataTableColumnReference)
-	{
-		parent::__construct(identifier: $identifier);
-		$this->label = $label;
-		$this->dataTableColumnReference = $dataTableColumnReference;
+	public function __construct(
+		AbstractTableFilter $parentFilter,
+		string              $identifier,
+		private string      $label,
+		private string      $dataTableColumnReference
+	) {
+		parent::__construct(parentFilter: $parentFilter, filterFieldIdentifier: $identifier);
 	}
 
 	public function init(): void
@@ -45,7 +45,13 @@ class TextFilterField extends AbstractTableFilterField
 
 	public function getWhereConditions(): array
 	{
-		$dbQueryData = SearchHelper::createSQLFilters(filterArr: [$this->dataTableColumnReference => $this->value]);
+		$dbQueryData = SearchHelper::createSQLFilters(filterArr: [
+			preg_replace(
+				pattern: '!\s+!',
+				replacement: ' ',
+				subject: $this->dataTableColumnReference
+			) => $this->value,
+		]);
 		$query = $dbQueryData->getQuery();
 		if (Sanitizer::trimmedString(input: $query) === '') {
 			return [];

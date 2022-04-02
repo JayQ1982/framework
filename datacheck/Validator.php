@@ -1,12 +1,14 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
 namespace framework\datacheck;
 
 use framework\datacheck\validatorTypes\DomainValidator;
+use framework\datacheck\validatorTypes\IpTypeEnum;
+use framework\datacheck\validatorTypes\IpValidator;
 use framework\datacheck\validatorTypes\TldValidator;
 
 /**
@@ -31,6 +33,16 @@ class Validator
 
 	public static function ip(string $input): bool
 	{
-		return (filter_var($input, FILTER_VALIDATE_IP, ['flags' => null]) !== false);
+		return IpValidator::validate(input: $input, ipType: IpTypeEnum::ip);
+	}
+
+	public static function ipv4(mixed $input): bool
+	{
+		return IpValidator::validate($input, ipType: IpTypeEnum::ipv4);
+	}
+
+	public static function ipv6(mixed $input): bool
+	{
+		return IpValidator::validate($input, ipType: IpTypeEnum::ipv6);
 	}
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  * =============================================================
  * this class uses original source (10.2016) from:
@@ -15,7 +15,6 @@
 
 namespace framework\form\rule;
 
-use framework\datacheck\Sanitizer;
 use framework\form\component\field\ZipCodeField;
 use framework\form\component\FormField;
 use framework\form\FormRule;
@@ -23,7 +22,7 @@ use LogicException;
 
 class ZipCodeRule extends FormRule
 {
-	private array $zipCodeRegularExpression = [
+	private const ZIP_CODE_REGULAR_EXPRESSION = [
 		//		'US'=>'^\d{5}([\-]?\d{4})?$',
 		//		'UK'=>'^(GIR|[A-Z]\d[A-Z\d]??|[A-Z]{2}\d[A-Z\d]??)[ ]??(\d[A-Z]{2})$',
 		'DE' => '\b((?:0[1-46-9]\d{3})|(?:[1-357-9]\d{4})|(?:[4][0-24-9]\d{3})|(?:[6][013-9]\d{3}))\b',
@@ -43,17 +42,25 @@ class ZipCodeRule extends FormRule
 	public function validate(FormField $formField): bool
 	{
 		if (!($formField instanceof ZipCodeField)) {
-			throw new LogicException("The formField must be an instance of ZipCodeField");
+			throw new LogicException(message: 'The formField must be an instance of ZipCodeField');
 		}
 
 		if ($formField->isValueEmpty()) {
 			return true;
 		}
 
+		$zip = trim(string: (string)$formField->getRawValue());
+		if (strlen(string: $zip) > 16) {
+			return false;
+		}
+
 		$countryCode = $formField->getCountryCode();
-		$zip = Sanitizer::trimmedString($formField->getRawValue());
-		if (isset($this->zipCodeRegularExpression[$countryCode])) {
-			return (preg_match('/' . $this->zipCodeRegularExpression[$countryCode] . '/i', $zip) === 1);
+		if (array_key_exists(key: $countryCode, array: ZipCodeRule::ZIP_CODE_REGULAR_EXPRESSION)) {
+			return (preg_match(
+					pattern: '/' . ZipCodeRule::ZIP_CODE_REGULAR_EXPRESSION[$countryCode] . '/i',
+					subject: $zip
+				) === 1
+			);
 		}
 
 		return true;

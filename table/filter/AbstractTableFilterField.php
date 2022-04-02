@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -17,13 +17,14 @@ abstract class AbstractTableFilterField
 	private static array $instances = [];
 	private string $identifier;
 
-	protected function __construct(string $identifier)
+	protected function __construct(AbstractTableFilter $parentFilter, string $filterFieldIdentifier)
 	{
-		if (array_key_exists(key: $identifier, array: AbstractTableFilterField::$instances)) {
-			throw new LogicException(message: 'There is already a column filter with the same identifier ' . $identifier);
+		$uniqueIdentifier = $parentFilter->getIdentifier() . '_' . $filterFieldIdentifier;
+		if (array_key_exists(key: $uniqueIdentifier, array: AbstractTableFilterField::$instances)) {
+			throw new LogicException(message: 'There is already a column filter with the same identifier ' . $uniqueIdentifier);
 		}
-		$this->identifier = $identifier;
-		AbstractTableFilterField::$instances[$identifier] = $this;
+		$this->identifier = $uniqueIdentifier;
+		AbstractTableFilterField::$instances[$uniqueIdentifier] = $this;
 	}
 
 	protected function getFromSession(string $index): ?string
@@ -33,7 +34,7 @@ abstract class AbstractTableFilterField
 
 	protected function saveToSession(string $index, string $value): void
 	{
-		DbResultTable::saveToSession(dataType: AbstractTableFilterField::sessionDataType,identifier:  $this->getIdentifier(), index: $index, value: $value);
+		DbResultTable::saveToSession(dataType: AbstractTableFilterField::sessionDataType, identifier: $this->getIdentifier(), index: $index, value: $value);
 	}
 
 	public function render(): string

@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -66,7 +66,10 @@ class ContentHandler
 		ob_implicit_flush(false);
 
 		$this->loadLocalizedText($core->getLocaleHandler());
-		$this->executePHP();
+		$viewClass = $this->getViewClass();
+		if (!$this->hasContent() && !is_null(value: $viewClass)) {
+			$viewClass->execute();
+		}
 		if (!$this->hasContent() && $this->contentType === HttpResponse::TYPE_HTML) {
 			$this->setContent(HtmlDocument::getInstance($core)->render());
 		}
@@ -84,7 +87,7 @@ class ContentHandler
 		$this->content = $contentString;
 	}
 
-	public function setHttpStatusCode(int $httpStatusCode)
+	public function setHttpStatusCode(int $httpStatusCode): void
 	{
 		$this->httpStatusCode = $httpStatusCode;
 	}
@@ -119,27 +122,22 @@ class ContentHandler
 		}
 	}
 
-	private function executePHP(): void
+	private function getViewClass(): ?BaseView
 	{
 		$requestHandler = RequestHandler::getInstance();
 		$phpClassName = 'site\\view\\' . $requestHandler->getViewGroup() . '\\php\\';
-		if (!is_null($requestHandler->getFileGroup())) {
+		if (!is_null(value: $requestHandler->getFileGroup())) {
 			$phpClassName .= $requestHandler->getFileGroup() . '\\';
 		}
 		$phpClassName .= $requestHandler->getFileTitle();
-		if (!class_exists($phpClassName)) {
-			return;
+		if (!class_exists(class: $phpClassName)) {
+			return null;
+		}
+		if (!is_subclass_of(object_or_class: $phpClassName, class: BaseView::class)) {
+			throw new Exception(message: 'The class ' . $phpClassName . ' must extend ' . BaseView::class . '.');
 		}
 
-		if (!is_subclass_of($phpClassName, 'framework\core\BaseView')) {
-			throw new Exception('The class ' . $phpClassName . ' must extend framework\core\BaseView.');
-		}
-
-		/** @var BaseView $baseView */
-		$baseView = new $phpClassName($this->core);
-		if (!$this->hasContent()) {
-			$baseView->execute();
-		}
+		return new $phpClassName($this->core);
 	}
 
 	public function hasContent(): bool

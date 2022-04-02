@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -63,7 +63,6 @@ class SimpleXMLExtended extends SimpleXMLElement
 		}
 
 		foreach ($array as $key => $val) {
-
 			if (!$include_null && $val === null) {
 				continue;
 			}
@@ -81,7 +80,9 @@ class SimpleXMLExtended extends SimpleXMLElement
 				$this->addArray($val, $child);
 				continue;
 			}
-			$child->addCData($val);
+			if ($child instanceof SimpleXMLExtended) {
+				$child->addCData($val);
+			}
 		}
 
 		return true;

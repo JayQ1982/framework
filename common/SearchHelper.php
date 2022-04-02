@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -94,13 +94,14 @@ class SearchHelper
 
 			if ($word === '') {
 				continue;
-			} else if ($word == "and" || $word == "or" || $word == "not" and $i > 0) {
-				if ($word == "not") {
+			}
+			if ($word === 'and' || $word === 'or' || $word === 'not' and $i > 0) {
+				if ($word === 'not') {
 					#
 					# $i++ kicks us to the actual keyword that the 'not' is working against, etc
 					#
 					$i++;
-					if ($i == 1) { #invalid sql syntax to prefix the first check with and/or/not
+					if ($i === 1) { #invalid sql syntax to prefix the first check with and/or/not
 						$buffer = $this->createSubquery(
 							word: $wordArray[$i],
 							mode: 'not',
@@ -116,7 +117,7 @@ class SearchHelper
 							);
 					}
 				} else {
-					if ($word == "or") {
+					if ($word === 'or') {
 						$i++;
 						if ($i == 1) {
 							$buffer = $this->createSubquery(
@@ -126,7 +127,7 @@ class SearchHelper
 								spaceSeparatedFieldNames: $spaceSeparatedFieldNames
 							);
 						} else {
-							$buffer = " OR " . $this->createSubquery(
+							$buffer = ' OR ' . $this->createSubquery(
 									word: $wordArray[$i],
 									mode: '',
 									splitFields: $splitFields,
@@ -134,7 +135,7 @@ class SearchHelper
 								);
 						}
 					} else {
-						if ($word == "and") {
+						if ($word === 'and') {
 							$i++;
 							if ($i == 1) {
 								$buffer = $this->createSubquery(
@@ -144,7 +145,7 @@ class SearchHelper
 									spaceSeparatedFieldNames: $spaceSeparatedFieldNames
 								);
 							} else {
-								$buffer = " AND " . $this->createSubquery(
+								$buffer = ' AND ' . $this->createSubquery(
 										word: $wordArray[$i],
 										mode: '',
 										splitFields: $splitFields,
@@ -180,14 +181,14 @@ class SearchHelper
 	private function handleShorthand(string $text): string
 	{
 		$text = preg_replace(
-			pattern: "/ \+/",
-			replacement: " and ",
+			pattern: '/ \+/',
+			replacement: ' and ',
 			subject: $text
 		);
 
 		return preg_replace(
-			pattern: "/ -/",
-			replacement: " not ",
+			pattern: '/ -/',
+			replacement: ' not ',
 			subject: $text
 		);
 	}
@@ -211,7 +212,7 @@ class SearchHelper
 		for ($a = 0; $a < strlen(string: $line); $a++) {
 			if ($line[$a] == "\"") {
 				$quote_level++;
-				if ($quote_level == 2) {
+				if ($quote_level === 2) {
 					$quote_level = 0;
 				}
 			} else {
@@ -438,80 +439,92 @@ class SearchHelper
 		$sqlParams = [];
 
 		foreach ($filterArr as $dataTableReference => $value) {
-			$value = trim(string: $value);
+			$dataTableReference = trim(string: $dataTableReference);
+			$value = trim(string: (string)$value);
 			if ($value === '') {
 				continue;
 			}
 			if ($value === '.') {
-				$whereConditions[] = $dataTableReference . '!=\'\'';
+				$whereConditions[] = '(' . $dataTableReference . '!=\'\' AND ' . $dataTableReference . ' IS NOT NULL)';
 				continue;
 			}
-
 			if ($value === '_') {
-				$whereConditions[] = "((" . $dataTableReference . "='') OR (" . $dataTableReference . " IS NULL))";
+				$whereConditions[] = '((' . $dataTableReference . '=\'\') OR (' . $dataTableReference . ' IS NULL))';
 				continue;
 			}
-
-			$wordsByType['and'] = [];
-			$wordsByType['not'] = [];
-			$wordsByType['or'] = [];
-			$wordsByType['equal'] = [];
-
+			if (
+				mb_strlen(string: $value) > 2
+				&& substr_count(haystack: $value, needle: '"') === 2
+				&& str_starts_with(haystack: $value, needle: '"')
+				&& str_ends_with(haystack: $value, needle: '"')
+			) {
+				$whereConditions[] = $dataTableReference . '=?';
+				$sqlParams[] = substr(string: $value, offset: 1, length: -1);
+				continue;
+			}
+			$strToCheck = str_replace(search: '*', replace: '%', subject: $value);
+			if (
+				mb_strlen(string: $strToCheck) > 2
+				&& substr_count(haystack: $strToCheck, needle: '%') === 2
+				&& str_starts_with(haystack: $strToCheck, needle: '%')
+				&& str_ends_with(haystack: $strToCheck, needle: '%')
+			) {
+				$whereConditions[] = $dataTableReference . ' LIKE ?';
+				$sqlParams[] = $strToCheck;
+				continue;
+			}
 			$searchWords = preg_split(
 				pattern: "/[\s,]*([^\"]+)" . "[\s,]*'([^']+)'[\s,]*|" . "[\s,]+/",
-				subject: $value, limit: -1,
+				subject: $value,
+				limit: -1,
 				flags: PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY
 			);
-
+			$remainingLazySearchWords = [];
 			foreach ($searchWords as $word) {
-				$type = 'or';
-				if (str_starts_with(haystack: $word, needle: '!') || str_starts_with(haystack: $word, needle: '-')) {
-					$type = 'not';
+				if (
+					str_starts_with(haystack: $word, needle: '!')
+					|| str_starts_with(haystack: $word, needle: '-')
+				) {
 					$word = substr(string: $word, offset: 1);
-				} else if (str_starts_with(haystack: $word, needle: '+')) {
-					$type = 'and';
+					$whereConditions[] = "((" . $dataTableReference . " NOT LIKE ?) OR " . $dataTableReference . " IS NULL)";
+					$sqlParams[] = SearchHelper::addWildcardToString(string: $word);
+					continue;
+				}
+				if (str_starts_with(haystack: $word, needle: '+')) {
 					$word = substr(string: $word, offset: 1);
-				} else if (
+					$whereConditions[] = $dataTableReference . ' LIKE ?';
+					$sqlParams[] = SearchHelper::addWildcardToString(string: $word);
+					continue;
+				}
+				if (
 					str_starts_with(haystack: $word, needle: '"')
 					&& str_ends_with(haystack: $word, needle: '"')
 					&& mb_strlen(string: $word) > 2
 				) {
-					$type = 'equal';
-					$word = substr(string: $word, offset: 1, length: -1);
-					$wordsByType[$type][] = $word;
+					$whereConditions[] = $dataTableReference . '=?';
+					$sqlParams[] = substr(string: $word, offset: 1, length: -1);
 					continue;
 				}
-				$word = str_replace(search: ['*'], replace: ['%'], subject: $word);
-				$word = (!str_starts_with(haystack: $word, needle: '%')) ? '%' . $word : $word;
-				$word = (!str_ends_with(haystack: $word, needle: '%')) ? $word . '%' : $word;
-				$wordsByType[$type][] = $word;
+				$remainingLazySearchWords[] = $word;
 			}
-
-			foreach ($wordsByType['and'] as $word) {
-				$whereConditions[] = $dataTableReference . ' LIKE ?';
-				$sqlParams[] = $word;
-			}
-
-			foreach ($wordsByType['not'] as $word) {
-				$whereConditions[] = "((" . $dataTableReference . " NOT LIKE ?) OR " . $dataTableReference . " IS NULL)";
-				$sqlParams[] = $word;
-			}
-
-			if (count($wordsByType['or']) != 0) {
+			if (count(value: $remainingLazySearchWords) > 0) {
 				$tmpArr = [];
-				foreach ($wordsByType['or'] as $word) {
+				foreach ($remainingLazySearchWords as $word) {
 					$tmpArr[] = $dataTableReference . ' LIKE ?';
-					$sqlParams[] = $word;
+					$sqlParams[] = SearchHelper::addWildcardToString(string: $word);
 				}
 				$whereConditions[] = '(' . implode(separator: ' OR ', array: $tmpArr) . ')';
-			}
-
-			foreach ($wordsByType['equal'] as $word) {
-				$whereConditions[] = $dataTableReference . ' = ?';
-				$sqlParams[] = $word;
 			}
 		}
 
 		return new DbQueryData(query: implode(' AND ', $whereConditions), params: $sqlParams);
+	}
+
+	public static function addWildcardToString(string $string): string
+	{
+		$string = str_replace(search: ['*'], replace: ['%'], subject: $string);
+		$string = !str_starts_with(haystack: $string, needle: '%') ? '%' . $string : $string;
+
+		return !str_ends_with(haystack: $string, needle: '%') ? $string . '%' : $string;
 	}
 }

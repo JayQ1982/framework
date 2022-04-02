@@ -1,6 +1,6 @@
 <?php
 /**
- * @author    Christof Moser <christof.moser@actra.ch>
+ * @author    Christof Moser <framework@actra.ch>
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
@@ -143,13 +143,17 @@ class RequestHandler
 			$requestedDirectories .= $this->pathParts[$x] . '/';
 		}
 
-		$requestedPath = Httprequest::getPath();
+		$requestedPath = HttpRequest::getPath();
 		foreach ($allRoutes as $route) {
 			$routePath = $route->getPath();
 			if ($routePath === $requestedDirectories) {
 				return $route;
 			}
-			if (preg_match_all(pattern: '#\${(.*?)}#', subject: $routePath, matches: $matches1) === 0) {
+			if (preg_match_all(
+					pattern: '#\${(.*?)}#',
+					subject: $routePath,
+					matches: $matches1
+				) === 0) {
 				continue;
 			}
 			$pattern = '#^' . str_replace(search: $matches1[0], replace: '(.*)', subject: $routePath) . '$#';
