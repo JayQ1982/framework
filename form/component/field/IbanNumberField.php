@@ -23,6 +23,9 @@ class IbanNumberField extends TextField
 		if (!parent::validate($inputData, $overwriteValue)) {
 			return false;
 		}
+		if($this->isValueEmpty()) {
+			return true;
+		}
 
 		if (!$this->checkIBAN($this->getRawValue())) {
 			$this->addErrorAsHtmlTextObject($this->invalidError);
