@@ -32,11 +32,11 @@ class MailerFileAttachment
 	private string $type;
 
 	public function __construct(
-		string         $path,
-		string         $fileName = '',
-		private string $encoding = MailerConstants::ENCODING_BASE64,
-		string         $type = '',
-		private bool   $dispositionInline = false
+		string  $path,
+		string  $fileName = '',
+		private readonly string $encoding = MailerConstants::ENCODING_BASE64,
+		string  $type = '',
+		private readonly bool   $dispositionInline = false
 	) {
 		if (!in_array(needle: $this->encoding, haystack: MailerConstants::ENCODING_LIST)) {
 			throw new MailerException(message: 'Invalid encoding "' . $this->encoding . '". See MailerConstants::ENCODING_LIST[].');

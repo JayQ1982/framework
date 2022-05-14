@@ -12,7 +12,7 @@ use LogicException;
 
 class Autoloader
 {
-	private static ?Autoloader $instance = null;
+	private static Autoloader $registeredInstance;
 
 	private string $cacheFilePath;
 	private array $cachedClasses = [];
@@ -22,20 +22,24 @@ class Autoloader
 
 	public static function register(string $cacheFilePath = ''): Autoloader
 	{
-		if (!is_null(Autoloader::$instance)) {
-			throw new LogicException('Autoloader is already registered');
+		if (isset(Autoloader::$registeredInstance)) {
+			throw new LogicException(message: 'Autoloader is already registered.');
 		}
+		Autoloader::$registeredInstance = new Autoloader(cacheFilePath: $cacheFilePath);
+		spl_autoload_register(callback: [Autoloader::$registeredInstance, 'doAutoload']);
 
-		Autoloader::$instance = new Autoloader($cacheFilePath);
-		spl_autoload_register([Autoloader::$instance, 'doAutoload']);
+		return Autoloader::$registeredInstance;
+	}
 
-		return Autoloader::$instance;
+	public static function get(): Autoloader
+	{
+		return Autoloader::$registeredInstance;
 	}
 
 	private function __construct(string $cacheFilePath = '')
 	{
-		$this->cacheFilePath = trim($cacheFilePath);
-		if (!$this->checkIfCacheDirectoryExists($cacheFilePath)) {
+		$this->cacheFilePath = trim(string: $cacheFilePath);
+		if (!$this->checkIfCacheDirectoryExists(cacheFilePath: $cacheFilePath)) {
 			return;
 		}
 		$this->cachedClasses = $this->initCachedClasses($cacheFilePath);
@@ -94,7 +98,7 @@ class Autoloader
 			$classPathParts = explode($delimiter, $className);
 			$phpFilePath = implode(DIRECTORY_SEPARATOR, $classPathParts);
 
-			$phpFilePathRemove = $autoloaderPathModel->getPhpFilePathRemove();
+			$phpFilePathRemove = $autoloaderPathModel->phpFilePathRemove;
 			if ($phpFilePathRemove !== '') {
 				$phpFilePath = preg_replace(
 					pattern: '#' . $phpFilePathRemove . '#',
@@ -103,7 +107,7 @@ class Autoloader
 				);
 			}
 
-			foreach ($autoloaderPathModel->getFileSuffixList() as $fileSuffix) {
+			foreach ($autoloaderPathModel->fileSuffixList as $fileSuffix) {
 				$includePath = $path . $phpFilePath . $fileSuffix;
 
 				$streamResolvedIncludePath = stream_resolve_include_path($includePath);

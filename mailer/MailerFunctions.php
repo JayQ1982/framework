@@ -116,7 +116,7 @@ class MailerFunctions
 			$encoded = addcslashes(string: $string, characters: "\0..\37\177\\\"");
 			if (
 				($string === $encoded)
-				&& preg_match(pattern: '/[^A-Za-z0-9!#$%&\'*+\/=?^_`{|}~ -]/', subject: $string) !== 1
+				&& preg_match(pattern: '/[^A-Za-z\d!#$%&\'*+\/=?^_`{|}~ -]/', subject: $string) !== 1
 			) {
 				return $encoded;
 			}

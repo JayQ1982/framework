@@ -54,8 +54,8 @@ abstract class AbstractMail
 		string         $toName,
 		private string $subject,
 		private string $charSet = MailerConstants::CHARSET_UTF8,
-		private string $encoding = MailerConstants::ENCODING_QUOTED_PRINTABLE,
-		private int    $priority = MailerConstants::PRIORITY_NORMAL
+		private        readonly string $encoding = MailerConstants::ENCODING_QUOTED_PRINTABLE,
+		private        readonly int    $priority = MailerConstants::PRIORITY_NORMAL
 	) {
 		$this->sender = MailerAddress::createSenderAddress(inputEmail: $senderEmail, inputName: '');
 		$this->fromAddress = MailerAddress::createFromAddress(inputEmail: $fromEmail, inputName: $fromName);

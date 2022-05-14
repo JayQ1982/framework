@@ -6,81 +6,80 @@
 
 namespace framework\exception;
 
-use framework\core\Core;
+use framework\Core;
+use framework\core\ContentHandler;
+use framework\core\ContentType;
+use framework\core\EnvironmentSettingsModel;
 use framework\core\HttpResponse;
-use framework\core\HttpStatusCodes;
+use framework\core\HttpStatusCode;
 use framework\response\HttpErrorResponseContent;
 use framework\security\CspNonce;
 use framework\security\CsrfToken;
+use LogicException;
 use Throwable;
 
 class ExceptionHandler
 {
-	private Core $core;
-	private string $contentType;
+	private static ExceptionHandler $registeredInstance;
+	protected ContentType $contentType;
 
-	public function __construct(Core $core)
+	public static function register(?ExceptionHandler $individualExceptionHandler): void
 	{
-		$this->core = $core;
-	}
-
-	protected function getCore(): Core
-	{
-		return $this->core;
+		if (isset(ExceptionHandler::$registeredInstance)) {
+			throw new LogicException(message: 'Exception handler is already registered.');
+		}
+		ExceptionHandler::$registeredInstance = is_null(value: $individualExceptionHandler) ? new ExceptionHandler() : $individualExceptionHandler;
+		set_exception_handler(callback: [
+			ExceptionHandler::$registeredInstance, 'handleException',
+		]);
 	}
 
 	final public function handleException(Throwable $throwable): void
 	{
-		$core = $this->core;
-		$this->contentType = $this->initContentType($core);
-		if ($core->getEnvironmentSettingsModel()->isDebug()) {
-			$this->sendDebugHttpResponseAndExit($throwable);
+		$contentHandler = ContentHandler::get();
+		$this->contentType = !is_null(value: $contentHandler) ? $contentHandler->getContentType() : ContentType::createHtml();
+		if (EnvironmentSettingsModel::get()->debug) {
+			$this->sendDebugHttpResponseAndExit(throwable: $throwable);
 		}
-
 		if ($throwable instanceof NotFoundException) {
-			$this->sendNotFoundHttpResponseAndExit($throwable);
+			$this->sendNotFoundHttpResponseAndExit(throwable: $throwable);
 		}
-
 		if ($throwable instanceof UnauthorizedException) {
-			$this->sendUnauthorizedHttpResponseAndExit($throwable);
+			$this->sendUnauthorizedHttpResponseAndExit(throwable: $throwable);
 		}
-
-		$this->core->getLogger()->log('', $throwable);
-		$this->sendDefaultHttpResponseAndExit($throwable);
+		Core::get()->getLogger()->log(message: '', exceptionToLog: $throwable);
+		$this->sendDefaultHttpResponseAndExit(throwable: $throwable);
 	}
 
 	protected function sendDebugHttpResponseAndExit(Throwable $throwable): void
 	{
-		$core = $this->core;
-
-		$realException = is_null($throwable->getPrevious()) ? $throwable : $throwable->getPrevious();
+		$realException = is_null(value: $throwable->getPrevious()) ? $throwable : $throwable->getPrevious();
 		$errorCode = $realException->getCode();
 		$errorMessage = $realException->getMessage();
 
 		if ($throwable instanceof NotFoundException) {
-			$httpStatusCode = HttpStatusCodes::HTTP_NOT_FOUND;
+			$httpStatusCode = HttpStatusCode::HTTP_NOT_FOUND;
 			$placeholders = ['title' => 'Page not found'];
 		} else if ($throwable instanceof UnauthorizedException) {
-			$httpStatusCode = HttpStatusCodes::HTTP_UNAUTHORIZED;
+			$httpStatusCode = HttpStatusCode::HTTP_UNAUTHORIZED;
 			$placeholders = ['title' => 'Unauthorized'];
 		} else {
-			$httpStatusCode = HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR;
+			$httpStatusCode = HttpStatusCode::HTTP_INTERNAL_SERVER_ERROR;
 			$placeholders = ['title' => 'Internal Server Error'];
 		}
 
-		$placeholders['errorType'] = get_class($throwable);
+		$placeholders['errorType'] = get_class(object: $throwable);
 		$placeholders['errorMessage'] = $errorMessage;
 		$placeholders['errorFile'] = $realException->getFile();
 		$placeholders['errorLine'] = $realException->getLine();
 		$placeholders['errorCode'] = $realException->getCode();
-		$placeholders['backtrace'] = ($this->contentType === HttpResponse::TYPE_HTML) ? $realException->getTraceAsString() : $realException->getTrace();
-		$placeholders['vardump_get'] = isset($_GET) ? htmlentities(var_export($_GET, true)) : '';
-		$placeholders['vardump_post'] = isset($_POST) ? htmlentities(var_export($_POST, true)) : '';
-		$placeholders['vardump_file'] = isset($_FILE) ? htmlentities(var_export($_FILE, true)) : '';
-		$placeholders['vardump_sess'] = isset($_SESSION) ? htmlentities(var_export($_SESSION, true)) : '';
+		$placeholders['backtrace'] = (!$this->contentType->isJson()) ? $realException->getTraceAsString() : $realException->getTrace();
+		$placeholders['vardump_get'] = isset($_GET) ? htmlentities(string: var_export(value: $_GET, return: true)) : '';
+		$placeholders['vardump_post'] = isset($_POST) ? htmlentities(string: var_export(value: $_POST, return: true)) : '';
+		$placeholders['vardump_file'] = isset($_FILE) ? htmlentities(string: var_export(value: $_FILE, return: true)) : '';
+		$placeholders['vardump_sess'] = isset($_SESSION) ? htmlentities(string: var_export(value: $_SESSION, return: true)) : '';
 
 		$this->sendHttpResponseAndExit(
-			core: $core,
 			httpStatusCode: $httpStatusCode,
 			errorMessage: $errorMessage,
 			errorCode: $errorCode,
@@ -92,8 +91,7 @@ class ExceptionHandler
 	protected function sendNotFoundHttpResponseAndExit(Throwable $throwable): void
 	{
 		$this->sendHttpResponseAndExit(
-			core: $this->core,
-			httpStatusCode: HttpStatusCodes::HTTP_NOT_FOUND,
+			httpStatusCode: HttpStatusCode::HTTP_NOT_FOUND,
 			errorMessage: $throwable->getMessage(),
 			errorCode: $throwable->getCode(),
 			htmlFileName: 'notFound.html',
@@ -104,8 +102,7 @@ class ExceptionHandler
 	protected function sendUnauthorizedHttpResponseAndExit(Throwable $throwable): void
 	{
 		$this->sendHttpResponseAndExit(
-			core: $this->core,
-			httpStatusCode: HttpStatusCodes::HTTP_UNAUTHORIZED,
+			httpStatusCode: HttpStatusCode::HTTP_UNAUTHORIZED,
 			errorMessage: $throwable->getMessage(),
 			errorCode: $throwable->getCode(),
 			htmlFileName: 'unauthorized.html',
@@ -116,8 +113,7 @@ class ExceptionHandler
 	protected function sendDefaultHttpResponseAndExit(Throwable $throwable): void
 	{
 		$this->sendHttpResponseAndExit(
-			core: $this->core,
-			httpStatusCode: HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR,
+			httpStatusCode: HttpStatusCode::HTTP_INTERNAL_SERVER_ERROR,
 			errorMessage: 'Internal Server Error',
 			errorCode: $throwable->getCode(),
 			htmlFileName: 'default.html',
@@ -126,60 +122,53 @@ class ExceptionHandler
 	}
 
 	final protected function sendHttpResponseAndExit(
-		Core       $core,
-		int        $httpStatusCode,
-		string     $errorMessage,
-		string|int $errorCode,
-		string     $htmlFileName,
-		array      $placeholders
+		HttpStatusCode $httpStatusCode,
+		string         $errorMessage,
+		string|int     $errorCode,
+		string         $htmlFileName,
+		array          $placeholders
 	): void {
 		$contentType = $this->contentType;
-		if ($contentType === HttpResponse::TYPE_HTML) {
-			$httpResponse = HttpResponse::createHtmlResponse(
+		if ($contentType->isJson()) {
+			$httpResponse = HttpResponse::createResponseFromString(
 				httpStatusCode: $httpStatusCode,
-				htmlContent: $this->getHtmlContent($core, $htmlFileName, $placeholders),
-				cspPolicySettingsModel: $core->getEnvironmentSettingsModel()->getCspPolicySettingsModel(),
-				nonce: CspNonce::get()
+				contentString: HttpErrorResponseContent::createJsonResponseContent(
+					errorMessage: $errorMessage,
+					errorCode: $errorCode,
+					additionalInfo: (object)$placeholders
+				)->getContent(),
+				contentType: $contentType
 			);
 			$httpResponse->sendAndExit();
 		}
-
-		$contentString = match ($contentType) {
-			HttpResponse::TYPE_JSON => HttpErrorResponseContent::createJsonResponseContent(
-				errorMessage: $errorMessage,
-				errorCode: $errorCode,
-				additionalInfo: (object)$placeholders
-			)->getContent(),
-			HttpResponse::TYPE_TXT, HttpResponse::TYPE_CSV => HttpErrorResponseContent::createTextResponseContent(
-				errorMessage: $errorMessage,
-				errorCode: $errorCode
-			)->getContent(),
-			default => '',
-		};
-
-		$httpResponse = HttpResponse::createResponseFromString($httpStatusCode, $contentString, $contentType);
+		if ($contentType->isTxt() || $contentType->isCsv()) {
+			$httpResponse = HttpResponse::createResponseFromString(
+				httpStatusCode: $httpStatusCode,
+				contentString: HttpErrorResponseContent::createTextResponseContent(
+					errorMessage: $errorMessage,
+					errorCode: $errorCode
+				)->getContent(),
+				contentType: $contentType
+			);
+			$httpResponse->sendAndExit();
+		}
+		$httpResponse = HttpResponse::createHtmlResponse(
+			httpStatusCode: $httpStatusCode,
+			htmlContent: $this->getHtmlContent(htmlFileName: $htmlFileName, placeholders: $placeholders),
+			cspPolicySettingsModel: EnvironmentSettingsModel::get()->cspPolicySettingsModel,
+			nonce: CspNonce::get()
+		);
 		$httpResponse->sendAndExit();
 	}
 
-	private function getHtmlContent(Core $core, string $htmlFileName, array $placeholders): string
+	private function getHtmlContent(string $htmlFileName, array $placeholders): string
 	{
-		$contentPath = $core->getCoreProperties()->getSiteRoot() . 'error_docs/' . $htmlFileName;
-		if (!file_exists($contentPath)) {
-			return 'Missing error html file ' . $htmlFileName;
+		$contentPath = Core::get()->siteDirectory . 'error_docs/' . $htmlFileName;
+		if (!file_exists(filename: $contentPath)) {
+			return 'Missing error html file ' . $contentPath;
 		}
-
 		$placeholders['cspNonce'] = CspNonce::get();
 		$placeholders['csrfField'] = CsrfToken::renderAsHiddenPostField();
-
-		$settingsHandler = $core->getSettingsHandler();
-		if ($settingsHandler->exists('versions')) {
-			$versions = $settingsHandler->get('versions');
-
-			foreach (get_object_vars($versions) as $key => $val) {
-				$placeholders[$key . 'Version'] = $val;
-			}
-		}
-
 		$srcArr = [];
 		$rplArr = [];
 		foreach ($placeholders as $key => $val) {
@@ -187,31 +176,8 @@ class ExceptionHandler
 			$rplArr[] = $val;
 		}
 
-		$content = file_get_contents($contentPath);
+		$content = file_get_contents(filename: $contentPath);
 
-		return str_replace($srcArr, $rplArr, $content);
-	}
-
-	private function initContentType(Core $core): string
-	{
-		$contentHandler = $core->getContentHandler();
-		if (is_null($contentHandler)) {
-			return HttpResponse::TYPE_HTML;
-		}
-
-		$contentType = $contentHandler->getContentType();
-		if (in_array($contentType, [
-			HttpResponse::TYPE_HTML,
-			HttpResponse::TYPE_JSON,
-			HttpResponse::TYPE_XML,
-			HttpResponse::TYPE_TXT,
-			HttpResponse::TYPE_CSV,
-		])) {
-			return $contentType;
-		}
-
-		$contentHandler->setContentType(HttpResponse::TYPE_HTML);
-
-		return HttpResponse::TYPE_HTML;
+		return str_replace(search: $srcArr, replace: $rplArr, subject: $content);
 	}
 }

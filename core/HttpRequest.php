@@ -13,23 +13,26 @@ class HttpRequest
 {
 	public const PROTOCOL_HTTP = 'http';
 	public const PROTOCOL_HTTPS = 'https';
+	public const SSL_PORT = 443;
 
-	private static ?string $host = null;
-	private static ?string $protocol = null;
-	private static ?array $languages = null;
+	private static array $inputData;
+	private static string $host;
+	private static string $protocol;
+	/** @var string[] */
+	private static array $languages;
 
 	public static function hasScalarInputValue(string $keyName): bool
 	{
 		$inputData = HttpRequest::getInputData();
 
-		return (isset($inputData[$keyName]) && is_scalar(value: $inputData[$keyName]));
+		return (array_key_exists(key: $keyName, array: $inputData) && is_scalar(value: $inputData[$keyName]));
 	}
 
 	public static function getInputString(string $keyName): ?string
 	{
 		$inputData = HttpRequest::getInputData();
 
-		return (HttpRequest::hasScalarInputValue(keyName: $keyName)) ? trim(string: $inputData[$keyName]) : null;
+		return (HttpRequest::hasScalarInputValue(keyName: $keyName)) ? trim(string: (string)$inputData[$keyName]) : null;
 	}
 
 	public static function getInputInteger(string $keyName): ?int
@@ -50,10 +53,10 @@ class HttpRequest
 	{
 		$inputData = HttpRequest::getInputData();
 
-		return (isset($inputData[$keyName]) && is_array(value: $inputData[$keyName])) ? $inputData[$keyName] : null;
+		return (array_key_exists(key: $keyName, array: $inputData) && is_array(value: $inputData[$keyName])) ? $inputData[$keyName] : null;
 	}
 
-	public static function getInputValue(string $keyName)
+	public static function getInputValue(string $keyName): null|string|array
 	{
 		$inputData = HttpRequest::getInputData();
 
@@ -67,14 +70,13 @@ class HttpRequest
 
 	public static function getHost(): string
 	{
-		if (!is_null(HttpRequest::$host)) {
+		if (isset(HttpRequest::$host)) {
 			return HttpRequest::$host;
 		}
-		if (isset($_SERVER['HTTP_HOST'])) {
+		if (array_key_exists(key: 'HTTP_HOST', array: $_SERVER)) {
 			return HttpRequest::$host = $_SERVER['HTTP_HOST'];
 		}
-
-		if (isset($_SERVER['SERVER_NAME'])) {
+		if (array_key_exists(key: 'SERVER_NAME', array: $_SERVER)) {
 			return HttpRequest::$host = $_SERVER['SERVER_NAME'];
 		}
 		throw new Exception(message: 'HTTP_HOST and SERVER_NAME are not defined');
@@ -97,25 +99,27 @@ class HttpRequest
 
 	public static function getProtocol(): string
 	{
-		if (!is_null(HttpRequest::$protocol)) {
+		if (isset(HttpRequest::$protocol)) {
 			return HttpRequest::$protocol;
 		}
-		if (isset($_SERVER['HTTPS']) && (int)$_SERVER['HTTPS'] === 1) {
-			// Apache
-			return HttpRequest::$protocol = HttpRequest::PROTOCOL_HTTPS;
+		if (array_key_exists(key: 'HTTPS', array: $_SERVER)) {
+			if (
+				(int)$_SERVER['HTTPS'] === 1 // Apache
+				|| (string)$_SERVER['HTTPS'] === 'on' // IIS
+			) {
+				return HttpRequest::$protocol = HttpRequest::PROTOCOL_HTTPS;
+			}
 		}
-
-		if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
-			// IIS
-			return HttpRequest::$protocol = HttpRequest::PROTOCOL_HTTPS;
-		}
-
-		if (HttpRequest::getPort() === 443) {
-			// Others
-			return HttpRequest::$protocol = HttpRequest::PROTOCOL_HTTPS;
+		if (HttpRequest::getPort() === HttpRequest::SSL_PORT) {
+			return HttpRequest::$protocol = HttpRequest::PROTOCOL_HTTPS; // Others
 		}
 
 		return HttpRequest::$protocol = HttpRequest::PROTOCOL_HTTP;
+	}
+
+	public static function isSSL(): bool
+	{
+		return (HttpRequest::getProtocol() === HttpRequest::PROTOCOL_HTTPS);
 	}
 
 	public static function getQuery(): string
@@ -133,25 +137,35 @@ class HttpRequest
 		return $_SERVER['HTTP_USER_AGENT'] ?? '';
 	}
 
-	public static function getLanguages(): array
+	/**
+	 * @return string[]
+	 */
+	public static function listBrowserLanguagesByQuality(): array
 	{
-		if (!is_null(HttpRequest::$languages)) {
+		if (isset(HttpRequest::$languages)) {
 			return HttpRequest::$languages;
 		}
-		$languages = [];
-		$langsRates = explode(separator: ',', string: $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '');
-
-		foreach ($langsRates as $lr) {
-			$lrParts = explode(separator: ';', string: $lr);
-			$language = StringUtils::beforeFirst(str: $lrParts[0], before: '-');
-			$priority = isset($lrParts[1]) ? ((float)StringUtils::afterFirst(str: $lrParts[1], after: 'q=')) * 100 : 100;
-			if (!isset($languages[$priority])) {
-				$languages[$priority] = $language;
+		HttpRequest::$languages = [];
+		$acceptLanguageString = array_key_exists(key: 'HTTP_ACCEPT_LANGUAGE', array: $_SERVER) ? (string)$_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
+		if ($acceptLanguageString === '') {
+			return HttpRequest::$languages;
+		}
+		$acceptedLanguages = explode(separator: ',', string: $acceptLanguageString);
+		$listByQuality = [];
+		foreach ($acceptedLanguages as $acceptedLanguageDetails) {
+			$languageAndQuality = explode(separator: ';q=', string: $acceptedLanguageDetails);
+			$languageCode = trim(string: explode(separator: '-', string: $languageAndQuality[0])[0]);
+			$quality = (array_key_exists(key: 1, array: $languageAndQuality) ? round(num: (float)$languageAndQuality[1], precision: 2) : 1.0) * 100;
+			if (!array_key_exists(key: $quality, array: $listByQuality)) {
+				$listByQuality[$quality] = $languageCode;
 			}
 		}
-		krsort(array: $languages);
+		krsort(array: $listByQuality);
+		foreach ($listByQuality as $languageCode) {
+			HttpRequest::$languages[] = $languageCode;
+		}
 
-		return HttpRequest::$languages = $languages;
+		return HttpRequest::$languages;
 	}
 
 	public static function getRemoteAddress(): string
@@ -161,7 +175,11 @@ class HttpRequest
 
 	private static function getInputData(): array
 	{
-		return array_merge($_GET, $_POST);
+		if (!is_array(value: HttpRequest::$inputData)) {
+			HttpRequest::$inputData = array_merge($_GET, $_POST);
+		}
+
+		return HttpRequest::$inputData;
 	}
 
 	public static function getReferrer(): string

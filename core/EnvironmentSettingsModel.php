@@ -13,85 +13,27 @@ use LogicException;
 class EnvironmentSettingsModel
 {
 	private static ?EnvironmentSettingsModel $instance = null;
-
-	private array $allowedDomains;
-	private array $availableLanguages;
-	private bool $debug;
-	private int $copyrightYear;
-	private string $timezone;
-	private string $logRecipientEmail;
-	private string $robots;
-	private SessionSettingsModel $sessionSettingsModel;
-	private ?CspPolicySettingsModel $cspPolicySettingsModel;
+	public readonly SessionSettingsModel $sessionSettingsModel;
 
 	public function __construct(
-		array $allowedDomains,
-		array $availableLanguages,
-		bool $debug,
-		int $copyrightYear,
-		string $timezone,
-		string $logRecipientEmail,
-		string $robots,
-		?SessionSettingsModel $sessionSettingsModel,
-		?CspPolicySettingsModel $cspPolicySettingsModel
+		public readonly array                   $allowedDomains,
+		public readonly LanguageCollection      $availableLanguages,
+		public readonly bool                    $debug,
+		public readonly int                     $copyrightYear,
+		public readonly string                  $errorLogRecipientEmail,
+		public readonly string                  $robots,
+		?SessionSettingsModel                   $sessionSettingsModel,
+		public readonly ?CspPolicySettingsModel $cspPolicySettingsModel
 	) {
-		if (!is_null(EnvironmentSettingsModel::$instance)) {
-			throw new LogicException('There is already an instance of EnvironmentSettingsModel');
+		if (!is_null(value: EnvironmentSettingsModel::$instance)) {
+			throw new LogicException(message: 'There is already an instance of EnvironmentSettingsModel');
 		}
-
-		$this->allowedDomains = $allowedDomains;
-		$this->availableLanguages = $availableLanguages;
-		$this->debug = $debug;
-		$this->copyrightYear = $copyrightYear;
-		$this->timezone = $timezone;
-		$this->logRecipientEmail = $logRecipientEmail;
-		$this->robots = $robots;
-		$this->sessionSettingsModel = is_null($sessionSettingsModel) ? new SessionSettingsModel() : $sessionSettingsModel;
-		$this->cspPolicySettingsModel = $cspPolicySettingsModel;
+		EnvironmentSettingsModel::$instance = $this;
+		$this->sessionSettingsModel = is_null(value: $sessionSettingsModel) ? new SessionSettingsModel() : $sessionSettingsModel;
 	}
 
-	public function getAllowedDomains(): array
+	public static function get(): EnvironmentSettingsModel
 	{
-		return $this->allowedDomains;
-	}
-
-	public function getAvailableLanguages(): array
-	{
-		return $this->availableLanguages;
-	}
-
-	public function isDebug(): bool
-	{
-		return $this->debug;
-	}
-
-	public function getCopyrightYear(): int
-	{
-		return $this->copyrightYear;
-	}
-
-	public function getTimezone(): string
-	{
-		return $this->timezone;
-	}
-
-	public function getLogRecipientEmail(): string
-	{
-		return $this->logRecipientEmail;
-	}
-
-	public function getRobots(): string
-	{
-		return $this->robots;
-	}
-
-	public function getSessionSettingsModel(): SessionSettingsModel
-	{
-		return $this->sessionSettingsModel;
-	}
-
-	public function getCspPolicySettingsModel(): ?CspPolicySettingsModel
-	{
-		return $this->cspPolicySettingsModel;
+		return EnvironmentSettingsModel::$instance;
 	}
 }

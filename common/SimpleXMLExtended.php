@@ -23,7 +23,7 @@ class SimpleXMLExtended extends SimpleXMLElement
 	public function remove(SimpleXMLElement $node): void
 	{
 		$dom = dom_import_simplexml($node);
-		if (is_object($dom) && isset($dom->parentNode)) {
+		if (isset($dom->parentNode)) {
 			$dom->parentNode->removeChild($dom);
 		}
 	}

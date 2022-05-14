@@ -89,7 +89,7 @@ class PhoneRenderer
 		))->replaceAll(replacement: $formattingPattern->getFormat());
 	}
 
-	private static function maybeAppendFormattedExtension(PhoneNumber $phoneNumber, PhoneMetaData $phoneMetaData, string &$formattedNumber)
+	private static function maybeAppendFormattedExtension(PhoneNumber $phoneNumber, PhoneMetaData $phoneMetaData, string &$formattedNumber): void
 	{
 		if (mb_strlen(string: $phoneNumber->getExtension()) > 0) {
 			if ($phoneMetaData->hasPreferredExtnPrefix()) {

@@ -19,8 +19,8 @@ class TextFilterField extends AbstractTableFilterField
 	public function __construct(
 		AbstractTableFilter $parentFilter,
 		string              $identifier,
-		private string      $label,
-		private string      $dataTableColumnReference
+		private             readonly string      $label,
+		private             readonly string      $dataTableColumnReference
 	) {
 		parent::__construct(parentFilter: $parentFilter, filterFieldIdentifier: $identifier);
 	}

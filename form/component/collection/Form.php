@@ -13,6 +13,7 @@ use framework\form\FormCollection;
 use framework\form\FormComponent;
 use framework\form\FormRenderer;
 use framework\form\renderer\DefaultFormRenderer;
+use framework\form\renderer\DefinitionListRenderer;
 use framework\form\rule\ValidCsrfTokenValue;
 use framework\html\HtmlText;
 use framework\security\CsrfToken;
@@ -27,7 +28,7 @@ class Form extends FormCollection
 	private string $sentIndicator;
 	private array $cssClasses = [];
 	private bool $renderRequiredAbbr = true;
-	private string $defaultFormFieldRenderer = '\framework\form\renderer\DefinitionListRenderer';
+	private string $defaultFormFieldRenderer = DefinitionListRenderer::class;
 
 	public function __construct(string $name, bool $acceptUpload = false, ?HtmlText $globalErrorMessage = null, bool $methodPost = true, ?string $individualSentIndicator = null)
 	{
@@ -150,6 +151,7 @@ class Form extends FormCollection
 		if ($this->hasErrors(withChildElements: true) && !$this->hasErrors(withChildElements: false) && !is_null($this->globalErrorMessage)) {
 			$this->addErrorAsHtmlTextObject($this->globalErrorMessage);
 		}
+
 		return parent::render();
 	}
 

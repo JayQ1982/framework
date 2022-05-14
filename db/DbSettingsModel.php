@@ -19,14 +19,14 @@ class DbSettingsModel
 	public const IDX_PASSWORD = 'password';
 
 	public function __construct(
-		private string  $identifier,
-		private string  $hostName,
-		private string  $databaseName,
-		private string  $userName,
-		private string  $password,
+		private         readonly string $identifier,
+		private         readonly string $hostName,
+		private         readonly string $databaseName,
+		private         readonly string $userName,
+		private         readonly string $password,
 		private ?string $charset,
-		private ?string $timeNamesLanguage,
-		private bool    $sqlSafeUpdates
+		private         readonly ?string $timeNamesLanguage,
+		private         readonly bool $sqlSafeUpdates
 	) {
 		if (array_key_exists(key: $identifier, array: DbSettingsModel::$instances)) {
 			throw new LogicException(message: 'There is already an instance with the identifier ' . $identifier);

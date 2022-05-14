@@ -37,7 +37,7 @@ class HtmlDoc
 		}
 	}
 
-	public function parse()
+	public function parse(): void
 	{
 		if ($this->htmlContent === null) {
 			return;
@@ -252,7 +252,7 @@ class HtmlDoc
 		return $html;
 	}
 
-	public function replaceNode(HtmlNode $nodeSearch, HtmlNode $nodeReplace)
+	public function replaceNode(HtmlNode $nodeSearch, HtmlNode $nodeReplace): void
 	{
 		$parentSearchNode = $nodeSearch->getParentNode();
 		$nodeList = ($parentSearchNode === null) ? $this->nodeTree : $nodeSearch->getParentNode()->childNodes;

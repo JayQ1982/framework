@@ -9,6 +9,25 @@ namespace framework\template\template;
 use ArrayObject;
 use Exception;
 use framework\common\StringUtils;
+use framework\template\customtags\CheckboxOptionsTag;
+use framework\template\customtags\CheckboxTag;
+use framework\template\customtags\DateTag;
+use framework\template\customtags\ElseifTag;
+use framework\template\customtags\ElseTag;
+use framework\template\customtags\For2Tag;
+use framework\template\customtags\ForgroupTag;
+use framework\template\customtags\FormAddRemoveTag;
+use framework\template\customtags\FormComponentTag;
+use framework\template\customtags\ForTag;
+use framework\template\customtags\IfTag;
+use framework\template\customtags\LangTag;
+use framework\template\customtags\LoadSubTplTag;
+use framework\template\customtags\OptionsTag;
+use framework\template\customtags\OptionTag;
+use framework\template\customtags\PrintTag;
+use framework\template\customtags\RadioOptionsTag;
+use framework\template\customtags\RadioTag;
+use framework\template\customtags\TextTag;
 use framework\template\htmlparser\CDataSectionNode;
 use framework\template\htmlparser\ElementNode;
 use framework\template\htmlparser\HtmlDoc;
@@ -49,26 +68,25 @@ class TemplateEngine
 	protected static function getDefaultCustomTags(): array
 	{
 		return [
-			'checkboxOptions' => 'framework\template\customtags\CheckboxOptionsTag',
-			'checkbox'        => 'framework\template\customtags\CheckboxTag',
-			'date'            => 'framework\template\customtags\DateTag',
-			'elseif'          => 'framework\template\customtags\ElseifTag',
-			'else'            => 'framework\template\customtags\ElseTag',
-			'for2'            => 'framework\template\customtags\For2Tag',
-			'forgroup'        => 'framework\template\customtags\ForgroupTag',
-			'formComponent'   => 'framework\template\customtags\FormComponentTag',
-			'for'             => 'framework\template\customtags\ForTag',
-			'if'              => 'framework\template\customtags\IfTag',
-			'lang'            => 'framework\template\customtags\LangTag',
-			'loadSubTpl'      => 'framework\template\customtags\LoadSubTplTag',
-			'options'         => 'framework\template\customtags\OptionsTag',
-			'option'          => 'framework\template\customtags\OptionTag',
-			'radioOptions'    => 'framework\template\customtags\RadioOptionsTag',
-			'radio'           => 'framework\template\customtags\RadioTag',
-			'subSite'         => 'framework\template\customtags\SubSiteTag',
-			'text'            => 'framework\template\customtags\TextTag',
-			'print'           => 'framework\template\customtags\PrintTag',
-			'formAddRemove'   => 'framework\template\customtags\FormAddRemoveTag',
+			'checkboxOptions' => CheckboxOptionsTag::class,
+			'checkbox'        => CheckboxTag::class,
+			'date'            => DateTag::class,
+			'elseif'          => ElseifTag::class,
+			'else'            => ElseTag::class,
+			'for2'            => For2Tag::class,
+			'forgroup'        => ForgroupTag::class,
+			'formComponent'   => FormComponentTag::class,
+			'for'             => ForTag::class,
+			'if'              => IfTag::class,
+			'lang'            => LangTag::class,
+			'loadSubTpl'      => LoadSubTplTag::class,
+			'options'         => OptionsTag::class,
+			'option'          => OptionTag::class,
+			'radioOptions'    => RadioOptionsTag::class,
+			'radio'           => RadioTag::class,
+			'text'            => TextTag::class,
+			'print'           => PrintTag::class,
+			'formAddRemove'   => FormAddRemoveTag::class,
 		];
 	}
 
@@ -95,7 +113,7 @@ class TemplateEngine
 	 *
 	 * @throws Exception
 	 */
-	protected function copyNodes(array $nodeList)
+	protected function copyNodes(array $nodeList): void
 	{
 		foreach ($nodeList as $node) {
 			// Parse inline tags if activated
@@ -251,20 +269,11 @@ class TemplateEngine
 		return $tplCacheEntry;
 	}
 
-	/**
-	 * Returns the final HTML-code or includes the cached file (if caching is enabled)
-	 *
-	 * @param string $tplFile
-	 * @param array  $tplVars
-	 *
-	 * @return string
-	 */
-	public function getResultAsHtml(string $tplFile, array $tplVars = []): string
+	public function getResultAsHtml(string $tplFile, ArrayObject $dataPool): string
 	{
 		$this->currentTemplateFile = $tplFile;
-		$this->dataPool = new ArrayObject($tplVars);
-
-		$templateCacheEntry = $this->parse($tplFile);
+		$this->dataPool = $dataPool;
+		$templateCacheEntry = $this->parse(tplFile: $tplFile);
 
 		try {
 			ob_start();
@@ -294,7 +303,10 @@ class TemplateEngine
 		$this->htmlDoc = new HtmlDoc($content, $this->tplNsPrefix);
 
 		foreach ($this->customTags as $customTag) {
-			if (in_array('framework\template\template\TagNode', class_implements($customTag)) === false || $customTag::isSelfClosing() === false) {
+			if (
+				!in_array(needle: TagNode::class, haystack: class_implements(object_or_class: $customTag))
+				|| !$customTag::isSelfClosing()
+			) {
 				continue;
 			}
 
@@ -338,7 +350,7 @@ class TemplateEngine
 	 *
 	 * @throws Exception
 	 */
-	public function addData(string $key, mixed $value, bool $overwrite = false)
+	public function addData(string $key, mixed $value, bool $overwrite = false): void
 	{
 		if ($this->dataPool->offsetExists($key) === true && $overwrite === false) {
 			throw new Exception("Data with the key '" . $key . "' is already registered");
@@ -347,7 +359,7 @@ class TemplateEngine
 		$this->dataPool->offsetSet($key, $value);
 	}
 
-	public function unsetData($key)
+	public function unsetData($key): void
 	{
 		if ($this->dataPool->offsetExists($key) === false) {
 			return;
@@ -377,7 +389,7 @@ class TemplateEngine
 		return $this->getSelectorValue($selector);
 	}
 
-	public function setAllData($dataPool)
+	public function setAllData($dataPool): void
 	{
 		foreach ($dataPool as $key => $val) {
 			$this->dataPool->offsetSet($key, $val);
@@ -445,7 +457,7 @@ class TemplateEngine
 	 * @param string $tagName  The name of the tag
 	 * @param string $tagClass The class name of the tag
 	 */
-	public function registerTag(string $tagName, string $tagClass)
+	public function registerTag(string $tagName, string $tagClass): void
 	{
 		$this->customTags[$tagName] = $tagClass;
 	}
@@ -533,7 +545,6 @@ class TemplateEngine
 					throw new Exception('Don\'t know how to handle selector part "' . $part . '"');
 				}
 			} else if (is_array($varData)) {
-				$varData = (array)$varData;
 				if (array_key_exists($part, $varData) === false) {
 					throw new Exception('Array key "' . $part . '" does not exist in array "' . $currentSel . '"');
 				}

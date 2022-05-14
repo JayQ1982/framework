@@ -6,6 +6,7 @@
 
 namespace framework\html;
 
+use ArrayObject;
 use framework\security\CspNonce;
 use framework\template\template\DirectoryTemplateCache;
 use framework\template\template\TemplateEngine;
@@ -39,7 +40,7 @@ class HtmlSnippet
 		$this->replacements[$placeholderName] = $booleanValue;
 	}
 
-	public function addDataObject(string $placeholderName, ?HtmlDataObject $htmlDataObject)
+	public function addDataObject(string $placeholderName, ?HtmlDataObject $htmlDataObject): void
 	{
 		$this->replacements[$placeholderName] = is_null($htmlDataObject) ? null : $htmlDataObject->getData();
 	}
@@ -61,7 +62,7 @@ class HtmlSnippet
 		);
 		$renderer = new TemplateEngine(tplCacheInterface: $tplCache, tplNsPrefix: 'tst');
 
-		return $renderer->getResultAsHtml(tplFile: $this->htmlSnippetFilePath, tplVars: $this->replacements);
+		return $renderer->getResultAsHtml(tplFile: $this->htmlSnippetFilePath, dataPool: new ArrayObject($this->replacements));
 	}
 
 	/**

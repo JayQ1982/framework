@@ -10,6 +10,7 @@ use framework\form\component\FormField;
 use framework\form\FormComponent;
 use framework\form\FormOptions;
 use framework\form\FormRenderer;
+use framework\form\renderer\DefinitionListRenderer;
 use framework\form\renderer\LegendAndListRenderer;
 use framework\form\rule\RequiredRule;
 use framework\html\HtmlTag;
@@ -20,7 +21,7 @@ use LogicException;
 class ToggleField extends OptionsField
 {
 	private array $childrenByMainOption = [];
-	private string $defaultChildFieldRenderer = '\framework\form\renderer\DefinitionListRenderer';
+	private string $defaultChildFieldRenderer = DefinitionListRenderer::class;
 	private bool $displayLegend;
 	private bool $multiple;
 	private ?HtmlText $listDescription = null;

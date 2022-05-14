@@ -73,7 +73,7 @@ class FileField extends FormField
 		// We do not allow dangerous characters in the pointer, as it will become part of
 		//   an filesystem path; And we want to easily detect these later in the external input:
 		return preg_replace(
-			pattern: '/[^a-z0-9_]/',
+			pattern: '/[^a-z\d_]/',
 			replacement: '',
 			subject: $uid
 		);

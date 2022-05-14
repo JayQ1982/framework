@@ -9,7 +9,7 @@ namespace framework\api;
 use CurlHandle;
 use framework\common\JsonUtils;
 use framework\common\SimpleXMLExtended;
-use framework\core\HttpStatusCodes;
+use framework\core\HttpStatusCode;
 use stdClass;
 
 class CurlResponse
@@ -17,12 +17,12 @@ class CurlResponse
 	public const ERROR_BAD_HTTP_RESPONSE_CODE = 900;
 
 	private function __construct(
-		private false|string $rawResponseBody,
-		private array        $curlInfo,
-		private int          $responseHttpCode,
-		private float        $totalRequestTime,
-		private int          $errorCode,
-		private string       $errorMessage
+		private readonly false|string   $rawResponseBody,
+		private readonly array          $curlInfo,
+		private readonly HttpStatusCode $responseHttpCode,
+		private readonly float          $totalRequestTime,
+		private readonly int            $errorCode,
+		private readonly string         $errorMessage
 	) {
 	}
 
@@ -30,7 +30,10 @@ class CurlResponse
 	{
 		$rawResponseBody = curl_exec(handle: $preparedCurlHandle);
 		$curlInfo = curl_getinfo(handle: $preparedCurlHandle);
-		$responseHttpCode = (int)$curlInfo['http_code'];
+		$responseHttpCode = HttpStatusCode::tryFrom(value: (int)$curlInfo['http_code']);
+		if (is_null(value: $responseHttpCode)) {
+			$responseHttpCode = HttpStatusCode::HTTP_UNKNOWN;
+		}
 		$errorCode = curl_errno(handle: $preparedCurlHandle);
 		$errorMessage = curl_error(handle: $preparedCurlHandle);
 
@@ -48,23 +51,23 @@ class CurlResponse
 				default => ''
 			};
 		} else if (
-			$responseHttpCode >= HttpStatusCodes::HTTP_MULTIPLE_CHOICES
-			&& $responseHttpCode < 600
+			$responseHttpCode >= HttpStatusCode::HTTP_MULTIPLE_CHOICES
+			&& $responseHttpCode->value < 600
 			&& (
 				!$acceptRedirectionResponseCode
-				|| !in_array($responseHttpCode, [HttpStatusCodes::HTTP_MOVED_PERMANENTLY, HttpStatusCodes::HTTP_SEE_OTHER])
+				|| !in_array(needle: $responseHttpCode, haystack: [HttpStatusCode::HTTP_MOVED_PERMANENTLY, HttpStatusCode::HTTP_SEE_OTHER])
 			)
 		) {
 			$errorCode = CurlResponse::ERROR_BAD_HTTP_RESPONSE_CODE;
-			$errorMessage = __CLASS__ . ': Bad HTTP response code received: ' . $responseHttpCode;
+			$errorMessage = __CLASS__ . ': Bad HTTP response code received: ' . $responseHttpCode->value;
 			$errorMessage .= match ($responseHttpCode) {
-				HttpStatusCodes::HTTP_MOVED_PERMANENTLY => ' ("moved permanently". Check URL/settings.)',
-				HttpStatusCodes::HTTP_SEE_OTHER => ' ("Redirect". Maybe HTTP-to-HTTPS? Check URL/settings.)',
-				HttpStatusCodes::HTTP_UNAUTHORIZED => ' ("unauthorized". Check credentials or request format.)',
-				HttpStatusCodes::HTTP_NOT_FOUND => ' ("not found" on server)',
-				HttpStatusCodes::HTTP_METHOD_NOT_ALLOWED => ' ("method not allowed". Check URL or request format/data.)',
-				HttpStatusCodes::HTTP_NOT_ACCEPTABLE => ' ("not acceptable" on server. Check request format/data.)',
-				HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR => ' (remote "Server error")',
+				HttpStatusCode::HTTP_MOVED_PERMANENTLY => ' ("moved permanently". Check URL/settings.)',
+				HttpStatusCode::HTTP_SEE_OTHER => ' ("Redirect". Maybe HTTP-to-HTTPS? Check URL/settings.)',
+				HttpStatusCode::HTTP_UNAUTHORIZED => ' ("unauthorized". Check credentials or request format.)',
+				HttpStatusCode::HTTP_NOT_FOUND => ' ("not found" on server)',
+				HttpStatusCode::HTTP_METHOD_NOT_ALLOWED => ' ("method not allowed". Check URL or request format/data.)',
+				HttpStatusCode::HTTP_NOT_ACCEPTABLE => ' ("not acceptable" on server. Check request format/data.)',
+				HttpStatusCode::HTTP_INTERNAL_SERVER_ERROR => ' (remote "Server error")',
 				default => ''
 			};
 		}
@@ -89,7 +92,7 @@ class CurlResponse
 		return $this->curlInfo;
 	}
 
-	public function getResponseHttpCode(): int
+	public function getResponseHttpCode(): HttpStatusCode
 	{
 		return $this->responseHttpCode;
 	}

@@ -7,76 +7,63 @@
 namespace framework\core;
 
 use Exception;
-use framework\datacheck\Sanitizer;
+use framework\Core;
 use framework\html\HtmlDocument;
 use LogicException;
 
 class ContentHandler
 {
-	private static ?ContentHandler $instance = null;
-	private Core $core;
-	private int $httpStatusCode = HttpStatusCodes::HTTP_OK;
+	private static ?ContentHandler $registeredInstance = null;
+
+	private HttpStatusCode $httpStatusCode = HttpStatusCode::HTTP_OK;
 	private string $content = '';
-	private string $contentType = HttpResponse::TYPE_HTML;
+	public readonly ContentType $contentType;
 	private bool $suppressCspHeader = false;
-	private bool $isInitialized = false;
 
-	public static function getInstance(Core $core): ContentHandler
+	public static function get(): ?ContentHandler
 	{
-		if (is_null(ContentHandler::$instance)) {
-			ContentHandler::$instance = new ContentHandler($core);
-		}
-
-		return ContentHandler::$instance;
+		return ContentHandler::$registeredInstance;
 	}
 
-	private function __construct(Core $core)
+	public static function register(): ContentHandler
 	{
-		$this->core = $core;
-		$requestHandler = RequestHandler::getInstance();
-
-		$defaultContentType = Sanitizer::trimmedString($requestHandler->getContentType());
-		if ($defaultContentType !== '') {
-			$this->contentType = $defaultContentType;
-		}
+		return new ContentHandler();
 	}
 
-	public function setContentType(string $contentType): void
+	private function __construct()
 	{
-		if (!in_array($contentType, HttpResponse::CONTENT_TYPES_WITH_CHARSET)) {
-			throw new Exception('Unknown contentType: ' . $contentType);
+		if (isset(ContentHandler::$registeredInstance)) {
+			throw new LogicException(message: 'ContentHandler is already registered.');
 		}
-		$this->contentType = $contentType;
-	}
-
-	public function getContentType(): string
-	{
-		return $this->contentType;
-	}
-
-	public function init(): void
-	{
-		if ($this->isInitialized) {
-			throw new LogicException('ContentHandler is already initialized');
-		}
-		$this->isInitialized = true;
-		$core = $this->core;
-
+		ContentHandler::$registeredInstance = $this;
+		$this->contentType = Request::get()->route->defaultContentType;
 		ob_start();
-		ob_implicit_flush(false);
-
-		$this->loadLocalizedText($core->getLocaleHandler());
+		ob_implicit_flush(enable: false);
+		$this->loadLocalizedText();
 		$viewClass = $this->getViewClass();
 		if (!$this->hasContent() && !is_null(value: $viewClass)) {
 			$viewClass->execute();
 		}
-		if (!$this->hasContent() && $this->contentType === HttpResponse::TYPE_HTML) {
-			$this->setContent(HtmlDocument::getInstance($core)->render());
+		if (!$this->hasContent() && $this->contentType->isHtml()) {
+			$this->setContent(HtmlDocument::get()->render());
 		}
 		$outputBufferContents = trim(string: ob_get_clean());
 		if ($outputBufferContents !== '') {
 			$this->setContent($outputBufferContents);
 		}
+	}
+
+	public function setContentType(ContentType $contentType): void
+	{
+		if (is_null(value: $contentType->charset)) {
+			throw new Exception(message: 'Unknown contentType: ' . $contentType->type);
+		}
+		$this->contentType = $contentType;
+	}
+
+	public function getContentType(): ContentType
+	{
+		return $this->contentType;
 	}
 
 	public function setContent(string $contentString): void
@@ -87,12 +74,12 @@ class ContentHandler
 		$this->content = $contentString;
 	}
 
-	public function setHttpStatusCode(int $httpStatusCode): void
+	public function setHttpStatusCode(HttpStatusCode $httpStatusCode): void
 	{
 		$this->httpStatusCode = $httpStatusCode;
 	}
 
-	public function getHttpStatusCode(): int
+	public function getHttpStatusCode(): HttpStatusCode
 	{
 		return $this->httpStatusCode;
 	}
@@ -102,34 +89,38 @@ class ContentHandler
 		return $this->content;
 	}
 
-	private function loadLocalizedText(LocaleHandler $localeHandler): void
+	private function loadLocalizedText(): void
 	{
-		$requestHandler = RequestHandler::getInstance();
-		$dir = $requestHandler->getViewDirectory() . 'language/' . $requestHandler->getLanguage() . '/';
-		if (!is_dir($dir)) {
+		$request = Request::get();
+		$dir = $request->route->getViewDirectory() . 'language/' . $request->language->code . '/';
+		if (!is_dir(filename: $dir)) {
 			return;
 		}
-
 		$langGlobal = $dir . 'global.lang.php';
-
-		if (file_exists($langGlobal)) {
-			$localeHandler->loadLanguageFile($langGlobal);
+		$locale = Locale::get();
+		if (file_exists(filename: $langGlobal)) {
+			$locale->loadLanguageFile(filePath: $langGlobal);
 		}
-
-		$langFile = $dir . $requestHandler->getFileTitle() . '.lang.php';
-		if (file_exists($langFile)) {
-			$localeHandler->loadLanguageFile($langFile);
+		$langFile = $dir . $request->fileTitle . '.lang.php';
+		if (file_exists(filename: $langFile)) {
+			$locale->loadLanguageFile(filePath: $langFile);
 		}
 	}
 
 	private function getViewClass(): ?BaseView
 	{
-		$requestHandler = RequestHandler::getInstance();
-		$phpClassName = 'site\\view\\' . $requestHandler->getViewGroup() . '\\php\\';
-		if (!is_null(value: $requestHandler->getFileGroup())) {
-			$phpClassName .= $requestHandler->getFileGroup() . '\\';
+		$request = Request::get();
+		$phpClassNameParts = [
+			Core::get()->siteDirectoryName,
+			'view',
+			$request->route->viewGroup,
+			'php',
+		];
+		if (!is_null(value: $request->getFileGroup())) {
+			$phpClassNameParts[] = $request->getFileGroup();
 		}
-		$phpClassName .= $requestHandler->getFileTitle();
+		$phpClassNameParts[] = $request->fileTitle;
+		$phpClassName = implode(separator: '\\', array: $phpClassNameParts);
 		if (!class_exists(class: $phpClassName)) {
 			return null;
 		}
@@ -137,7 +128,7 @@ class ContentHandler
 			throw new Exception(message: 'The class ' . $phpClassName . ' must extend ' . BaseView::class . '.');
 		}
 
-		return new $phpClassName($this->core);
+		return new $phpClassName();
 	}
 
 	public function hasContent(): bool

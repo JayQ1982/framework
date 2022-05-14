@@ -9,12 +9,12 @@ namespace framework\session;
 use Exception;
 use framework\core\EnvironmentSettingsModel;
 use framework\core\HttpRequest;
-use framework\datacheck\Sanitizer;
+use LogicException;
 use SessionHandler;
 
 abstract class AbstractSessionHandler extends SessionHandler
 {
-	private static null|FileSessionHandler|NoSqlSessionHandler $instance = null;
+	private static AbstractSessionHandler $registeredInstance;
 
 	private const SESSION_CREATED_INDICATOR = 'sessionCreated';
 	private const TRUSTED_REMOTE_ADDRESS_INDICATOR = 'trustedRemoteAddress';
@@ -25,43 +25,40 @@ abstract class AbstractSessionHandler extends SessionHandler
 	private int $currentTime;
 	private ?string $ID = null;
 	private ?string $name = null;
-	private ?int $maxLifeTime;
 	private string $clientRemoteAddress;
 	private string $clientUserAgent;
 	private ?string $fingerprint = null;
-	private array $availableLanguages;
 
-	public static function getSessionHandler(EnvironmentSettingsModel $environmentSettingsModel): FileSessionHandler|NoSqlSessionHandler
+	public static function register(?AbstractSessionHandler $individualSessionHandler): void
 	{
-		if (is_null(AbstractSessionHandler::$instance)) {
-			if ($environmentSettingsModel->getSessionSettingsModel()->isUseNoSqlSessionHandler()) {
-				AbstractSessionHandler::$instance = new NoSqlSessionHandler(environmentSettingsModel: $environmentSettingsModel);
-			} else {
-				AbstractSessionHandler::$instance = new FileSessionHandler(environmentSettingsModel: $environmentSettingsModel);
-			}
+		if (isset(AbstractSessionHandler::$registeredInstance)) {
+			throw new LogicException(message: 'SessionHandler handler is already registered.');
 		}
-
-		return AbstractSessionHandler::$instance;
+		AbstractSessionHandler::$registeredInstance = is_null(value: $individualSessionHandler) ? new FileSessionHandler(sessionSettingsModel: new SessionSettingsModel()) : $individualSessionHandler;
 	}
 
-	protected function __construct(EnvironmentSettingsModel $environmentSettingsModel)
+	public static function getSessionHandler(): AbstractSessionHandler
+	{
+		return AbstractSessionHandler::$registeredInstance;
+	}
+
+	protected function __construct(private readonly SessionSettingsModel $sessionSettingsModel)
 	{
 		$this->currentTime = time();
-		$this->maxLifeTime = $environmentSettingsModel->getSessionSettingsModel()->getMaxLifeTime();
 		$this->clientRemoteAddress = HttpRequest::getRemoteAddress();
 		$this->clientUserAgent = HttpRequest::getUserAgent();
-		$this->availableLanguages = $environmentSettingsModel->getAvailableLanguages();
 
-		$this->start(sessionSettingsModel: $environmentSettingsModel->getSessionSettingsModel());
+		$this->start();
 	}
 
-	private function start(SessionSettingsModel $sessionSettingsModel): void
+	private function start(): void
 	{
-		$this->setDefaultConfigurationOptions(maxLifeTime: $sessionSettingsModel->getMaxLifeTime());
-		$this->setDefaultSecuritySettings(isSameSiteStrict: $sessionSettingsModel->isSameSiteStrict());
-		$this->setSessionName(individualName: $sessionSettingsModel->getIndividualName());
+		$sessionSettingsModel = $this->sessionSettingsModel;
+		$this->setDefaultConfigurationOptions(maxLifeTime: $sessionSettingsModel->maxLifeTime);
+		$this->setDefaultSecuritySettings(isSameSiteStrict: $sessionSettingsModel->isSameSiteStrict);
+		$this->setSessionName(individualName: $sessionSettingsModel->individualName);
 		$this->executePreStartActions();
-		session_set_save_handler($this, true); // TODO: Named parameters not working in PHP 8.0
+		session_set_save_handler($this, true); // TODO: Named parameters not working in PHP 8.1
 		if (!session_start()) {
 			throw new Exception(message: 'Could not start session');
 		}
@@ -105,27 +102,26 @@ abstract class AbstractSessionHandler extends SessionHandler
 		ini_set(option: 'session.cookie_samesite', value: $isSameSiteStrict ? 'Strict' : 'Lax');
 	}
 
-	private function setSessionName(?string $individualName): void
+	private function setSessionName(string $individualName): void
 	{
-		$individualName = Sanitizer::trimmedString(input: $individualName);
 		if ($individualName !== '') {
-			$sn = $individualName;
+			$sessionName = $individualName;
 
 			// Overwrite session id in cookie when provided by get-Parameter
-			$requestedSessionID = HttpRequest::getInputString(keyName: $sn);
-			if (!empty($requestedSessionID) && isset($_COOKIE[$sn]) && $_COOKIE[$sn] !== $requestedSessionID) {
-				$_COOKIE[$sn] = $requestedSessionID;
+			$requestedSessionID = HttpRequest::getInputString(keyName: $sessionName);
+			if (!empty($requestedSessionID) && isset($_COOKIE[$sessionName]) && $_COOKIE[$sessionName] !== $requestedSessionID) {
+				$_COOKIE[$sessionName] = $requestedSessionID;
 				session_id(id: $requestedSessionID);
 			}
 
-			session_name(name: $sn);
+			session_name(name: $sessionName);
 		}
 
 		// Just generate new session id, if current from cookie contains illegal characters
 		// Inspired from http://stackoverflow.com/questions/32898857/session-start-issues-regarding-illegal-characters-empty-session-id-and-failed
-		$sn = session_name();
-		if (isset($_COOKIE[$sn]) && $this->checkSessionIdAgainstSidBitsPerChar($_COOKIE[$sn], ini_get(option: 'session.sid_bits_per_character')) === false) {
-			unset($_COOKIE[$sn]);
+		$sessionName = session_name();
+		if (isset($_COOKIE[$sessionName]) && $this->checkSessionIdAgainstSidBitsPerChar($_COOKIE[$sessionName], ini_get(option: 'session.sid_bits_per_character')) === false) {
+			unset($_COOKIE[$sessionName]);
 		}
 	}
 
@@ -140,15 +136,15 @@ abstract class AbstractSessionHandler extends SessionHandler
 	 */
 	protected function checkSessionIdAgainstSidBitsPerChar(string $sessionId, int $sidBitsPerChar): bool
 	{
-		if ($sidBitsPerChar == 4 && preg_match(pattern: '/^[a-f0-9]+$/', subject: $sessionId) === 0) {
+		if ($sidBitsPerChar == 4 && preg_match(pattern: '/^[a-f\d]+$/', subject: $sessionId) === 0) {
 			return false;
 		}
 
-		if ($sidBitsPerChar == 5 && preg_match(pattern: '/^[a-v0-9]+$/', subject: $sessionId) === 0) {
+		if ($sidBitsPerChar == 5 && preg_match(pattern: '/^[a-v\d]+$/', subject: $sessionId) === 0) {
 			return false;
 		}
 
-		if ($sidBitsPerChar == 6 && preg_match(pattern: '/^[A-Za-z0-9-,]+$/i', subject: $sessionId) === 0) {
+		if ($sidBitsPerChar == 6 && preg_match(pattern: '/^[A-Za-z\d-,]+$/i', subject: $sessionId) === 0) {
 			return false;
 		}
 
@@ -254,9 +250,9 @@ abstract class AbstractSessionHandler extends SessionHandler
 	private function isSessionExpired(): bool
 	{
 		return (
-			!is_null(value: $this->maxLifeTime)
+			!is_null(value: $this->sessionSettingsModel->maxLifeTime)
 			&& array_key_exists(key: AbstractSessionHandler::LAST_ACTIVITY_INDICATOR, array: $_SESSION)
-			&& ($this->currentTime - $_SESSION[AbstractSessionHandler::LAST_ACTIVITY_INDICATOR] > $this->maxLifeTime)
+			&& ($this->currentTime - $_SESSION[AbstractSessionHandler::LAST_ACTIVITY_INDICATOR] > $this->sessionSettingsModel->maxLifeTime)
 		);
 	}
 
@@ -265,13 +261,13 @@ abstract class AbstractSessionHandler extends SessionHandler
 		$_SESSION[AbstractSessionHandler::LAST_ACTIVITY_INDICATOR] = $this->currentTime;
 	}
 
-	public function setPreferredLanguage(string $language): void
+	public function setPreferredLanguage(string $languageCode): void
 	{
-		if (!array_key_exists(key: $language, array: $this->availableLanguages)) {
-			throw new Exception(message: 'The preferred language ' . $language . ' is not available');
+		if (!EnvironmentSettingsModel::get()->availableLanguages->hasLanguage(languageCode: $languageCode)) {
+			throw new Exception(message: 'The preferred language ' . $languageCode . ' is not available');
 		}
 
-		$_SESSION[AbstractSessionHandler::PREFERRED_LANGUAGE_INDICATOR] = $language;
+		$_SESSION[AbstractSessionHandler::PREFERRED_LANGUAGE_INDICATOR] = $languageCode;
 	}
 
 	public function getPreferredLanguage(): ?string

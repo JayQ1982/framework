@@ -4,43 +4,57 @@
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
-namespace framework\common;
+namespace framework\core;
 
-class MimeTypeHandler
+class MimeType
 {
-	public static function forceDownloadByDefault(string $fileType): bool
-	{
-		$arr = [
-			'xml'  => false,
-			'csv'  => true,
-			'txt'  => false,
-			'log'  => true,
-			'css'  => false,
-			'js'   => false,
-			'jpg'  => false,
-			'gif'  => false,
-			'png'  => false,
-			'xls'  => true,
-			'xla'  => true,
-			'ppt'  => true,
-			'pps'  => true,
-			'ppz'  => true,
-			'pot'  => true,
-			'doc'  => true,
-			'dot'  => true,
-			'pdf'  => true,
-			'zip'  => true,
-			'exe'  => true,
-			'swf'  => false,
-			'mov'  => false,
-			'json' => false,
-		];
+	public const DEFAULT = 'application/octet-stream';
+	public const HTML = 'text/html';
+	public const JSON = 'application/json';
+	public const XML = 'application/xml';
+	public const TXT = 'text/plain';
+	public const CSV = 'text/csv';
+	public const JS = 'application/javascript';
 
-		return $arr[$fileType] ?? true;
+	public function __construct(
+		public readonly string $value
+	) {
 	}
 
-	public static function mimeTypeByExtension(string $extension): string
+	public static function createHtml(): MimeType
 	{
+		return new MimeType(value: MimeType::HTML);
+	}
+
+	public static function createJson(): MimeType
+	{
+		return new MimeType(value: MimeType::JSON);
+	}
+
+	public static function createXml(): MimeType
+	{
+		return new MimeType(value: MimeType::XML);
+	}
+
+	public static function createTxt(): MimeType
+	{
+		return new MimeType(value: MimeType::TXT);
+	}
+
+	public static function createCsv(): MimeType
+	{
+		return new MimeType(value: MimeType::CSV);
+	}
+
+	public static function createJs(): MimeType
+	{
+		return new MimeType(value: MimeType::JS);
+	}
+
+	public static function createByFileExtension(string $extension): MimeType
+	{
+		$extension = mb_strtolower(string: trim(string: $extension));
+
 		// Original list from : Debian 9 /etc/mime.types, reworked
 		$mimeTypes = [
 			'323'         => 'text/h323',
@@ -60,7 +74,7 @@ class MimeTypeHandler
 			'appcache'    => 'text/cache-manifest',
 			'application' => 'application/x-ms-application',
 			'art'         => 'image/x-jg',
-			'asc'         => 'text/plain',
+			'asc'         => MimeType::TXT,
 			'asf'         => 'video/x-ms-asf',
 			'asn'         => 'chemical/x-ncbi-asn1',
 			'aso'         => 'chemical/x-ncbi-asn1-binary',
@@ -82,7 +96,7 @@ class MimeTypeHandler
 			'bmp'         => 'image/x-ms-bmp',
 			'boo'         => 'text/x-boo',
 			'book'        => 'application/x-maker',
-			'brf'         => 'text/plain',
+			'brf'         => MimeType::TXT,
 			'bsd'         => 'chemical/x-crossfire',
 			'c'           => 'text/x-csrc',
 			'c++'         => 'text/x-c++src',
@@ -128,7 +142,7 @@ class MimeTypeHandler
 			'csm'         => 'chemical/x-csml',
 			'csml'        => 'chemical/x-csml',
 			'css'         => 'text/css',
-			'csv'         => 'text/csv',
+			'csv'         => MimeType::CSV,
 			'ctab'        => 'chemical/x-cactvs-binary',
 			'ctx'         => 'chemical/x-ctx',
 			'cu'          => 'application/cu-seeme',
@@ -217,8 +231,8 @@ class MimeTypeHandler
 			'hs'          => 'text/x-haskell',
 			'hta'         => 'application/hta',
 			'htc'         => 'text/x-component',
-			'htm'         => 'text/html',
-			'html'        => 'text/html',
+			'htm'         => MimeType::HTML,
+			'html'        => MimeType::HTML,
 			'hwp'         => 'application/x-hwp',
 			'hxx'         => 'text/x-c++hdr',
 			'ica'         => 'application/x-ica',
@@ -253,8 +267,8 @@ class MimeTypeHandler
 			'jpg2'        => 'image/jp2',
 			'jpm'         => 'image/jpm',
 			'jpx'         => 'image/jpx',
-			'js'          => 'application/javascript',
-			'json'        => 'application/json',
+			'js'          => MimeType::JS,
+			'json'        => MimeType::JSON,
 			'kar'         => 'audio/midi',
 			'key'         => 'application/pgp-keys',
 			'kil'         => 'application/x-killustrator',
@@ -270,7 +284,7 @@ class MimeTypeHandler
 			'lha'         => 'application/x-lha',
 			'lhs'         => 'text/x-literate-haskell',
 			'lin'         => 'application/bbolin',
-			'log'         => 'text/plain',
+			'log'         => MimeType::TXT,
 			'lsf'         => 'video/x-la-asf',
 			'lsx'         => 'video/x-la-asf',
 			'ltx'         => 'text/x-tex',
@@ -399,7 +413,7 @@ class MimeTypeHandler
 			'pm'          => 'text/x-perl',
 			'png'         => 'image/png',
 			'pnm'         => 'image/x-portable-anymap',
-			'pot'         => 'text/plain',
+			'pot'         => MimeType::TXT,
 			'potm'        => 'application/vnd.ms-powerpoint.template.macroEnabled.12',
 			'potx'        => 'application/vnd.openxmlformats-officedocument.presentationml.template',
 			'ppam'        => 'application/vnd.ms-powerpoint.addin.macroEnabled.12',
@@ -460,7 +474,7 @@ class MimeTypeHandler
 			'sh'          => 'text/x-sh',
 			'shar'        => 'application/x-shar',
 			'shp'         => 'application/x-qgis',
-			'shtml'       => 'text/html',
+			'shtml'       => MimeType::HTML,
 			'shx'         => 'application/x-qgis',
 			'sid'         => 'audio/prs.sid',
 			'sig'         => 'application/pgp-signature',
@@ -484,7 +498,7 @@ class MimeTypeHandler
 			'spx'         => 'audio/ogg',
 			'sql'         => 'application/x-sql',
 			'src'         => 'application/x-wais-source',
-			'srt'         => 'text/plain',
+			'srt'         => MimeType::TXT,
 			'stc'         => 'application/vnd.sun.xml.calc.template',
 			'std'         => 'application/vnd.sun.xml.draw.template',
 			'sti'         => 'application/vnd.sun.xml.impress.template',
@@ -511,7 +525,7 @@ class MimeTypeHandler
 			'tex'         => 'text/x-tex',
 			'texi'        => 'application/x-texinfo',
 			'texinfo'     => 'application/x-texinfo',
-			'text'        => 'text/plain',
+			'text'        => MimeType::TXT,
 			'tgf'         => 'chemical/x-mdl-tgf',
 			'tgz'         => 'application/x-gtar-compressed',
 			'thmx'        => 'application/vnd.ms-officetheme',
@@ -526,7 +540,7 @@ class MimeTypeHandler
 			'tsv'         => 'text/tab-separated-values',
 			'ttf'         => 'application/font-sfnt',
 			'ttl'         => 'text/turtle',
-			'txt'         => 'text/plain',
+			'txt'         => MimeType::TXT,
 			'udeb'        => 'application/vnd.debian.binary-package',
 			'uls'         => 'text/iuls',
 			'ustar'       => 'application/x-ustar',
@@ -584,10 +598,10 @@ class MimeTypeHandler
 			'xlt'         => 'application/vnd.ms-excel',
 			'xltm'        => 'application/vnd.ms-excel.template.macroEnabled.12',
 			'xltx'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
-			'xml'         => 'application/xml',
+			'xml'         => MimeType::XML,
 			'xpi'         => 'application/x-xpinstall',
 			'xpm'         => 'image/x-xpixmap',
-			'xsd'         => 'application/xml',
+			'xsd'         => MimeType::XML,
 			'xsl'         => 'application/xslt+xml',
 			'xslt'        => 'application/xslt+xml',
 			'xspf'        => 'application/xspf+xml',
@@ -599,8 +613,7 @@ class MimeTypeHandler
 			'zip'         => 'application/zip',
 			'zmt'         => 'chemical/x-mopac-input',
 		];
-		$extension = mb_strtolower(string: trim(string: $extension));
 
-		return $mimeTypes[$extension] ?? 'application/octet-stream'; // Default for unknown file types
+		return array_key_exists(key: $extension, array: $mimeTypes) ? new MimeType(value: $mimeTypes[$extension]) : new MimeType(value: MimeType::DEFAULT);
 	}
 }

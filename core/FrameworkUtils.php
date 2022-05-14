@@ -107,19 +107,19 @@ class FrameworkUtils
 		$mon_thousands_sep = str_replace('.', '\.', $mon_thousands_sep);
 		$mon_decimal_point = str_replace('.', '\.', $mon_decimal_point);
 
-		if (preg_match('/^-?[0-9]+\.[0-9]+$/', $number)) {
+		if (preg_match('/^-?\d+\.\d+$/', $number)) {
 			return floatval($number);
 		}
 
-		if (preg_match('/^-?[0-9]+' . $mon_thousands_sep . '[0-9]+' . $mon_decimal_point . '[0-9]+$/', $number)) {
+		if (preg_match('/^-?\d+' . $mon_thousands_sep . '\d+' . $mon_decimal_point . '\d+$/', $number)) {
 			return floatval(str_replace([$mon_thousands_sep, $mon_decimal_point], [null, '.'], $number));
 		}
 
-		if (preg_match('/^-?[0-9]+' . $mon_decimal_point . '[0-9]+$/', $number)) {
+		if (preg_match('/^-?\d+' . $mon_decimal_point . '\d+$/', $number)) {
 			return floatval(str_replace([$mon_decimal_point], ['.'], $number));
 		}
 
-		if (preg_match('/^-?[0-9]+,[0-9]+$/', $number)) {
+		if (preg_match('/^-?\d+,\d+$/', $number)) {
 			return floatval(str_replace([','], ['.'], $number));
 		}
 

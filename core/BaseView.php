@@ -20,16 +20,15 @@ use stdClass;
 abstract class BaseView
 {
 	protected function __construct(
-		private Core           $core,
-		array                  $ipWhitelist,
-		private ?Authenticator $authenticator,
-		array                  $requiredAccessRights,
-		private array          $mandatoryParams = [],
-		private array          $optionalParams = [],
-		?string                $individualContentType = null
+		array                           $ipWhitelist,
+		private readonly ?Authenticator $authenticator,
+		array                           $requiredAccessRights,
+		private readonly array          $mandatoryParams = [],
+		private readonly array          $optionalParams = [],
+		?ContentType                         $individualContentType = null
 	) {
-		if (!is_null($individualContentType)) {
-			$this->setContentType($individualContentType);
+		if (!is_null(value: $individualContentType)) {
+			$this->setContentType(contentType: $individualContentType);
 		}
 
 		if (count(value: $ipWhitelist) > 0 && !in_array(needle: HttpRequest::getRemoteAddress(), haystack: $ipWhitelist)) {
@@ -44,22 +43,22 @@ abstract class BaseView
 			);
 		}
 
-		$this->checkMandatoryParameters(core: $core, mandatoryParams: $mandatoryParams);
+		$this->checkMandatoryParameters(mandatoryParams: $mandatoryParams);
 	}
 
-	protected function setContentType(string $contentType): void
+	protected function setContentType(ContentType $contentType): void
 	{
-		$this->core->getContentHandler()->setContentType(contentType: $contentType);
+		ContentHandler::get()->setContentType(contentType: $contentType);
 	}
 
 	protected function setContent(string $contentString): void
 	{
-		$this->getCore()->getContentHandler()->setContent(contentString: $contentString);
+		ContentHandler::get()->setContent(contentString: $contentString);
 	}
 
-	private function checkMandatoryParameters(Core $core, array $mandatoryParams): void
+	private function checkMandatoryParameters(array $mandatoryParams): void
 	{
-		$contentType = $core->getContentHandler()->getContentType();
+		$contentType = ContentHandler::get()->getContentType();
 
 		foreach ($mandatoryParams as $mandatoryParam => $paramDescription) {
 			$paramValue = HttpRequest::getInputValue(keyName: $mandatoryParam);
@@ -68,7 +67,7 @@ abstract class BaseView
 				|| (!is_array(value: $paramValue) && Sanitizer::trimmedString(input: $paramValue) === '')
 				|| (is_array(value: $paramValue) && count(value: $paramValue) === 0)
 			) {
-				if ($contentType === HttpResponse::TYPE_HTML) {
+				if ($contentType->isHtml()) {
 					throw new NotFoundException();
 				}
 				$this->setErrorResponseContent(errorMessage: 'missing or empty mandatory parameter: ' . $mandatoryParam);
@@ -90,26 +89,16 @@ abstract class BaseView
 
 	abstract public function execute(): void;
 
-	protected function getText(string $fieldName, array $replacements = []): string
-	{
-		return $this->core->getLocaleHandler()->getText($fieldName, $replacements);
-	}
-
 	protected function getAuthenticator(): ?Authenticator
 	{
 		return $this->authenticator;
 	}
 
-	protected function getCore(): Core
-	{
-		return $this->core;
-	}
-
 	protected function getPathVar(int $nr): ?string
 	{
-		$pathVars = RequestHandler::getInstance()->getPathVars();
+		$pathVars = Request::get()->pathParts;
 
-		return $pathVars[$nr] ?? null;
+		return array_key_exists(key: $nr, array: $pathVars) ? $pathVars[$nr] : null;
 	}
 
 	private function onlyDefinedInputParametersAllowed(string $parameterName): void
@@ -170,31 +159,35 @@ abstract class BaseView
 
 	protected function setErrorResponseContent(string $errorMessage, null|int|string $errorCode = null, ?stdClass $additionalInfo = null): void
 	{
-		$contentType = $this->core->getContentHandler()->getContentType();
-		$httpErrorResponseContent = match ($contentType) {
-			HttpResponse::TYPE_JSON => HttpErrorResponseContent::createJsonResponseContent(
+		$contentType = ContentHandler::get()->getContentType();
+		if ($contentType->isJson()) {
+			$httpErrorResponseContent = HttpErrorResponseContent::createJsonResponseContent(
 				errorMessage: $errorMessage,
 				errorCode: $errorCode,
 				additionalInfo: $additionalInfo
-			),
-			HttpResponse::TYPE_TXT, HttpResponse::TYPE_CSV => HttpErrorResponseContent::createTextResponseContent(
+			);
+		} else if ($contentType->isTxt() || $contentType->isCsv()) {
+			$httpErrorResponseContent = HttpErrorResponseContent::createTextResponseContent(
 				errorMessage: $errorMessage,
 				errorCode: $errorCode
-			),
-			default => throw new LogicException('Invalid contentType: ' . $contentType),
-		};
+			);
+		} else {
+			throw new LogicException('Invalid contentType: ' . $contentType->type);
+		}
 
 		$this->setContent(contentString: $httpErrorResponseContent->getContent());
 	}
 
 	protected function setSuccessResponseContent(stdClass $resultDataObject = new stdClass()): void
 	{
-		$contentType = $this->core->getContentHandler()->getContentType();
-		$httpSuccessResponseContent = match ($contentType) {
-			HttpResponse::TYPE_JSON => HttpSuccessResponseContent::createJsonResponseContent(resultDataObject: $resultDataObject),
-			HttpResponse::TYPE_TXT, HttpResponse::TYPE_CSV => HttpSuccessResponseContent::createTextResponseContent(resultDataObject: $resultDataObject),
-			default => throw new LogicException('Invalid contentType: ' . $contentType),
-		};
+		$contentType = ContentHandler::get()->getContentType();
+		if ($contentType->isJson()) {
+			$httpSuccessResponseContent = HttpSuccessResponseContent::createJsonResponseContent(resultDataObject: $resultDataObject);
+		} else if ($contentType->isTxt() || $contentType->isCsv()) {
+			$httpSuccessResponseContent = HttpSuccessResponseContent::createTextResponseContent(resultDataObject: $resultDataObject);
+		} else {
+			throw new LogicException('Invalid contentType: ' . $contentType->type);
+		}
 
 		$this->setContent(contentString: $httpSuccessResponseContent->getContent());
 	}

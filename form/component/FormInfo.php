@@ -14,11 +14,11 @@ use framework\html\HtmlText;
 class FormInfo extends FormComponent
 {
 	public function __construct(
-		private HtmlText $title,
-		private HtmlText $content,
-		private array    $dlClasses = [],
-		private array    $dtClasses = [],
-		private array    $ddClasses = []
+		private readonly HtmlText $title,
+		private readonly HtmlText $content,
+		private readonly array    $dlClasses = [],
+		private readonly array    $dtClasses = [],
+		private readonly array    $ddClasses = []
 	) {
 		parent::__construct(uniqid());
 	}

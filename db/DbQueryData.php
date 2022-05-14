@@ -8,13 +8,10 @@ namespace framework\db;
 
 class DbQueryData
 {
-	private string $query;
-	private array $params;
-
-	public function __construct(string $query, array $params)
-	{
-		$this->query = $query;
-		$this->params = $params;
+	public function __construct(
+		private readonly string $query,
+		private readonly array $params
+	) {
 	}
 
 	public function getQuery(): string

@@ -119,19 +119,23 @@ class PhoneParser
 		if ($lengthOfNationalNumber > PhoneConstants::MAX_LENGTH_FOR_NSN) {
 			throw new PhoneParseException(message: 'The string supplied is too long to be a phone number.', code: PhoneParseException::TOO_LONG);
 		}
-		$italianLeadingZero = ($countryCode === 39) ? null : false;
 		$numberOfLeadingZeros = 1;
-		if (strlen(string: $normalizedNationalNumber) > 1 && str_starts_with(haystack: $normalizedNationalNumber, needle: '0')) {
-			$italianLeadingZero = true;
-			// Note that if the national number is all "0"s, the last "0" is not counted as a leading zero.
-			while (
-				$numberOfLeadingZeros < (strlen(string: $normalizedNationalNumber) - 1)
-				&& substr(string: $normalizedNationalNumber, offset: $numberOfLeadingZeros, length: 1) === '0'
-			) {
-				$numberOfLeadingZeros++;
+		// See https://github.com/giggsey/libphonenumber-for-php/issues/296 for an issue with italian leading zeros
+		if (!in_array(needle: $countryCode, haystack: PhoneConstants::ITALIAN_LEADING_ZERO_COUNTRY_CODES)) {
+			$italianLeadingZero = false;
+		} else {
+			$italianLeadingZero = null;
+			if (strlen(string: $normalizedNationalNumber) > 1 && str_starts_with(haystack: $normalizedNationalNumber, needle: '0')) {
+				$italianLeadingZero = true;
+				// Note that if the national number is all "0"s, the last "0" is not counted as a leading zero.
+				while (
+					$numberOfLeadingZeros < (strlen(string: $normalizedNationalNumber) - 1)
+					&& substr(string: $normalizedNationalNumber, offset: $numberOfLeadingZeros, length: 1) === '0'
+				) {
+					$numberOfLeadingZeros++;
+				}
 			}
 		}
-
 		$normalizedNationalNumber = ((int)$normalizedNationalNumber === 0) ? '0' : ltrim(string: $normalizedNationalNumber, characters: '0');
 
 		return new PhoneNumber(

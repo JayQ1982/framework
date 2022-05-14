@@ -217,7 +217,7 @@ abstract class FormField extends FormComponent
 	protected function hasRule(string $ruleClassName): bool
 	{
 		foreach ($this->rules as $r) {
-			if (get_class($r) === $ruleClassName) {
+			if (get_class(object: $r) === $ruleClassName) {
 				return true;
 			}
 		}
@@ -227,7 +227,7 @@ abstract class FormField extends FormComponent
 
 	public function isRequired(): bool
 	{
-		return $this->hasRule('framework\form\rule\RequiredRule');
+		return $this->hasRule(ruleClassName: RequiredRule::class);
 	}
 
 	public function addListener(FormFieldListener $formFieldListener): void

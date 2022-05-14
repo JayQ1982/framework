@@ -36,9 +36,9 @@ class MailerAddress
 	private string $addressName;
 
 	private function __construct(
-		private string $kind,
-		string         $inputEmail,
-		string         $inputName
+		private readonly string $kind,
+		string  $inputEmail,
+		string  $inputName
 	) {
 		$inputEmail = mb_strtolower(string: trim(string: $inputEmail));
 		$atPos = strrpos(haystack: $inputEmail, needle: '@');

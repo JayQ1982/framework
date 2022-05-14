@@ -6,11 +6,13 @@
 
 namespace framework\auth;
 
-use framework\core\Core;
 use framework\core\HttpRequest;
-use framework\core\RequestHandler;
+use framework\core\HttpResponse;
+use framework\core\Request;
 use framework\db\FrameworkDB;
 use framework\exception\UnauthorizedException;
+use framework\session\AbstractSessionHandler;
+use JetBrains\PhpStorm\NoReturn;
 use LogicException;
 use stdClass;
 
@@ -28,31 +30,26 @@ class Authenticator
 
 	private static ?Authenticator $instance = null;
 
-	private Core $core;
-	private AuthSettings $authSettings;
 	private int $lastErrorCode = Authenticator::ERROR_UNKNOWN;
 	private ?FrameworkDB $authDb = null;
 	private ?stdClass $loginUserDataCache = null;
 
-	public static function getInstance(Core $core, AuthSettings $authSettings): Authenticator
+	public static function getInstance(AuthSettings $authSettings): Authenticator
 	{
 		if (is_null(Authenticator::$instance)) {
-			Authenticator::$instance = new Authenticator($core, $authSettings);
+			Authenticator::$instance = new Authenticator($authSettings);
 		}
 
 		return Authenticator::$instance;
 	}
 
-	protected static function setInstance(Authenticator $authenticator)
+	protected static function setInstance(Authenticator $authenticator): void
 	{
 		Authenticator::$instance = $authenticator;
 	}
 
-	protected function __construct(Core $core, AuthSettings $authSettings)
+	protected function __construct(private readonly AuthSettings $authSettings)
 	{
-		$this->core = $core;
-		$this->authSettings = $authSettings;
-
 		$now = time();
 		$lastActivity = AuthSession::getLastActivity();
 		if (!is_null($lastActivity) && $this->isLoggedIn() && $now > $lastActivity + $authSettings->getMaxIdleSeconds()) {
@@ -203,15 +200,15 @@ class Authenticator
 
 	protected function regenerateSessionID(): void
 	{
-		$this->core->getSessionHandler()->regenerateID();
+		AbstractSessionHandler::getSessionHandler()->regenerateID();
 	}
 
 	public function checkAccess(bool $accessOnlyForLoggedInUsers, array $requiredAccessRights, bool $autoRedirect): bool
 	{
 		$hasAccess = $this->doAccessCheck($accessOnlyForLoggedInUsers, $requiredAccessRights);
 		if (!$hasAccess && $autoRedirect) {
-			$requestHandler = RequestHandler::getInstance();
-			if ($requestHandler->getRoute() === $requestHandler->getDefaultRoutesByLanguageCode()[$requestHandler->getLanguage()]) {
+			$request = Request::get();
+			if ($request->route === $request->defaultRoutesByLanguage->getRouteForLanguage(languageCode: $request->language->code)) {
 				$this->redirectToLoginPage();
 			}
 
@@ -221,10 +218,10 @@ class Authenticator
 		return $hasAccess;
 	}
 
-	public function redirectToLoginPage(): void
+	#[NoReturn] public function redirectToLoginPage(): void
 	{
 		$pageAfterLogin = base64_encode(HttpRequest::getURI());
-		$this->core->redirect($this->authSettings->getLoginPage() . '?pageAfterLogin=' . $pageAfterLogin);
+		HttpResponse::redirectAndExit(relativeOrAbsoluteUri: $this->authSettings->getLoginPage() . '?pageAfterLogin=' . $pageAfterLogin);
 	}
 
 	private function doAccessCheck(bool $accessOnlyForLoggedInUsers, array $requiredAccessRights): bool

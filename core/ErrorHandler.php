@@ -7,13 +7,19 @@
 namespace framework\core;
 
 use framework\exception\PhpException;
+use LogicException;
 
 class ErrorHandler
 {
-	public function __construct()
+	private static ErrorHandler $registeredInstance;
+
+	public static function register(): void
 	{
-		error_reporting(error_level: E_ALL);
-		set_error_handler(callback: [$this, 'handlePHPError']);
+		if (isset(ErrorHandler::$registeredInstance)) {
+			throw new LogicException(message: 'ErrorHandler is already registered.');
+		}
+		ErrorHandler::$registeredInstance = new ErrorHandler();
+		set_error_handler(callback: [ErrorHandler::$registeredInstance, 'handlePHPError']);
 	}
 
 	public function handlePHPError(int $errorCode, string $errorMessage, string $errorFile, int $errorLine): bool

@@ -6,6 +6,7 @@
 
 namespace framework\table;
 
+use framework\db\DbQuery;
 use framework\db\FrameworkDB;
 use framework\table\column\ActionsColumn;
 use framework\table\column\CallbackColumn;
@@ -46,8 +47,7 @@ class TableHelper
 		return new DbResultTable(
 			identifier: $identifier,
 			db: $db,
-			selectQuery: $selectQuery,
-			params: $params,
+			dbQuery: DbQuery::createFromSqlQuery(query: $selectQuery, parameters: $params),
 			abstractTableFilter: $abstractTableFilter,
 			tablePaginationRenderer: $tablePaginationRenderer,
 			sortableTableHeadRenderer: $sortableTableHeadRenderer,

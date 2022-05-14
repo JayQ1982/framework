@@ -128,4 +128,5 @@ class PhoneConstants
 	];
 	public const MAX_LENGTH_COUNTRY_CODE = 3;
 	public const DEFAULT_EXTN_PREFIX = ' ext. ';
+	public const ITALIAN_LEADING_ZERO_COUNTRY_CODES = [PhoneCountryCodes::IT];
 }

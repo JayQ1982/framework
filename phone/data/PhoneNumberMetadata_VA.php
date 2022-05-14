@@ -7,6 +7,8 @@
  * with "Apache License Version 2.0, January 2004" ( http://www.apache.org/licenses/ )
  */
 
+use framework\phone\PhoneCountryCodes;
+
 return [
 	'generalDesc'                   =>
 		[
@@ -165,7 +167,7 @@ return [
 				],
 		],
 	'id'                            => 'VA',
-	'countryCode'                   => 39,
+	'countryCode'                   => PhoneCountryCodes::IT,
 	'internationalPrefix'           => '00',
 	'sameMobileAndFixedLinePattern' => false,
 	'numberFormat'                  =>

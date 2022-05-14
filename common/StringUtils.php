@@ -165,7 +165,7 @@ class StringUtils
 
 		// Replace multiple dashes
 		$urlifiedStr = preg_replace(
-			pattern: '/[-]{2,}/',
+			pattern: '/-{2,}/',
 			replacement: '-',
 			subject: $urlifiedStr
 		);

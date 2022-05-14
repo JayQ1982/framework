@@ -6,9 +6,9 @@
 
 namespace framework\html;
 
-use framework\core\Core;
-use framework\core\RequestHandler;
-use framework\datacheck\Sanitizer;
+use framework\Core;
+use framework\core\EnvironmentSettingsModel;
+use framework\core\Request;
 use framework\exception\NotFoundException;
 use framework\security\CspNonce;
 use framework\security\CsrfToken;
@@ -18,42 +18,37 @@ use framework\template\template\TemplateEngine;
 class HtmlDocument
 {
 	private static ?HtmlDocument $instance = null;
-	private Core $core;
 	private string $templateName = 'default';
 	private string $contentFileName;
-	private array $replacements = [];
+	public readonly HtmlReplacementCollection $replacements;
 	private array $activeHtmlIds = [];
 
-	public static function getInstance(Core $core): HtmlDocument
+	public static function get(): HtmlDocument
 	{
-		if (is_null(HtmlDocument::$instance)) {
-			HtmlDocument::$instance = new HtmlDocument(core: $core);
+		if (is_null(value: HtmlDocument::$instance)) {
+			HtmlDocument::$instance = new HtmlDocument();
 		}
 
 		return HtmlDocument::$instance;
 	}
 
-	private function __construct(Core $core)
+	private function __construct()
 	{
-		$this->core = $core;
-		$requestHandler = RequestHandler::getInstance();
-		$environmentSettingsModel = $core->getEnvironmentSettingsModel();
-
-		$fileTitle = Sanitizer::trimmedString($requestHandler->getFileTitle());
+		$fileTitle = Request::get()->fileTitle;
 		$this->contentFileName = $fileTitle;
+		$this->replacements = new HtmlReplacementCollection();
+		$environmentSettingsModel = EnvironmentSettingsModel::get();
 
-		$this->replacements['_fileTitle'] = $fileTitle;
-		$this->replacements['_localeHandler'] = $core->getLocaleHandler();
-
-		$copyright = $environmentSettingsModel->getCopyrightYear();
-		$this->addText('bodyid', 'body_' . $fileTitle, true);
-		$this->addText('language', $requestHandler->getLanguage(), true);
-		$this->addText('charset', 'UTF-8', true);
-		$this->addText('copyright', ($copyright < (int)date('Y')) ? $copyright . '-' . date('Y') : $copyright, true);
-		$this->addText('robots', $environmentSettingsModel->getRobots(), true);
-		$this->addText('scripts', '', true);
-		$this->addText('cspNonce', CspNonce::get(), true);
-		$this->addText('csrfField', CsrfToken::renderAsHiddenPostField(), true);
+		$copyright = $environmentSettingsModel->copyrightYear;
+		$replacements = $this->replacements;
+		$replacements->addEncodedText(identifier: 'bodyid', content: 'body_' . $fileTitle);
+		$replacements->addEncodedText(identifier: 'language', content: Request::get()->language->code);
+		$replacements->addEncodedText(identifier: 'charset', content: 'UTF-8');
+		$replacements->addEncodedText(identifier: 'copyright', content: ($copyright < (int)date(format: 'Y')) ? $copyright . '-' . date(format: 'Y') : $copyright);
+		$replacements->addEncodedText(identifier: 'robots', content: $environmentSettingsModel->robots);
+		$replacements->addEncodedText(identifier: 'scripts', content: '');
+		$replacements->addEncodedText(identifier: 'cspNonce', content: CspNonce::get());
+		$replacements->addEncodedText(identifier: 'csrfField', content: CsrfToken::renderAsHiddenPostField());
 	}
 
 	public function setTemplateName(string $templateName): void
@@ -66,77 +61,6 @@ class HtmlDocument
 		$this->contentFileName = $contentFileName;
 	}
 
-	public function hasReplacement(string $name): bool
-	{
-		return array_key_exists($name, $this->replacements);
-	}
-
-	public function addText(string $placeholderName, ?string $content, bool $isEncodedForRendering): void
-	{
-		if (is_null($content)) {
-			$this->replacements[$placeholderName] = null;
-
-			return;
-		}
-		$this->replacements[$placeholderName] = $isEncodedForRendering ? $content : HtmlEncoder::encode(value: $content);
-	}
-
-	public function addBooleanValue(string $placeholderName, bool $booleanValue): void
-	{
-		$this->replacements[$placeholderName] = $booleanValue;
-	}
-
-	public function addDataObject(string $placeholderName, ?HtmlDataObject $htmlDataObject)
-	{
-		$this->replacements[$placeholderName] = is_null($htmlDataObject) ? null : $htmlDataObject->getData();
-	}
-
-	/**
-	 * @param string          $placeholderName
-	 * @param null|HtmlText[] $textElementsArray
-	 */
-	public function addTextElementsArray(string $placeholderName, ?array $textElementsArray): void
-	{
-		if (is_null($textElementsArray)) {
-			$this->replacements[$placeholderName] = null;
-
-			return;
-		}
-		$this->replacements[$placeholderName] = [];
-		foreach ($textElementsArray as $htmlText) {
-			$this->replacements[$placeholderName][] = $htmlText->render();
-		}
-	}
-
-	/**
-	 * @param string                $placeholderName
-	 * @param HtmlDataObject[]|null $htmlDataObjectsArray
-	 */
-	public function addDataObjectsArray(string $placeholderName, ?array $htmlDataObjectsArray): void
-	{
-		if (is_null($htmlDataObjectsArray)) {
-			$this->replacements[$placeholderName] = null;
-
-			return;
-		}
-
-		$this->replacements[$placeholderName] = [];
-		foreach ($htmlDataObjectsArray as $htmlDataObject) {
-			$this->replacements[$placeholderName][] = $htmlDataObject->getData();
-		}
-	}
-
-	/**
-	 * @param string $placeholderName
-	 *
-	 * @deprecated : Backwards compatibility
-	 * @todo       : Replace all occurrences of <tst:if compare="xx" operator="NE" against="null">
-	 */
-	public function addNullAsReplacementValue(string $placeholderName): void
-	{
-		$this->replacements[$placeholderName] = null;
-	}
-
 	public function setActiveHtmlId(int $key, string $val): void
 	{
 		$this->activeHtmlIds[$key] = $val;
@@ -144,40 +68,39 @@ class HtmlDocument
 
 	public function isActiveHtmlIdSet(int $key): bool
 	{
-		return array_key_exists($key, $this->activeHtmlIds);
+		return array_key_exists(key: $key, array: $this->activeHtmlIds);
 	}
 
 	public function render(): string
 	{
-		$core = $this->core;
-		$requestHandler = RequestHandler::getInstance();
-		$contentFileDirectory = $requestHandler->getViewDirectory() . 'html/';
-		if (!is_null($requestHandler->getFileGroup())) {
-			$contentFileDirectory .= $requestHandler->getFileGroup() . '/';
+		$request = Request::get();
+		$viewDirectory = $request->route->getViewDirectory();
+		$contentFileDirectory = $viewDirectory . 'html/';
+		if (!is_null(value: $request->getFileGroup())) {
+			$contentFileDirectory .= $request->getFileGroup() . '/';
 		}
-
 		if ($this->contentFileName === '') {
 			throw new NotFoundException();
 		}
-
 		$fullContentFilePath = $contentFileDirectory . $this->contentFileName . '.html';
-		if (!is_file($fullContentFilePath)) {
+		if (!is_file(filename: $fullContentFilePath)) {
 			throw new NotFoundException();
 		}
-		$this->addText('this', $fullContentFilePath, true);
-
+		$this->replacements->set(identifier: 'this', htmlReplacement: HtmlReplacement::encodedText(content: $fullContentFilePath));
 		$templateName = $this->templateName;
-		$templateFilePath = $requestHandler->getViewDirectory() . 'templates/' . $templateName . '.html';
-		if ($templateName === '' || !is_file($templateFilePath)) {
+		$templateFilePath = $viewDirectory . 'templates/' . $templateName . '.html';
+		if ($templateName === '' || !is_file(filename: $templateFilePath)) {
 			$templateFilePath = $fullContentFilePath;
 		}
-		$coreProperties = $core->getCoreProperties();
-		$tplCache = new DirectoryTemplateCache(
-			cachePath: $coreProperties->getSiteCacheDir(),
-			templateBaseDirectory: $coreProperties->getSiteViewsDir()
+		$core = Core::get();
+		$tplEngine = new TemplateEngine(
+			tplCacheInterface: new DirectoryTemplateCache(
+				cachePath: $core->cacheDirectory,
+				templateBaseDirectory: $core->viewDirectory
+			),
+			tplNsPrefix: 'tst'
 		);
-		$tplEngine = new TemplateEngine($tplCache, 'tst');
-		$htmlAfterReplacements = $tplEngine->getResultAsHtml($templateFilePath, $this->replacements);
+		$htmlAfterReplacements = $tplEngine->getResultAsHtml(tplFile: $templateFilePath, dataPool: $this->replacements->getArrayObject());
 
 		return preg_replace_callback(
 			pattern: '/(\s+id="nav-(.+?)")(\s+class="(.+?)")?/',
@@ -188,7 +111,7 @@ class HtmlDocument
 
 	private function setCSSActive(array $m): string
 	{
-		if (!in_array($m[2], $this->activeHtmlIds)) {
+		if (!in_array(needle: $m[2], haystack: $this->activeHtmlIds)) {
 			// The id is not within activeHtmlIds, so we just return the whole unmodified string
 			return $m[0];
 		}

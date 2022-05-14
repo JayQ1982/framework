@@ -13,11 +13,11 @@ class CSVFile
 	private array $rows = [];
 
 	public function __construct(
-		private string $fileName,
-		private array  $headersList = [],
-		private bool   $utf8Encode = true,
-		private string $delimiter = ';',
-		private string $enclosure = '"'
+		private readonly string $fileName,
+		private readonly array  $headersList = [],
+		private readonly bool   $utf8Encode = true,
+		private readonly string $delimiter = ';',
+		private readonly string $enclosure = '"'
 	) {
 	}
 

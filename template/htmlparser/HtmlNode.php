@@ -61,7 +61,7 @@ abstract class HtmlNode
 	 * @param HtmlNode $nodeToReplace   The node to replace
 	 * @param HtmlNode $replacementNode The replacement node for the original one
 	 */
-	public function replaceNode(HtmlNode $nodeToReplace, HtmlNode $replacementNode)
+	public function replaceNode(HtmlNode $nodeToReplace, HtmlNode $replacementNode): void
 	{
 		$pos = $this->findNodePosition($nodeToReplace);
 
@@ -78,7 +78,7 @@ abstract class HtmlNode
 	 * @param HtmlNode|HtmlNode[] $nodesToInsert A single HtmlNode object or an array of multiple HtmlNode objects
 	 * @param HtmlNode            $beforeNode    HtmlNode object before the new nodes should be inserted
 	 */
-	public function insertBefore(HtmlNode|array $nodesToInsert, HtmlNode $beforeNode)
+	public function insertBefore(HtmlNode|array $nodesToInsert, HtmlNode $beforeNode): void
 	{
 		$pos = $this->findNodePosition($beforeNode);
 
@@ -109,7 +109,7 @@ abstract class HtmlNode
 	 *
 	 * @param HtmlNode $nodeToRemove
 	 */
-	public function removeNode(HtmlNode $nodeToRemove)
+	public function removeNode(HtmlNode $nodeToRemove): void
 	{
 		$countChildren = count($this->childNodes);
 
@@ -130,7 +130,7 @@ abstract class HtmlNode
 	 *
 	 * @param HtmlNode $childNode
 	 */
-	public function addChildNode(HtmlNode $childNode)
+	public function addChildNode(HtmlNode $childNode): void
 	{
 		$this->childNodes[] = $childNode;
 	}
@@ -199,7 +199,7 @@ abstract class HtmlNode
 	 *
 	 * @param HtmlNode[] $childNodes
 	 */
-	public function setChildNodes(array $childNodes)
+	public function setChildNodes(array $childNodes): void
 	{
 		$this->childNodes = $childNodes;
 	}
@@ -215,7 +215,7 @@ abstract class HtmlNode
 	/**
 	 * @param HtmlNode|null $parentNode
 	 */
-	public function setParentNode(?HtmlNode $parentNode)
+	public function setParentNode(?HtmlNode $parentNode): void
 	{
 		$this->parentNode = $parentNode;
 	}

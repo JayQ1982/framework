@@ -7,22 +7,19 @@
 namespace framework\core;
 
 use Exception;
-use framework\datacheck\Sanitizer;
 use Throwable;
 
 class Logger
 {
-	const dnl = PHP_EOL . PHP_EOL;
+	private const dnl = PHP_EOL . PHP_EOL;
 	private int $maxLogSize = 10000000;
-	private ?string $logEmailRecipient;
-	private string $logdir;
 
-	public function __construct(EnvironmentSettingsModel $environmentSettingsModel, CoreProperties $coreProperties)
-	{
-		$this->logEmailRecipient = $environmentSettingsModel->getLogRecipientEmail();
-		$this->logdir = $coreProperties->getSiteLogsDir();
-		if (!is_dir($this->logdir)) {
-			throw new Exception('Log directory does not exist: ' . $this->logdir);
+	public function __construct(
+		private readonly string $logEmailRecipient,
+		private readonly string $logDirectory
+	) {
+		if (!is_dir(filename: $this->logDirectory)) {
+			throw new Exception(message: 'Log directory does not exist: ' . $this->logDirectory);
 		}
 	}
 
@@ -30,14 +27,14 @@ class Logger
 	{
 		$hashableContent = $message;
 
-		if (!is_null($exceptionToLog)) {
+		if (!is_null(value: $exceptionToLog)) {
 			$previousException = $exceptionToLog->getPrevious();
-			$realException = is_null($previousException) ? $exceptionToLog : $previousException;
+			$realException = is_null(value: $previousException) ? $exceptionToLog : $previousException;
 
 			if (trim(string: $message) !== '') {
 				$message .= Logger::dnl;
 			}
-			$message .= get_class($realException) . ': (' . $realException->getCode() . ') "' . $realException->getMessage() . '"' . PHP_EOL;
+			$message .= get_class(object: $realException) . ': (' . $realException->getCode() . ') "' . $realException->getMessage() . '"' . PHP_EOL;
 			$message .= 'thrown in file: ' . $realException->getFile() . ' (Line: ' . $realException->getLine() . ')' . Logger::dnl;
 			$hashableContent = $message;
 			$message .= $realException->getTraceAsString();
@@ -54,28 +51,28 @@ class Logger
 			}
 		}
 
-		$hash = hash('sha256', $hashableContent, false);
-		$this->deliverMessage($hash, $message);
+		$hash = hash(algo: 'sha256', data: $hashableContent, binary: false);
+		$this->deliverMessage(hash: $hash, message: $message);
 	}
 
 	private function deliverMessage(string $hash, string $message): void
 	{
 		$ticketFile = 'ticket_' . $hash . '.txt';
-		$ticketFullPath = $this->logdir . $ticketFile;
-		$isNewIssue = $this->isNewIssue($ticketFullPath);
-		$this->writeMessage($message, $ticketFullPath);
+		$ticketFullPath = $this->logDirectory . $ticketFile;
+		$isNewIssue = $this->isNewIssue(ticketFullPath: $ticketFullPath);
+		$this->writeMessage(message: $message, filenameFullPath: $ticketFullPath);
 		if ($isNewIssue) {
-			$this->mailMessage('Ticketfile: ' . $ticketFile . Logger::dnl . $message);
+			$this->mailMessage(fullMessage: 'Ticketfile: ' . $ticketFile . Logger::dnl . $message);
 		}
 	}
 
 	private function isNewIssue(string $ticketFullPath): bool
 	{
 		// File will only be written, if the desired content is unique / not already present (determined by the hash):
-		if (!file_exists($ticketFullPath)) {
+		if (!file_exists(filename: $ticketFullPath)) {
 			return true;
 		}
-		$modified = filemtime($ticketFullPath);
+		$modified = filemtime(filename: $ticketFullPath);
 		// Older than 24h?
 		if (($modified + 86400) < time()) {
 			return true;
@@ -86,31 +83,38 @@ class Logger
 
 	private function writeMessage(string $message, string $filenameFullPath): void
 	{
-		$message .= Logger::dnl . '$_SERVER = ' . print_r($_SERVER, true);
-		$message .= Logger::dnl . '$_GET = ' . print_r($_GET, true);
-		$message .= Logger::dnl . '$_POST = ' . print_r($_POST, true);
-		$message .= Logger::dnl . '$_FILES = ' . print_r($_FILES, true);
-		$message .= Logger::dnl . '$_COOKIE = ' . print_r($_COOKIE, true);
+		$message .= Logger::dnl . '$_SERVER = ' . print_r(value: $_SERVER, return: true);
+		$message .= Logger::dnl . '$_GET = ' . print_r(value: $_GET, return: true);
+		$message .= Logger::dnl . '$_POST = ' . print_r(value: $_POST, return: true);
+		$message .= Logger::dnl . '$_FILES = ' . print_r(value: $_FILES, return: true);
+		$message .= Logger::dnl . '$_COOKIE = ' . print_r(value: $_COOKIE, return: true);
 
-		$this->checkMaxFileSize($filenameFullPath);
+		$this->checkMaxFileSize(filenameFullPath: $filenameFullPath);
 		// Because of date('u')-PHP-bug (always 00000)
-		$mtimeParts = explode(' ', (string)microtime());
-		$timestamp = date('Y-m-d H:i:s', $mtimeParts[1]) . ',' . substr($mtimeParts[0], 2);
-		$msg = $timestamp . PHP_EOL . $message . PHP_EOL . str_pad('', 70, '=') . PHP_EOL;
-		error_log($msg, 3, $filenameFullPath);
+		$mtimeParts = explode(separator: ' ', string: (string)microtime());
+		$timestamp = date(format: 'Y-m-d H:i:s', timestamp: $mtimeParts[1]) . ',' . substr(string: $mtimeParts[0], offset: 2);
+		error_log(
+			message: $timestamp . PHP_EOL . $message . PHP_EOL . str_pad('', 70, '=') . PHP_EOL,
+			message_type: 3,
+			destination: $filenameFullPath
+		);
 	}
 
 	private function mailMessage(string $fullMessage): void
 	{
-		if (Sanitizer::trimmedString($this->logEmailRecipient) === '') {
+		if ($this->logEmailRecipient === '') {
 			return;
 		}
-		$headers = [
-			'From: error@' . $_SERVER['SERVER_NAME'],
-			'Date: ' . date('r'),
-			'Content-Type: text/plain; charset=UTF-8',
-		];
-		error_log($fullMessage, 1, $this->logEmailRecipient, implode(PHP_EOL, $headers));
+		error_log(
+			message: $fullMessage,
+			message_type: 1,
+			destination: $this->logEmailRecipient,
+			additional_headers: implode(separator: PHP_EOL, array: [
+				'From: error@' . $_SERVER['SERVER_NAME'],
+				'Date: ' . date(format: 'r'),
+				'Content-Type: text/plain; charset=UTF-8',
+			])
+		);
 	}
 
 	private function checkMaxFileSize(string $filenameFullPath): void
@@ -119,21 +123,21 @@ class Logger
 			return;
 		}
 
-		if (!file_exists($filenameFullPath) || filesize($filenameFullPath) < $this->maxLogSize) {
+		if (!file_exists(filename: $filenameFullPath) || filesize(filename: $filenameFullPath) < $this->maxLogSize) {
 			return;
 		}
 
-		$filePathParts = explode(DIRECTORY_SEPARATOR, $filenameFullPath);
-		$fileName = array_pop($filePathParts);
+		$filePathParts = explode(separator: DIRECTORY_SEPARATOR, string: $filenameFullPath);
+		$fileName = array_pop(array: $filePathParts);
 
 		$i = 0;
-		foreach (scandir(implode(DIRECTORY_SEPARATOR, $filePathParts)) as $f) {
-			$pos = (strpos($f, $fileName));
+		foreach (scandir(directory: implode(separator: DIRECTORY_SEPARATOR, array: $filePathParts)) as $f) {
+			$pos = strpos(haystack: $f, needle: $fileName);
 			if ($pos === false) {
 				continue;
 			}
 
-			$fileNum = substr($f, $pos + strlen($fileName) + 1);
+			$fileNum = substr(string: $f, offset: $pos + strlen($fileName) + 1);
 
 			if ($fileNum > $i) {
 				$i = $fileNum;
@@ -141,15 +145,13 @@ class Logger
 		}
 
 		++$i;
-
 		$newFilename = $filenameFullPath . '.' . $i;
-
 		/* rename() does not work proper */
-		$fp = fopen($newFilename, 'a+');
-		fwrite($fp, file_get_contents($filenameFullPath));
-		fclose($fp);
+		$fp = fopen(filename: $newFilename, mode: 'a+');
+		fwrite(stream: $fp, data: file_get_contents(filename: $filenameFullPath));
+		fclose(stream: $fp);
 
-		$fp = fopen($filenameFullPath, 'w+');
-		fclose($fp);
+		$fp = fopen(filename: $filenameFullPath, mode: 'w+');
+		fclose(stream: $fp);
 	}
 }

@@ -110,8 +110,6 @@ class ForTag extends TemplateTag implements TagNode
 			if (($forNode instanceof ElementNode) === false) {
 				continue;
 			}
-
-			/** @var ElementNode $forNode */
 			$classAttr = $forNode->getAttribute('class');
 			$classVal = $classAttr->getValue();
 

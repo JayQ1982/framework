@@ -68,30 +68,24 @@ class TableFilter extends AbstractTableFilter
 			$whereConds[$key] = '(' . $val . ')';
 		}
 
-		$currentSelectQuery = $dbResultTable->getSelectQuery();
-		if ((int)strrpos(haystack: $currentSelectQuery, needle: 'WHERE') < strrpos(haystack: $currentSelectQuery, needle: 'FROM')) {
-			$dbResultTable->addToSelectQuery(additionalSql: 'WHERE ' . implode(separator: ' AND ', array: $whereConds));
-		} else {
-			$dbResultTable->addToSelectQuery(additionalSql: 'AND ' . implode(separator: ' AND ', array: $whereConds));
-		}
-
-		foreach ($params as $param) {
-			$dbResultTable->addParam(param: $param);
-		}
+		$dbResultTable->getDbQuery()->addWherePart(
+			wherePart: implode(separator: ' AND ', array: $whereConds),
+			parameters: $params
+		);
 	}
 
 	public function render(): string
 	{
 		$htmlArr = [
-			'<div class="table-filter-wrapper clearfix">',
-			'<div class="table-filter-legend-wrap clearfix">',
+			'<div class="table-filter-wrapper">',
+			'<div class="table-filter-legend-wrap">',
 			'<a href="#" class="trigger-table-filter-legend">Suchoptionen</a>',
-			'<div class="table-filter-legend clearfix">',
-			'<dl class="clearfix"><dt>.</dt><dd>Feld ist nicht leer</dd></dl>',
-			'<dl class="clearfix"><dt>!term</dt><dd>Feld enthält "term" nicht</dd></dl>',
-			'<dl class="clearfix"><dt>_</dt><dd>Feld ist leer</dd></dl>',
-			'<dl class="clearfix"><dt>%</dt><dd>Wildcard</dd></dl>',
-			'<dl class="clearfix"><dt>*</dt><dd>Wildcard</dd></dl>',
+			'<div class="table-filter-legend">',
+			'<dl><dt>.</dt><dd>Feld ist nicht leer</dd></dl>',
+			'<dl><dt>!term</dt><dd>Feld enthält "term" nicht</dd></dl>',
+			'<dl><dt>_</dt><dd>Feld ist leer</dd></dl>',
+			'<dl><dt>%</dt><dd>Wildcard</dd></dl>',
+			'<dl><dt>*</dt><dd>Wildcard</dd></dl>',
 			'</div>',
 			'</div>',
 			'<form method="post" action="?find=' . $this->getIdentifier() . '" class="form-tablefilter">',
@@ -99,7 +93,7 @@ class TableFilter extends AbstractTableFilter
 		];
 
 		$htmlArr[] = '<div class="table-filter-primary-wrap">';
-		$htmlArr[] = '<ul class="table-filter table-filter-primary clearfix">';
+		$htmlArr[] = '<ul class="table-filter table-filter-primary">';
 		foreach ($this->filterFields as $abstractTableFilterField) {
 			$htmlArr[] = $abstractTableFilterField->render();
 		}

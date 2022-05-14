@@ -12,11 +12,11 @@ namespace framework\phone;
 class PhoneNumber
 {
 	public function __construct(
-		private string $extension,
-		private int    $countryCode,
-		private ?bool  $italianLeadingZero,
-		private int    $numberOfLeadingZeros,
-		private string $nationalNumber
+		private readonly string $extension,
+		private readonly int    $countryCode,
+		private readonly ?bool  $italianLeadingZero,
+		private readonly int    $numberOfLeadingZeros,
+		private readonly string $nationalNumber
 	) {
 	}
 

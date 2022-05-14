@@ -54,7 +54,7 @@ class FileFieldRenderer extends FormRenderer
 			]);
 			$htmlContent = '';
 			foreach ($alreadyUploadedFiles as $hash => $fileDataModel) {
-				$htmlContent .= '<li class="clearfix"><b>' . HtmlEncoder::encode(value: $fileDataModel->getName()) . '</b> <button type="submit" name="' . FileField::FIELD_PREFIX . '_removeAttachment" value="' . HtmlEncoder::encode(value: $hash) . '">löschen</button>';
+				$htmlContent .= '<li><b>' . HtmlEncoder::encode(value: $fileDataModel->getName()) . '</b> <button type="submit" name="' . FileField::FIELD_PREFIX . '_removeAttachment" value="' . HtmlEncoder::encode(value: $hash) . '">löschen</button>';
 			}
 			$fileListBox->addText(HtmlText::encoded($htmlContent));
 			$wrapper->addTag($fileListBox);

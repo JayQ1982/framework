@@ -62,6 +62,6 @@ class LoadSubTplTag extends TemplateTag implements TagNode
 
 			return;
 		}
-		echo $tplEngine->getResultAsHtml($file, (array)$tplEngine->getAllData());
+		echo $tplEngine->getResultAsHtml($file, $tplEngine->getAllData());
 	}
 }

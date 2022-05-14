@@ -24,6 +24,7 @@ class FileSizeColumn extends AbstractTableColumn
 		if (is_null($bytes)) {
 			return '';
 		}
+
 		return StringUtils::formatBytes($bytes, $this->decimals);
 	}
 }

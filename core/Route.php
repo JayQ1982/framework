@@ -6,71 +6,33 @@
 
 namespace framework\core;
 
+use framework\Core;
 use LogicException;
 
 class Route
 {
-	private static array $paths = [];
+	/** @var Route[] */
+	private static array $routesByPath = [];
 
 	public function __construct(
-		private string  $path,
-		private string  $viewGroup,
-		private string  $defaultFileName,
-		private bool    $isDefaultForLanguage,
-		private ?string $contentType = null,
-		private ?string $languageCode = null,
-		private ?string $acceptedExtension = HttpResponse::TYPE_HTML,
-		private ?string $forceFileGroup = null,
-		private ?string $forceFileName = null
+		public readonly string      $path,
+		public readonly string      $viewGroup,
+		public readonly string      $defaultFileName,
+		public readonly bool        $isDefaultForLanguage,
+		public readonly ContentType $defaultContentType,
+		public readonly ?Language   $language = null,
+		public readonly ?string     $acceptedExtension = ContentType::HTML,
+		public readonly ?string     $forceFileGroup = null,
+		public readonly ?string     $forceFileName = null
 	) {
-		if (in_array(needle: $path, haystack: Route::$paths)) {
+		if (array_key_exists(key: $path, array: Route::$routesByPath)) {
 			throw new LogicException(message: 'There is already a route with this path: ' . $path);
 		}
-		Route::$paths[] = $path;
+		Route::$routesByPath[$path] = $this;
 	}
 
-	public function getPath(): string
+	public function getViewDirectory(): string
 	{
-		return $this->path;
-	}
-
-	public function getViewGroup(): string
-	{
-		return $this->viewGroup;
-	}
-
-	public function getAcceptedExtension(): ?string
-	{
-		return $this->acceptedExtension;
-	}
-
-	public function getDefaultFileName(): string
-	{
-		return $this->defaultFileName;
-	}
-
-	public function getLanguageCode(): string
-	{
-		return $this->languageCode;
-	}
-
-	public function getContentType(): string
-	{
-		return $this->contentType;
-	}
-
-	public function isDefaultForLanguage(): bool
-	{
-		return $this->isDefaultForLanguage;
-	}
-
-	public function getForceFileGroup(): ?string
-	{
-		return $this->forceFileGroup;
-	}
-
-	public function getForceFileName(): ?string
-	{
-		return $this->forceFileName;
+		return Core::get()->viewDirectory . $this->viewGroup . DIRECTORY_SEPARATOR;
 	}
 }

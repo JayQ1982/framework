@@ -36,7 +36,7 @@ class MailerStringAttachment
 		string       $contentString,
 		string       $fileName,
 		string       $type,
-		private bool $dispositionInline = false
+		private readonly bool $dispositionInline = false
 	) {
 		$contentString = trim($contentString);
 		$fileName = trim($fileName);

@@ -17,7 +17,7 @@ class HtmlDataObject
 		$this->data = new stdClass();
 	}
 
-	public function addTextElement(string $propertyName, ?string $content, bool $isEncodedForRendering)
+	public function addTextElement(string $propertyName, ?string $content, bool $isEncodedForRendering): void
 	{
 		if (is_null($content)) {
 			$this->data->{$propertyName} = null;
@@ -28,7 +28,7 @@ class HtmlDataObject
 		$this->data->{$propertyName} = $isEncodedForRendering ? $content : HtmlEncoder::encode(value: $content);
 	}
 
-	public function addDataObject(string $propertyName, ?HtmlDataObject $htmlDataObject)
+	public function addDataObject(string $propertyName, ?HtmlDataObject $htmlDataObject): void
 	{
 		$this->data->{$propertyName} = is_null($htmlDataObject) ? null : $htmlDataObject->getData();
 	}

@@ -15,7 +15,7 @@ class Pagination
 	protected const linkTarget = '[linkTarget]';
 	protected const pageNumber = '[pageNumber]';
 
-	private string $rootDivClass = 'pagination clearfix';
+	private string $rootDivClass = 'pagination';
 	private string $ulClass = '';
 	private string $backDisabledHtml = '<li class="backdisabled">&laquo;</li>';
 	private string $backHtml = '<li class="back"><a href="' . Pagination::linkTarget . '">&laquo;</a></li>';
