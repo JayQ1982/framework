@@ -175,7 +175,7 @@ class HttpRequest
 
 	private static function getInputData(): array
 	{
-		if (!is_array(value: HttpRequest::$inputData)) {
+		if (!isset(HttpRequest::$inputData)) {
 			HttpRequest::$inputData = array_merge($_GET, $_POST);
 		}
 

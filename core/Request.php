@@ -21,7 +21,7 @@ class Request
 	public readonly RouteCollection $defaultRoutesByLanguage;
 	public readonly Route $route;
 	private ?string $fileGroup = null;
-	private array $routeVariables;
+	private array $routeVariables = [];
 	public readonly Language $language;
 	public readonly string $fileTitle;
 	public readonly array $pathVars;
