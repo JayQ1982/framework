@@ -96,7 +96,7 @@ abstract class BaseView
 
 	protected function getPathVar(int $nr): ?string
 	{
-		$pathVars = Request::get()->pathParts;
+		$pathVars = Request::get()->pathVars;
 
 		return array_key_exists(key: $nr, array: $pathVars) ? $pathVars[$nr] : null;
 	}
