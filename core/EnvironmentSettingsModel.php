@@ -25,6 +25,7 @@ class EnvironmentSettingsModel
 		if (!is_null(value: EnvironmentSettingsModel::$instance)) {
 			throw new LogicException(message: 'There is already an instance of EnvironmentSettingsModel');
 		}
+		EnvironmentSettingsModel::$instance = $this;
 	}
 
 	public static function get(): EnvironmentSettingsModel

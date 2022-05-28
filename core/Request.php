@@ -34,7 +34,7 @@ class Request
 
 	public static function register(RouteCollection $routeCollection): void
 	{
-		Request(allRoutes: $routeCollection);
+		new Request(allRoutes: $routeCollection);
 	}
 
 	private function __construct(RouteCollection $allRoutes)
