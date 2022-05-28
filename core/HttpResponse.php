@@ -10,7 +10,6 @@ use framework\common\FileHandler;
 use framework\common\UrlHelper;
 use framework\security\CspPolicySettingsModel;
 use framework\session\AbstractSessionHandler;
-use JetBrains\PhpStorm\NoReturn;
 use LogicException;
 
 class HttpResponse
@@ -47,7 +46,7 @@ class HttpResponse
 		$this->setHeader(key: 'Strict-Transport-Security', val: 'max-age=' . $maxAge);
 	}
 
-	#[NoReturn] public static function redirectAndExit(
+	public static function redirectAndExit(
 		string         $relativeOrAbsoluteUri,
 		HttpStatusCode $httpStatusCode = HttpStatusCode::HTTP_SEE_OTHER,
 		bool           $setSameSiteCookieTemporaryToLax = false
@@ -89,7 +88,7 @@ class HttpResponse
 		}
 
 		return new HttpResponse(
-			eTag: md5($contentString),
+			eTag: md5(string: $contentString),
 			lastModifiedTimeStamp: time(),
 			httpStatusCode: $httpStatusCode,
 			downloadFileName: null,
@@ -99,7 +98,7 @@ class HttpResponse
 		);
 	}
 
-	public static function createResponseFromFilePath(string $absolutePathToFile, ?bool $forceDownload, ?string $individualFileName, ?int $maxAge): HttpResponse
+	public static function createResponseFromFilePath(string $absolutePathToFile, ?bool $forceDownload, ?string $individualFileName, int $maxAge): HttpResponse
 	{
 		$realPath = realpath(path: $absolutePathToFile);
 
@@ -153,7 +152,7 @@ class HttpResponse
 		return false;
 	}
 
-	#[NoReturn] public function sendAndExit(): void
+	public function sendAndExit(): void
 	{
 		header(header: $this->httpStatusCode->getStatusHeader());
 		foreach ($this->headers as $key => $val) {

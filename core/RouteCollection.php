@@ -51,6 +51,6 @@ class RouteCollection
 
 	public function getFirstRoute(): Route
 	{
-		return current($this->routes);
+		return current(array: $this->routes);
 	}
 }

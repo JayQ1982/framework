@@ -12,7 +12,7 @@ use LogicException;
 
 class Autoloader
 {
-	private static Autoloader $registeredInstance;
+	private static ?Autoloader $registeredInstance = null;
 
 	private string $cacheFilePath;
 	private array $cachedClasses = [];
@@ -22,7 +22,7 @@ class Autoloader
 
 	public static function register(string $cacheFilePath = ''): Autoloader
 	{
-		if (isset(Autoloader::$registeredInstance)) {
+		if (!is_null(value: Autoloader::$registeredInstance)) {
 			throw new LogicException(message: 'Autoloader is already registered.');
 		}
 		Autoloader::$registeredInstance = new Autoloader(cacheFilePath: $cacheFilePath);
@@ -42,7 +42,7 @@ class Autoloader
 		if (!$this->checkIfCacheDirectoryExists(cacheFilePath: $cacheFilePath)) {
 			return;
 		}
-		$this->cachedClasses = $this->initCachedClasses($cacheFilePath);
+		$this->cachedClasses = $this->initCachedClasses(cacheFilePath: $cacheFilePath);
 	}
 
 	private function checkIfCacheDirectoryExists(string $cacheFilePath): bool
@@ -50,9 +50,9 @@ class Autoloader
 		if ($cacheFilePath === '') {
 			return true;
 		}
-		$dir = dirname($cacheFilePath);
-		if (!is_dir($dir)) {
-			throw new Exception('Cache-Directory ' . $dir . ' does not exist');
+		$dir = dirname(path: $cacheFilePath);
+		if (!is_dir(filename: $dir)) {
+			throw new Exception(message: 'Cache-Directory ' . $dir . ' does not exist');
 		}
 
 		return true;
@@ -60,11 +60,11 @@ class Autoloader
 
 	private function initCachedClasses(string $cacheFilePath): array
 	{
-		if ($cacheFilePath === '' || !file_exists($cacheFilePath)) {
+		if ($cacheFilePath === '' || !file_exists(filename: $cacheFilePath)) {
 			return [];
 		}
 
-		$jsonString = file_get_contents($cacheFilePath);
+		$jsonString = file_get_contents(filename: $cacheFilePath);
 
 		return json_decode(json: $jsonString, associative: true, flags: JSON_THROW_ON_ERROR);
 	}
@@ -77,7 +77,7 @@ class Autoloader
 	private function doAutoload(string $className): bool
 	{
 		$includePath = $this->getPathFromCache($className);
-		if (!is_null($includePath)) {
+		if (!is_null(value: $includePath)) {
 			require_once $includePath;
 
 			return true;
@@ -92,11 +92,11 @@ class Autoloader
 			} else if ($mode === AutoloaderPathModel::MODE_UNDERSCORE) {
 				$delimiter = '_';
 			} else {
-				throw new Exception('Unknown mode for path "' . $path . '": ' . $mode);
+				throw new Exception(message: 'Unknown mode for path "' . $path . '": ' . $mode);
 			}
 
-			$classPathParts = explode($delimiter, $className);
-			$phpFilePath = implode(DIRECTORY_SEPARATOR, $classPathParts);
+			$classPathParts = explode(separator: $delimiter, string: $className);
+			$phpFilePath = implode(separator: DIRECTORY_SEPARATOR, array: $classPathParts);
 
 			$phpFilePathRemove = $autoloaderPathModel->phpFilePathRemove;
 			if ($phpFilePathRemove !== '') {
@@ -110,12 +110,12 @@ class Autoloader
 			foreach ($autoloaderPathModel->fileSuffixList as $fileSuffix) {
 				$includePath = $path . $phpFilePath . $fileSuffix;
 
-				$streamResolvedIncludePath = stream_resolve_include_path($includePath);
+				$streamResolvedIncludePath = stream_resolve_include_path(filename: $includePath);
 				if ($streamResolvedIncludePath === false) {
 					continue;
 				}
 
-				$this->doInclude($includePath, $className);
+				$this->doInclude(includePath: $includePath, className: $className);
 
 				return true;
 			}
@@ -126,17 +126,17 @@ class Autoloader
 
 	private function getPathFromCache(string $className): ?string
 	{
-		if (!isset($this->cachedClasses[$className])) {
+		if (!array_key_exists(key: $className, array: $this->cachedClasses)) {
 			return null;
 		}
 
 		$classPath = $this->cachedClasses[$className];
 
-		if (file_exists($classPath)) {
+		if (file_exists(filename: $classPath)) {
 			return $classPath;
 		}
 
-		if (file_exists('phar://' . $classPath)) {
+		if (file_exists(filename: 'phar://' . $classPath)) {
 			return 'phar://' . $classPath;
 		}
 
@@ -145,7 +145,7 @@ class Autoloader
 
 	private function doInclude(string $includePath, string $className): void
 	{
-		if (class_exists($className)) {
+		if (class_exists(class: $className)) {
 			return;
 		}
 		require_once $includePath;

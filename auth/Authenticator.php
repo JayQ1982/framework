@@ -12,7 +12,6 @@ use framework\core\Request;
 use framework\db\FrameworkDB;
 use framework\exception\UnauthorizedException;
 use framework\session\AbstractSessionHandler;
-use JetBrains\PhpStorm\NoReturn;
 use LogicException;
 use stdClass;
 
@@ -37,7 +36,7 @@ class Authenticator
 	public static function getInstance(AuthSettings $authSettings): Authenticator
 	{
 		if (is_null(Authenticator::$instance)) {
-			Authenticator::$instance = new Authenticator($authSettings);
+			Authenticator::$instance = new Authenticator(authSettings: $authSettings);
 		}
 
 		return Authenticator::$instance;
@@ -218,7 +217,7 @@ class Authenticator
 		return $hasAccess;
 	}
 
-	#[NoReturn] public function redirectToLoginPage(): void
+	public function redirectToLoginPage(): void
 	{
 		$pageAfterLogin = base64_encode(HttpRequest::getURI());
 		HttpResponse::redirectAndExit(relativeOrAbsoluteUri: $this->authSettings->getLoginPage() . '?pageAfterLogin=' . $pageAfterLogin);

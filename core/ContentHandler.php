@@ -17,7 +17,7 @@ class ContentHandler
 
 	private HttpStatusCode $httpStatusCode = HttpStatusCode::HTTP_OK;
 	private string $content = '';
-	public readonly ContentType $contentType;
+	private ContentType $contentType;
 	private bool $suppressCspHeader = false;
 
 	public static function get(): ?ContentHandler
@@ -32,7 +32,7 @@ class ContentHandler
 
 	private function __construct()
 	{
-		if (isset(ContentHandler::$registeredInstance)) {
+		if (!is_null(value: ContentHandler::$registeredInstance)) {
 			throw new LogicException(message: 'ContentHandler is already registered.');
 		}
 		ContentHandler::$registeredInstance = $this;
@@ -92,7 +92,7 @@ class ContentHandler
 	private function loadLocalizedText(): void
 	{
 		$request = Request::get();
-		$dir = $request->route->getViewDirectory() . 'language/' . $request->language->code . '/';
+		$dir = $request->route->viewDirectory . 'language/' . $request->language->code . '/';
 		if (!is_dir(filename: $dir)) {
 			return;
 		}
@@ -109,10 +109,11 @@ class ContentHandler
 
 	private function getViewClass(): ?BaseView
 	{
+		$core = Core::get();
 		$request = Request::get();
 		$phpClassNameParts = [
-			Core::get()->siteDirectoryName,
-			'view',
+			$core->siteDirectoryName,
+			$core->viewDirectoryName,
 			$request->route->viewGroup,
 			'php',
 		];

@@ -216,8 +216,8 @@ abstract class FormField extends FormComponent
 
 	protected function hasRule(string $ruleClassName): bool
 	{
-		foreach ($this->rules as $r) {
-			if (get_class(object: $r) === $ruleClassName) {
+		foreach ($this->rules as $rule) {
+			if (get_class(object: $rule) === $ruleClassName) {
 				return true;
 			}
 		}

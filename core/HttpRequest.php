@@ -15,11 +15,10 @@ class HttpRequest
 	public const PROTOCOL_HTTPS = 'https';
 	public const SSL_PORT = 443;
 
-	private static array $inputData;
-	private static string $host;
-	private static string $protocol;
-	/** @var string[] */
-	private static array $languages;
+	private static ?array $inputData = null;
+	private static ?string $host = null;
+	private static ?string $protocol = null;
+	private static ?array $languages = null;
 
 	public static function hasScalarInputValue(string $keyName): bool
 	{
@@ -70,7 +69,7 @@ class HttpRequest
 
 	public static function getHost(): string
 	{
-		if (isset(HttpRequest::$host)) {
+		if (!is_null(value: HttpRequest::$host)) {
 			return HttpRequest::$host;
 		}
 		if (array_key_exists(key: 'HTTP_HOST', array: $_SERVER)) {
@@ -99,7 +98,7 @@ class HttpRequest
 
 	public static function getProtocol(): string
 	{
-		if (isset(HttpRequest::$protocol)) {
+		if (!is_null(value: HttpRequest::$protocol)) {
 			return HttpRequest::$protocol;
 		}
 		if (array_key_exists(key: 'HTTPS', array: $_SERVER)) {
@@ -142,13 +141,13 @@ class HttpRequest
 	 */
 	public static function listBrowserLanguagesByQuality(): array
 	{
-		if (isset(HttpRequest::$languages)) {
+		if (!is_null(value: HttpRequest::$languages)) {
 			return HttpRequest::$languages;
 		}
 		HttpRequest::$languages = [];
 		$acceptLanguageString = array_key_exists(key: 'HTTP_ACCEPT_LANGUAGE', array: $_SERVER) ? (string)$_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
 		if ($acceptLanguageString === '') {
-			return HttpRequest::$languages;
+			return [];
 		}
 		$acceptedLanguages = explode(separator: ',', string: $acceptLanguageString);
 		$listByQuality = [];
@@ -175,11 +174,11 @@ class HttpRequest
 
 	private static function getInputData(): array
 	{
-		if (!isset(HttpRequest::$inputData)) {
-			HttpRequest::$inputData = array_merge($_GET, $_POST);
+		if (!is_null(value: HttpRequest::$inputData)) {
+			return HttpRequest::$inputData;
 		}
 
-		return HttpRequest::$inputData;
+		return HttpRequest::$inputData = array_merge($_GET, $_POST);
 	}
 
 	public static function getReferrer(): string

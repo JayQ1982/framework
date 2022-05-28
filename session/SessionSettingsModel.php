@@ -11,7 +11,7 @@ class SessionSettingsModel
 	public function __construct(
 		public readonly string $savePath = '',
 		public readonly string $individualName = '',
-		public readonly ?int    $maxLifeTime = null,
+		public readonly ?int   $maxLifeTime = null,
 		public readonly bool   $isSameSiteStrict = true
 	) {
 	}

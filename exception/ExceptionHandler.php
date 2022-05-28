@@ -20,13 +20,13 @@ use Throwable;
 
 class ExceptionHandler
 {
-	private static ExceptionHandler $registeredInstance;
+	private static ?ExceptionHandler $registeredInstance = null;
 	protected ContentType $contentType;
 
 	public static function register(?ExceptionHandler $individualExceptionHandler): void
 	{
-		if (isset(ExceptionHandler::$registeredInstance)) {
-			throw new LogicException(message: 'Exception handler is already registered.');
+		if (!is_null(value: ExceptionHandler::$registeredInstance)) {
+			throw new LogicException(message: 'ExceptionHandler is already registered.');
 		}
 		ExceptionHandler::$registeredInstance = is_null(value: $individualExceptionHandler) ? new ExceptionHandler() : $individualExceptionHandler;
 		set_exception_handler(callback: [
@@ -163,7 +163,7 @@ class ExceptionHandler
 
 	private function getHtmlContent(string $htmlFileName, array $placeholders): string
 	{
-		$contentPath = Core::get()->siteDirectory . 'error_docs/' . $htmlFileName;
+		$contentPath = Core::get()->errorDocsDirectory . $htmlFileName;
 		if (!file_exists(filename: $contentPath)) {
 			return 'Missing error html file ' . $contentPath;
 		}

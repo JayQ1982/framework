@@ -62,7 +62,7 @@ class HtmlSnippet
 		);
 		$renderer = new TemplateEngine(tplCacheInterface: $tplCache, tplNsPrefix: 'tst');
 
-		return $renderer->getResultAsHtml(tplFile: $this->htmlSnippetFilePath, dataPool: new ArrayObject($this->replacements));
+		return $renderer->getResultAsHtml(tplFile: $this->htmlSnippetFilePath, dataPool: new ArrayObject(array: $this->replacements));
 	}
 
 	/**

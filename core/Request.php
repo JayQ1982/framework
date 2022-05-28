@@ -13,7 +13,7 @@ use LogicException;
 
 class Request
 {
-	private static Request $registeredInstance;
+	private static ?Request $instance = null;
 
 	public readonly array $pathParts;
 	public readonly int $countPathParts;
@@ -29,19 +29,20 @@ class Request
 
 	public static function get(): Request
 	{
-		return Request::$registeredInstance;
+		return Request::$instance;
 	}
 
 	public static function register(RouteCollection $routeCollection): void
 	{
-		Request::$registeredInstance = new Request(allRoutes: $routeCollection);
+		Request(allRoutes: $routeCollection);
 	}
 
 	private function __construct(RouteCollection $allRoutes)
 	{
-		if (isset(Request::$registeredInstance)) {
+		if (!is_null(value: Request::$instance)) {
 			throw new LogicException(message: 'Request is already registered');
 		}
+		Request::$instance = $this;
 		$environmentSettingsModel = EnvironmentSettingsModel::get();
 		$this->checkDomain(allowedDomains: $environmentSettingsModel->allowedDomains);
 		$this->pathParts = explode(separator: '/', string: HttpRequest::getPath());
@@ -57,12 +58,11 @@ class Request
 		if (!is_null(value: $forceFileName) && $forceFileName !== '') {
 			$this->fileName = $forceFileName;
 		}
-		$routeLanguage = $this->route->language;
-		$this->language = !is_null(value: $routeLanguage) ? $routeLanguage : $environmentSettingsModel->availableLanguages->getFirstLanguage();
+		$this->language = !is_null(value: $this->route->language) ? $this->route->language : $environmentSettingsModel->availableLanguages->getFirstLanguage();
 		$sessionHandler = AbstractSessionHandler::getSessionHandler();
-		$preferredLanguage = $sessionHandler->getPreferredLanguage();
-		if (is_null(value: $preferredLanguage) || $preferredLanguage !== $this->language->code) {
-			$sessionHandler->setPreferredLanguage(languageCode: $this->language->code);
+		$preferredLanguageCode = $sessionHandler->getPreferredLanguageCode();
+		if (is_null(value: $preferredLanguageCode) || $preferredLanguageCode !== $this->language->code) {
+			$sessionHandler->setPreferredLanguage(language: $this->language);
 		}
 		$fileName = (trim(string: $this->fileName) === '') ? $this->route->defaultFileName : $this->fileName;
 		$dotPos = strripos(haystack: $fileName, needle: '.');
@@ -79,7 +79,7 @@ class Request
 			subject: explode(separator: '-', string: substr(string: $fileName, offset: 0, length: $length))
 		);
 		$this->fileName = $fileName;
-		$this->fileTitle = (string)$fnArr[0];
+		$this->fileTitle = $fnArr[0];
 		$this->pathVars = $fnArr;
 		$this->fileExtension = $fileExtension;
 		if (!is_null(value: $this->route->acceptedExtension) && $this->fileExtension !== $this->route->acceptedExtension) {
@@ -170,10 +170,10 @@ class Request
 		}
 		if (HttpRequest::getURI() === '/') {
 			$defaultRoutesByLanguage = $this->defaultRoutesByLanguage;
-			$preferredLanguage = AbstractSessionHandler::getSessionHandler()->getPreferredLanguage();
-			if (!is_null(value: $preferredLanguage)) {
+			$preferredLanguageCode = AbstractSessionHandler::getSessionHandler()->getPreferredLanguageCode();
+			if (!is_null(value: $preferredLanguageCode)) {
 				foreach ($defaultRoutesByLanguage->getRoutes() as $route) {
-					if ($route->language->code === $preferredLanguage) {
+					if ($route->language->code === $preferredLanguageCode) {
 						HttpResponse::redirectAndExit(relativeOrAbsoluteUri: $route->path);
 					}
 				}

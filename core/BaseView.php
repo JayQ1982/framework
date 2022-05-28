@@ -25,7 +25,7 @@ abstract class BaseView
 		array                           $requiredAccessRights,
 		private readonly array          $mandatoryParams = [],
 		private readonly array          $optionalParams = [],
-		?ContentType                         $individualContentType = null
+		?ContentType                    $individualContentType = null
 	) {
 		if (!is_null(value: $individualContentType)) {
 			$this->setContentType(contentType: $individualContentType);
@@ -172,7 +172,7 @@ abstract class BaseView
 				errorCode: $errorCode
 			);
 		} else {
-			throw new LogicException('Invalid contentType: ' . $contentType->type);
+			throw new LogicException(message: 'Invalid contentType: ' . $contentType->type);
 		}
 
 		$this->setContent(contentString: $httpErrorResponseContent->getContent());
@@ -186,7 +186,7 @@ abstract class BaseView
 		} else if ($contentType->isTxt() || $contentType->isCsv()) {
 			$httpSuccessResponseContent = HttpSuccessResponseContent::createTextResponseContent(resultDataObject: $resultDataObject);
 		} else {
-			throw new LogicException('Invalid contentType: ' . $contentType->type);
+			throw new LogicException(message: 'Invalid contentType: ' . $contentType->type);
 		}
 
 		$this->setContent(contentString: $httpSuccessResponseContent->getContent());

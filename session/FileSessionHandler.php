@@ -8,9 +8,8 @@ namespace framework\session;
 
 class FileSessionHandler extends AbstractSessionHandler
 {
-	public function __construct(
-		private readonly SessionSettingsModel $sessionSettingsModel
-	) {
+	public function __construct(private readonly SessionSettingsModel $sessionSettingsModel)
+	{
 		parent::__construct(sessionSettingsModel: $sessionSettingsModel);
 	}
 

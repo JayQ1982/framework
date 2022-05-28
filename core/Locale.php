@@ -11,7 +11,7 @@ use LogicException;
 
 class Locale
 {
-	private static Locale $registeredInstance;
+	private static ?Locale $registeredInstance = null;
 	private array $languageBlocks = [];
 	private array $loadedLangFiles = [];
 
@@ -22,14 +22,15 @@ class Locale
 
 	public static function register(): void
 	{
-		Locale::$registeredInstance = new Locale();
+		new Locale();
 	}
 
 	private function __construct()
 	{
-		if (isset(Locale::$registeredInstance)) {
+		if (!is_null(value: Locale::$registeredInstance)) {
 			throw new LogicException(message: 'Locale is already registered');
 		}
+		Locale::$registeredInstance = $this;
 		$requestLanguageCode = Request::get()->language->code;
 		$activeLanguage = EnvironmentSettingsModel::get()->availableLanguages->getLanguageByCode(languageCode: $requestLanguageCode);
 		if (is_null(value: $activeLanguage)) {

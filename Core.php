@@ -25,13 +25,14 @@ use LogicException;
 
 class Core
 {
-	private static Core $instance;
-	private static HttpResponse $httpResponse;
+	private static ?Core $instance = null;
+	private static ?HttpResponse $httpResponse = null;
 
 	public readonly string $documentRoot;
 	public readonly string $frameworkDirectory;
 	public readonly string $siteDirectory;
 	public readonly string $cacheDirectory;
+	public readonly string $errorDocsDirectory;
 	public readonly string $logDirectory;
 	public readonly string $settingsDirectory;
 	public readonly string $viewDirectory;
@@ -43,16 +44,21 @@ class Core
 	}
 
 	public function __construct(
+		string                 $defaultTimeZone = 'Europe/Zurich',
 		public readonly string $siteDirectoryName = 'site',
-		public readonly string $timezone = 'Europe/Zurich',
+		string                 $cacheDirectoryName = 'cache',
+		string                 $errorDocsDirectoryName = 'error_docs',
+		string                 $logsDirectoryName = 'logs',
+		string                 $settingsDirectoryName = 'settings',
+		public readonly string $viewDirectoryName = 'view',
 		string                 $frameworkFilePathRemove = ''
 	) {
-		if (isset(Core::$instance)) {
-			throw new LogicException(message: 'Core is already initialized. Use Core::get().');
+		if (!is_null(value: Core::$instance)) {
+			throw new LogicException(message: 'Core is already initialized');
 		}
 		Core::$instance = $this;
 		error_reporting(error_level: E_ALL);
-		date_default_timezone_set(timezoneId: $timezone);
+		date_default_timezone_set(timezoneId: $defaultTimeZone);
 		$this->documentRoot = str_replace(
 			search: DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR,
 			replace: DIRECTORY_SEPARATOR,
@@ -60,13 +66,14 @@ class Core
 		);
 		$this->frameworkDirectory = $frameworkDirectory = dirname(path: __FILE__) . DIRECTORY_SEPARATOR;
 		$this->siteDirectory = $this->documentRoot . $siteDirectoryName . DIRECTORY_SEPARATOR;
-		$this->cacheDirectory = $this->siteDirectory . 'cache' . DIRECTORY_SEPARATOR;
-		$this->logDirectory = $this->siteDirectory . 'logs' . DIRECTORY_SEPARATOR;
-		$this->settingsDirectory = $this->siteDirectory . 'settings' . DIRECTORY_SEPARATOR;
-		$this->viewDirectory = $this->siteDirectory . 'view' . DIRECTORY_SEPARATOR;
+		$this->cacheDirectory = $this->siteDirectory . $cacheDirectoryName . DIRECTORY_SEPARATOR;
+		$this->errorDocsDirectory = $this->siteDirectory . $errorDocsDirectoryName . DIRECTORY_SEPARATOR;
+		$this->logDirectory = $this->siteDirectory . $logsDirectoryName . DIRECTORY_SEPARATOR;
+		$this->settingsDirectory = $this->siteDirectory . $settingsDirectoryName . DIRECTORY_SEPARATOR;
+		$this->viewDirectory = $this->siteDirectory . $viewDirectoryName . DIRECTORY_SEPARATOR;
 
 		require_once $frameworkDirectory . 'autoloader' . DIRECTORY_SEPARATOR . 'Autoloader.php';
-		$autoloader = Autoloader::register(cacheFilePath: $this->siteDirectory . 'cache' . DIRECTORY_SEPARATOR . 'cache.autoload');
+		$autoloader = Autoloader::register(cacheFilePath: $this->cacheDirectory . 'cache.autoload');
 		require_once $frameworkDirectory . 'autoloader' . DIRECTORY_SEPARATOR . 'AutoloaderPathModel.php';
 		$autoloader->addPath(autoloaderPathModel: new AutoloaderPathModel(
 			name: 'fw-logic',
@@ -87,7 +94,7 @@ class Core
 		?ExceptionHandler        $individualExceptionHandler,
 		?AbstractSessionHandler  $individualSessionHandler
 	): HttpResponse {
-		if (isset(Core::$httpResponse)) {
+		if (!is_null(value: Core::$httpResponse)) {
 			throw new LogicException(message: 'The HttpResponse is already prepared');
 		}
 		$this->logger = new Logger(logEmailRecipient: $environmentSettingsModel->errorLogRecipientEmail, logDirectory: $this->logDirectory);

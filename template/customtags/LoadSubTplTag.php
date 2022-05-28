@@ -32,25 +32,22 @@ class LoadSubTplTag extends TemplateTag implements TagNode
 
 	public function replaceNode(TemplateEngine $tplEngine, ElementNode $elementNode): void
 	{
-		$dataKey = $elementNode->getAttribute('tplfile')->getValue();
-		$tplFile = (preg_match('/^{(.+)}$/', $dataKey, $res) === 1) ? '$this->getData(\'' . $res[1] . '\')' : '\'' . $dataKey . '\'';
+		$dataKey = $elementNode->getAttribute(name: 'tplfile')->getValue();
+		$tplFile = (preg_match(pattern: '/^{(.+)}$/', subject: $dataKey, matches: $res) === 1) ? '$this->getData(\'' . $res[1] . '\')' : '\'' . $dataKey . '\'';
 
-		/** @var TextNode */
 		$newNode = new TextNode();
 		$newNode->content = '<?php ' . __NAMESPACE__ . '\\LoadSubTplTag::requireFile(' . $tplFile . ', $this); ?>';
 
-		$elementNode->parentNode->replaceNode($elementNode, $newNode);
+		$elementNode->parentNode->replaceNode(nodeToReplace: $elementNode, replacementNode: $newNode);
 	}
 
 	public function replaceInline()
 	{
-		throw new Exception('Don\'t use this tag (LoadSubTpl) inline!');
+		throw new Exception(message: 'Don\'t use this tag (LoadSubTpl) inline!');
 	}
 
 	/**
-	 * A special method that belongs to the LoadSubTplTag class but needs none
-	 * static properties from this class and is called from the cached template
-	 * files.
+	 * A special method that belongs to the LoadSubTplTag class but needs none static properties from this class and is called from the cached template files.
 	 *
 	 * @param string         $file The full filepath to include (OR magic {this})
 	 * @param TemplateEngine $tplEngine
@@ -62,6 +59,6 @@ class LoadSubTplTag extends TemplateTag implements TagNode
 
 			return;
 		}
-		echo $tplEngine->getResultAsHtml($file, $tplEngine->getAllData());
+		echo $tplEngine->getResultAsHtml(tplFile: $file, dataPool: $tplEngine->getAllData());
 	}
 }

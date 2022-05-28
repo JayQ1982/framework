@@ -34,7 +34,8 @@ class HtmlDocument
 
 	private function __construct()
 	{
-		$fileTitle = Request::get()->fileTitle;
+		$request = Request::get();
+		$fileTitle = $request->fileTitle;
 		$this->contentFileName = $fileTitle;
 		$this->replacements = new HtmlReplacementCollection();
 		$environmentSettingsModel = EnvironmentSettingsModel::get();
@@ -42,7 +43,7 @@ class HtmlDocument
 		$copyright = $environmentSettingsModel->copyrightYear;
 		$replacements = $this->replacements;
 		$replacements->addEncodedText(identifier: 'bodyid', content: 'body_' . $fileTitle);
-		$replacements->addEncodedText(identifier: 'language', content: Request::get()->language->code);
+		$replacements->addEncodedText(identifier: 'language', content: $request->language->code);
 		$replacements->addEncodedText(identifier: 'charset', content: 'UTF-8');
 		$replacements->addEncodedText(identifier: 'copyright', content: ($copyright < (int)date(format: 'Y')) ? $copyright . '-' . date(format: 'Y') : $copyright);
 		$replacements->addEncodedText(identifier: 'robots', content: $environmentSettingsModel->robots);
@@ -74,7 +75,7 @@ class HtmlDocument
 	public function render(): string
 	{
 		$request = Request::get();
-		$viewDirectory = $request->route->getViewDirectory();
+		$viewDirectory = $request->route->viewDirectory;
 		$contentFileDirectory = $viewDirectory . 'html/';
 		if (!is_null(value: $request->getFileGroup())) {
 			$contentFileDirectory .= $request->getFileGroup() . '/';
@@ -86,7 +87,7 @@ class HtmlDocument
 		if (!is_file(filename: $fullContentFilePath)) {
 			throw new NotFoundException();
 		}
-		$this->replacements->set(identifier: 'this', htmlReplacement: HtmlReplacement::encodedText(content: $fullContentFilePath));
+		$this->replacements->addEncodedText(identifier: 'this', content: $fullContentFilePath);
 		$templateName = $this->templateName;
 		$templateFilePath = $viewDirectory . 'templates/' . $templateName . '.html';
 		if ($templateName === '' || !is_file(filename: $templateFilePath)) {

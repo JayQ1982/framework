@@ -11,11 +11,11 @@ use LogicException;
 
 class ErrorHandler
 {
-	private static ErrorHandler $registeredInstance;
+	private static ?ErrorHandler $registeredInstance = null;
 
 	public static function register(): void
 	{
-		if (isset(ErrorHandler::$registeredInstance)) {
+		if (!is_null(value: ErrorHandler::$registeredInstance)) {
 			throw new LogicException(message: 'ErrorHandler is already registered.');
 		}
 		ErrorHandler::$registeredInstance = new ErrorHandler();

@@ -9,12 +9,13 @@ namespace framework\session;
 use Exception;
 use framework\core\EnvironmentSettingsModel;
 use framework\core\HttpRequest;
+use framework\core\Language;
 use LogicException;
 use SessionHandler;
 
 abstract class AbstractSessionHandler extends SessionHandler
 {
-	private static AbstractSessionHandler $registeredInstance;
+	private static ?AbstractSessionHandler $registeredInstance = null;
 
 	private const SESSION_CREATED_INDICATOR = 'sessionCreated';
 	private const TRUSTED_REMOTE_ADDRESS_INDICATOR = 'trustedRemoteAddress';
@@ -31,7 +32,7 @@ abstract class AbstractSessionHandler extends SessionHandler
 
 	public static function register(?AbstractSessionHandler $individualSessionHandler): void
 	{
-		if (isset(AbstractSessionHandler::$registeredInstance)) {
+		if (!is_null(value: AbstractSessionHandler::$registeredInstance)) {
 			throw new LogicException(message: 'SessionHandler handler is already registered.');
 		}
 		AbstractSessionHandler::$registeredInstance = is_null(value: $individualSessionHandler) ? new FileSessionHandler(sessionSettingsModel: new SessionSettingsModel()) : $individualSessionHandler;
@@ -261,16 +262,16 @@ abstract class AbstractSessionHandler extends SessionHandler
 		$_SESSION[AbstractSessionHandler::LAST_ACTIVITY_INDICATOR] = $this->currentTime;
 	}
 
-	public function setPreferredLanguage(string $languageCode): void
+	public function setPreferredLanguage(Language $language): void
 	{
-		if (!EnvironmentSettingsModel::get()->availableLanguages->hasLanguage(languageCode: $languageCode)) {
-			throw new Exception(message: 'The preferred language ' . $languageCode . ' is not available');
+		if (!EnvironmentSettingsModel::get()->availableLanguages->hasLanguage(languageCode: $language->code)) {
+			throw new Exception(message: 'The preferred language ' . $language->code . ' is not available');
 		}
 
-		$_SESSION[AbstractSessionHandler::PREFERRED_LANGUAGE_INDICATOR] = $languageCode;
+		$_SESSION[AbstractSessionHandler::PREFERRED_LANGUAGE_INDICATOR] = $language->code;
 	}
 
-	public function getPreferredLanguage(): ?string
+	public function getPreferredLanguageCode(): ?string
 	{
 		return $_SESSION[AbstractSessionHandler::PREFERRED_LANGUAGE_INDICATOR] ?? null;
 	}
