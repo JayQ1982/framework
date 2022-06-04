@@ -92,7 +92,7 @@ class ContentHandler
 	private function loadLocalizedText(): void
 	{
 		$request = Request::get();
-		$dir = $request->route->viewDirectory . 'language/' . $request->language->code . '/';
+		$dir = $request->route->viewDirectory . 'language' . DIRECTORY_SEPARATOR . $request->language->code . DIRECTORY_SEPARATOR;
 		if (!is_dir(filename: $dir)) {
 			return;
 		}
