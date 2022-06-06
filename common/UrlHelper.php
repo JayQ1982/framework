@@ -7,7 +7,6 @@
 namespace framework\common;
 
 use framework\core\HttpRequest;
-use framework\core\Request;
 
 class UrlHelper
 {
@@ -17,8 +16,6 @@ class UrlHelper
 		if (!array_key_exists(key: 'host', array: $components)) {
 			if (str_starts_with(haystack: $relativeOrAbsoluteUri, needle: '/')) {
 				$directory = '';
-			} else if (!str_contains(haystack: $relativeOrAbsoluteUri, needle: '/')) {
-				$directory = Request::get()->route->path;
 			} else {
 				$directory = dirname(path: HttpRequest::getURI());
 				$directory = ($directory === '/' || $directory === '\\') ? '/' : $directory . '/';
