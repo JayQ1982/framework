@@ -129,7 +129,7 @@ class ContentType
 	{
 		return new ContentType(
 			type: ContentType::TXT,
-			mimeType: MimeType::createJson(),
+			mimeType: MimeType::createTxt(),
 			forceDownloadByDefault: false,
 			charset: 'utf-8',
 			languageCode: null
