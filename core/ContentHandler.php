@@ -36,7 +36,7 @@ class ContentHandler
 			throw new LogicException(message: 'ContentHandler is already registered.');
 		}
 		ContentHandler::$registeredInstance = $this;
-		$this->contentType = Request::get()->route->defaultContentType;
+		$this->contentType = RequestHandler::get()->route->defaultContentType;
 		ob_start();
 		ob_implicit_flush(enable: false);
 		$this->loadLocalizedText();
@@ -91,13 +91,13 @@ class ContentHandler
 
 	private function loadLocalizedText(): void
 	{
-		$request = Request::get();
+		$request = RequestHandler::get();
 		$dir = $request->route->viewDirectory . 'language' . DIRECTORY_SEPARATOR . $request->language->code . DIRECTORY_SEPARATOR;
 		if (!is_dir(filename: $dir)) {
 			return;
 		}
 		$langGlobal = $dir . 'global.lang.php';
-		$locale = Locale::get();
+		$locale = LocaleHandler::get();
 		if (file_exists(filename: $langGlobal)) {
 			$locale->loadLanguageFile(filePath: $langGlobal);
 		}
@@ -110,7 +110,7 @@ class ContentHandler
 	private function getViewClass(): ?BaseView
 	{
 		$core = Core::get();
-		$request = Request::get();
+		$request = RequestHandler::get();
 		$phpClassNameParts = [
 			$core->siteDirectoryName,
 			$core->viewDirectoryName,

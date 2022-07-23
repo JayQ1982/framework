@@ -6,12 +6,14 @@
 
 namespace framework\core;
 
-use framework\auth\Authenticator;
+use framework\auth\AccessRightCollection;
+use framework\auth\AuthUser;
+use framework\auth\UnauthorizedAccessRightException;
+use framework\auth\UnauthorizedIpAddressException;
 use framework\common\JsonUtils;
 use framework\common\SimpleXMLExtended;
 use framework\datacheck\Sanitizer;
 use framework\exception\NotFoundException;
-use framework\exception\UnauthorizedException;
 use framework\response\HttpErrorResponseContent;
 use framework\response\HttpSuccessResponseContent;
 use LogicException;
@@ -20,30 +22,36 @@ use stdClass;
 abstract class BaseView
 {
 	protected function __construct(
-		array                           $ipWhitelist,
-		private readonly ?Authenticator $authenticator,
-		array                           $requiredAccessRights,
-		private readonly array          $mandatoryParams = [],
-		private readonly array          $optionalParams = [],
-		?ContentType                    $individualContentType = null
+		array                                     $ipWhitelist,
+		private readonly ?AuthUser                $authUser,
+		AccessRightCollection                     $requiredAccessRights,
+		private readonly InputParameterCollection $inputParameterCollection
 	) {
-		if (!is_null(value: $individualContentType)) {
-			$this->setContentType(contentType: $individualContentType);
-		}
-
 		if (count(value: $ipWhitelist) > 0 && !in_array(needle: HttpRequest::getRemoteAddress(), haystack: $ipWhitelist)) {
-			throw new UnauthorizedException();
+			throw new UnauthorizedIpAddressException();
 		}
-
-		if (count(value: $requiredAccessRights) > 0) {
-			$authenticator->checkAccess(
-				accessOnlyForLoggedInUsers: true,
-				requiredAccessRights: $requiredAccessRights,
-				autoRedirect: true
-			);
+		if (
+			!$requiredAccessRights->isEmpty()
+			&& (is_null(value: $this->authUser) || !$authUser->hasOneOfRights(accessRightCollection: $requiredAccessRights))
+		) {
+			throw new UnauthorizedAccessRightException();
 		}
+		foreach ($this->inputParameterCollection->listRequiredParameters() as $inputParameter) {
+			$name = $inputParameter->name;
+			$paramValue = HttpRequest::getInputValue(keyName: $name);
+			if (
+				is_null(value: $paramValue)
+				|| (!is_array(value: $paramValue) && trim(string: $paramValue) === '')
+				|| (is_array(value: $paramValue) && count(value: $paramValue) === 0)
+			) {
+				if (ContentHandler::get()->getContentType()->isHtml()) {
+					throw new NotFoundException();
+				}
+				$this->setErrorResponseContent(errorMessage: 'missing or empty mandatory parameter: ' . $name);
 
-		$this->checkMandatoryParameters(mandatoryParams: $mandatoryParams);
+				return;
+			}
+		}
 	}
 
 	protected function setContentType(ContentType $contentType): void
@@ -56,54 +64,18 @@ abstract class BaseView
 		ContentHandler::get()->setContent(contentString: $contentString);
 	}
 
-	private function checkMandatoryParameters(array $mandatoryParams): void
-	{
-		$contentType = ContentHandler::get()->getContentType();
-
-		foreach ($mandatoryParams as $mandatoryParam => $paramDescription) {
-			$paramValue = HttpRequest::getInputValue(keyName: $mandatoryParam);
-			if (
-				is_null($paramValue)
-				|| (!is_array(value: $paramValue) && Sanitizer::trimmedString(input: $paramValue) === '')
-				|| (is_array(value: $paramValue) && count(value: $paramValue) === 0)
-			) {
-				if ($contentType->isHtml()) {
-					throw new NotFoundException();
-				}
-				$this->setErrorResponseContent(errorMessage: 'missing or empty mandatory parameter: ' . $mandatoryParam);
-
-				return;
-			}
-		}
-	}
-
-	public function getMandatoryParams(): array
-	{
-		return $this->mandatoryParams;
-	}
-
-	public function getOptionalParams(): array
-	{
-		return $this->optionalParams;
-	}
-
 	abstract public function execute(): void;
-
-	protected function getAuthenticator(): ?Authenticator
-	{
-		return $this->authenticator;
-	}
 
 	protected function getPathVar(int $nr): ?string
 	{
-		$pathVars = Request::get()->pathVars;
+		$pathVars = RequestHandler::get()->pathVars;
 
-		return array_key_exists(key: $nr, array: $pathVars) ? $pathVars[$nr] : null;
+		return array_key_exists(key: $nr, array: $pathVars) ? trim(string: $pathVars[$nr]) : null;
 	}
 
 	private function onlyDefinedInputParametersAllowed(string $parameterName): void
 	{
-		if (!array_key_exists(key: $parameterName, array: $this->mandatoryParams) && !array_key_exists(key: $parameterName, array: $this->optionalParams)) {
+		if (!$this->inputParameterCollection->hasParameter(name: $parameterName)) {
 			throw new LogicException(message: 'Access to not defined input parameter "' . $parameterName . '"');
 		}
 	}

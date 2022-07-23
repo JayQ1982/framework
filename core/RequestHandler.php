@@ -11,9 +11,9 @@ use framework\exception\NotFoundException;
 use framework\session\AbstractSessionHandler;
 use LogicException;
 
-class Request
+class RequestHandler
 {
-	private static ?Request $instance = null;
+	private static ?RequestHandler $instance = null;
 
 	public readonly array $pathParts;
 	public readonly int $countPathParts;
@@ -27,22 +27,22 @@ class Request
 	public readonly array $pathVars;
 	public readonly string $fileExtension;
 
-	public static function get(): Request
+	public static function get(): RequestHandler
 	{
-		return Request::$instance;
+		return RequestHandler::$instance;
 	}
 
 	public static function register(RouteCollection $routeCollection): void
 	{
-		new Request(allRoutes: $routeCollection);
+		new RequestHandler(allRoutes: $routeCollection);
 	}
 
 	private function __construct(RouteCollection $allRoutes)
 	{
-		if (!is_null(value: Request::$instance)) {
-			throw new LogicException(message: 'Request is already registered');
+		if (!is_null(value: RequestHandler::$instance)) {
+			throw new LogicException(message: 'RequestHandler is already registered');
 		}
-		Request::$instance = $this;
+		RequestHandler::$instance = $this;
 		$environmentSettingsModel = EnvironmentSettingsModel::get();
 		$this->checkDomain(allowedDomains: $environmentSettingsModel->allowedDomains);
 		$this->pathParts = explode(separator: '/', string: HttpRequest::getPath());
@@ -184,7 +184,6 @@ class Request
 					HttpResponse::redirectAndExit(relativeOrAbsoluteUri: $routeForLanguage->path);
 				}
 			}
-
 			// Redirect to first default route if none is available in accepted languages
 			HttpResponse::redirectAndExit(relativeOrAbsoluteUri: $defaultRoutesByLanguage->getFirstRoute()->path);
 		}

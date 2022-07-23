@@ -7,11 +7,12 @@
 namespace framework\exception;
 
 use Exception;
+use framework\core\HttpStatusCode;
 
 class UnauthorizedException extends Exception
 {
-	public function __construct($message = 'Unauthorized', $code = 9999)
+	public function __construct($message = 'Unauthorized', HttpStatusCode $code = HttpStatusCode::HTTP_UNAUTHORIZED)
 	{
-		parent::__construct($message, $code);
+		parent::__construct(message: $message, code: $code->value);
 	}
 }

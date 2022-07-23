@@ -15,17 +15,18 @@ class ValidCsrfTokenValue extends FormRule
 {
 	public function __construct()
 	{
-		// Hidden fields have no own visible error label
-		parent::__construct(HtmlText::encoded('Das Formular konnte wegen einem technischen Problem (ungültiges CSRF) nicht übermittelt werden. Bitte versuchen Sie es erneut.'));
+		parent::__construct(defaultErrorMessage: HtmlText::encoded(
+			textContent: 'Das Formular konnte wegen eines technischen Problems (ungültiges CSRF) nicht übermittelt werden. Bitte versuchen Sie es erneut.'
+		));
 	}
 
 	public function validate(FormField $formField): bool
 	{
 		$token = $formField->getRawValue();
-		if (is_null($token)) {
-			$token = $_GET[CsrfToken::getFieldName()] ?? '';
+		if (is_null(value: $token)) {
+			$token = array_key_exists(key: CsrfToken::getFieldName(), array: $_GET) ? $_GET[CsrfToken::getFieldName()] : '';
 		}
 
-		return CsrfToken::validateToken($token);
+		return CsrfToken::validateToken(token: $token);
 	}
 }

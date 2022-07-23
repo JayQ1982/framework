@@ -8,7 +8,7 @@ namespace framework\html;
 
 use framework\Core;
 use framework\core\EnvironmentSettingsModel;
-use framework\core\Request;
+use framework\core\RequestHandler;
 use framework\exception\NotFoundException;
 use framework\security\CspNonce;
 use framework\security\CsrfToken;
@@ -34,7 +34,7 @@ class HtmlDocument
 
 	private function __construct()
 	{
-		$request = Request::get();
+		$request = RequestHandler::get();
 		$fileTitle = $request->fileTitle;
 		$this->contentFileName = $fileTitle;
 		$this->replacements = new HtmlReplacementCollection();
@@ -74,7 +74,7 @@ class HtmlDocument
 
 	public function render(): string
 	{
-		$request = Request::get();
+		$request = RequestHandler::get();
 		$viewDirectory = $request->route->viewDirectory;
 		$contentFileDirectory = $viewDirectory . 'html/';
 		if (!is_null(value: $request->getFileGroup())) {

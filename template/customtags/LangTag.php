@@ -6,7 +6,7 @@
 
 namespace framework\template\customtags;
 
-use framework\core\Locale;
+use framework\core\LocaleHandler;
 use framework\template\htmlparser\ElementNode;
 use framework\template\htmlparser\TextNode;
 use framework\template\template\TagInline;
@@ -67,6 +67,6 @@ class LangTag extends TemplateTag implements TagNode, TagInline
 
 	public static function getText($key, array $phpVars): string
 	{
-		return Locale::get()->getText(key: $key, replacements: $phpVars);
+		return LocaleHandler::get()->getText(key: $key, replacements: $phpVars);
 	}
 }

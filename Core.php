@@ -13,9 +13,9 @@ use framework\core\EnvironmentSettingsModel;
 use framework\core\ErrorHandler;
 use framework\core\HttpRequest;
 use framework\core\HttpResponse;
-use framework\core\Locale;
+use framework\core\LocaleHandler;
 use framework\core\Logger;
-use framework\core\Request;
+use framework\core\RequestHandler;
 use framework\core\RouteCollection;
 use framework\exception\ExceptionHandler;
 use framework\exception\NotFoundException;
@@ -100,8 +100,8 @@ class Core
 		$this->logger = new Logger(logEmailRecipient: $environmentSettingsModel->errorLogRecipientEmail, logDirectory: $this->logDirectory);
 		ExceptionHandler::register(individualExceptionHandler: $individualExceptionHandler);
 		AbstractSessionHandler::register(individualSessionHandler: $individualSessionHandler);
-		Request::register(routeCollection: $routeCollection);
-		Locale::register();
+		RequestHandler::register(routeCollection: $routeCollection);
+		LocaleHandler::register();
 		$contentHandler = ContentHandler::register();
 		if (!$contentHandler->hasContent()) {
 			throw new NotFoundException();

@@ -9,29 +9,29 @@ namespace framework\core;
 use Exception;
 use LogicException;
 
-class Locale
+class LocaleHandler
 {
-	private static ?Locale $registeredInstance = null;
+	private static ?LocaleHandler $registeredInstance = null;
 	private array $languageBlocks = [];
 	private array $loadedLangFiles = [];
 
-	public static function get(): Locale
+	public static function get(): LocaleHandler
 	{
-		return Locale::$registeredInstance;
+		return LocaleHandler::$registeredInstance;
 	}
 
 	public static function register(): void
 	{
-		new Locale();
+		new LocaleHandler();
 	}
 
 	private function __construct()
 	{
-		if (!is_null(value: Locale::$registeredInstance)) {
-			throw new LogicException(message: 'Locale is already registered');
+		if (!is_null(value: LocaleHandler::$registeredInstance)) {
+			throw new LogicException(message: 'LocaleHandler is already registered');
 		}
-		Locale::$registeredInstance = $this;
-		$requestLanguageCode = Request::get()->language->code;
+		LocaleHandler::$registeredInstance = $this;
+		$requestLanguageCode = RequestHandler::get()->language->code;
 		$activeLanguage = EnvironmentSettingsModel::get()->availableLanguages->getLanguageByCode(languageCode: $requestLanguageCode);
 		if (is_null(value: $activeLanguage)) {
 			throw new Exception(message: 'Language ' . $requestLanguageCode . ' is not available');
@@ -49,7 +49,6 @@ class Locale
 		if ((int)filesize(filename: $filePath) === 0) {
 			return;
 		}
-
 		$this->parseLanguageFile(filePath: $filePath);
 		$this->loadedLangFiles[] = $filePath;
 	}
@@ -69,18 +68,14 @@ class Locale
 		if (!array_key_exists(key: $key, array: $this->languageBlocks)) {
 			throw new Exception(message: 'Missing language fragment for ' . $key);
 		}
-
 		$block = $this->languageBlocks[$key];
-
 		if (count(value: $replacements) > 0) {
 			$search = [];
 			$replace = [];
-
 			foreach ($replacements as $k => $v) {
 				$search[] = "[" . strtoupper(string: $k) . "]";
 				$replace[] = $v;
 			}
-
 			$block = str_ireplace(search: $search, replace: $replace, subject: $block);
 		}
 

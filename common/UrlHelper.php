@@ -20,7 +20,7 @@ class UrlHelper
 				$directory = dirname(path: HttpRequest::getURI());
 				$directory = ($directory === '/' || $directory === '\\') ? '/' : $directory . '/';
 			}
-			$absoluteUri = Httprequest::getProtocol() . '://' . HttpRequest::getHost() . $directory . $relativeOrAbsoluteUri;
+			$absoluteUri = HttpRequest::getProtocol() . '://' . HttpRequest::getHost() . $directory . $relativeOrAbsoluteUri;
 		} else {
 			$absoluteUri = $relativeOrAbsoluteUri;
 		}

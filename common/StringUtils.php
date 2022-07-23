@@ -268,10 +268,10 @@ class StringUtils
 	public static function generateSalt(int $length = 16): string
 	{
 		$chars = '`´°+*ç%&/()=?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890üöä!£{}éèà[]¢|¬§°#@¦';
-		$charsLength = mb_strlen($chars);
+		$charsLength = mb_strlen(string: $chars);
 		$salt = '';
 		for ($i = 0; $i < $length; $i++) {
-			$salt .= mb_substr($chars, (rand() % $charsLength), 1);
+			$salt .= mb_substr(string: $chars, start: (rand() % $charsLength), length: 1);
 		}
 
 		return $salt;

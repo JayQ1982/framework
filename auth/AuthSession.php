@@ -6,99 +6,76 @@
 
 namespace framework\auth;
 
-use stdClass;
+use framework\session\AbstractSessionHandler;
 
 class AuthSession
 {
 	private const SESSION_KEY = 'auth_userSession';
-	private static string $isLoggedInIndicator = 'isLoggedIn';
-	private static string $userDataIndicator = 'userData';
-	private static string $rightsIndicator = 'rights';
-	private static string $lastActivityIndicator = 'lastActivity';
+	private const isLoggedInIndicator = 'isLoggedIn';
+	private const authUserIdIndicator = 'authUserID';
 
-	private static function saveToSession(string $key, mixed $value): void
+	final public static function logIn(AuthUser $authUser): void
+	{
+		AuthSession::setIsLoggedIn(isLoggedIn: true);
+		AuthSession::setAuthUserID(authUserID: $authUser->ID);
+	}
+
+	final public static function logOut(): void
+	{
+		if (!AuthSession::isLoggedIn()) {
+			return;
+		}
+		AuthSession::resetSession();
+	}
+
+	private static function saveToSession(string $key, bool|int $value): void
 	{
 		$_SESSION[AuthSession::SESSION_KEY][$key] = $value;
 	}
 
-	private static function getFromSession(string $key): null|bool|array|stdClass|int
+	private static function getFromSession(string $key): null|bool|int
 	{
-		if (!array_key_exists(AuthSession::SESSION_KEY, $_SESSION)) {
+		if (!array_key_exists(key: AuthSession::SESSION_KEY, array: $_SESSION)) {
 			$_SESSION[AuthSession::SESSION_KEY] = [];
 		}
-
-		if (!array_key_exists($key, $_SESSION[AuthSession::SESSION_KEY])) {
+		if (!array_key_exists(key: $key, array: $_SESSION[AuthSession::SESSION_KEY])) {
 			$_SESSION[AuthSession::SESSION_KEY][$key] = null;
 		}
 
 		return $_SESSION[AuthSession::SESSION_KEY][$key];
 	}
 
-	final public static function setIsLoggedIn(bool $isLoggedIn): void
+	private static function setIsLoggedIn(bool $isLoggedIn): void
 	{
-		AuthSession::saveToSession(AuthSession::$isLoggedInIndicator, $isLoggedIn);
+		AuthSession::saveToSession(key: AuthSession::isLoggedInIndicator, value: $isLoggedIn);
+	}
+
+	private static function setAuthUserID(int $authUserID): void
+	{
+		AuthSession::saveToSession(key: AuthSession::authUserIdIndicator, value: $authUserID);
 	}
 
 	final public static function isLoggedIn(): bool
 	{
-		$indicator = AuthSession::$isLoggedInIndicator;
-		$isLoggedIn = AuthSession::getFromSession($indicator);
-		if (is_null($isLoggedIn)) {
-			$isLoggedIn = false;
-			AuthSession::saveToSession($indicator, false);
+		$isLoggedIn = AuthSession::getFromSession(key: AuthSession::isLoggedInIndicator);
+		if (is_null(value: $isLoggedIn)) {
+			AuthSession::setIsLoggedIn(isLoggedIn: false);
+
+			return false;
 		}
 
 		return $isLoggedIn;
 	}
 
-	final public static function setUserData(stdClass $userData): void
+	final public static function getAuthUserID(): int
 	{
-		AuthSession::saveToSession(AuthSession::$userDataIndicator, $userData);
+		return AuthSession::getFromSession(key: AuthSession::authUserIdIndicator);
 	}
 
-	final public static function getUserData(): stdClass
+	private static function resetSession(): void
 	{
-		$indicator = AuthSession::$userDataIndicator;
-		$userData = AuthSession::getFromSession($indicator);
-		if (is_null($userData)) {
-			$userData = new stdClass();
-			AuthSession::saveToSession($indicator, $userData);
-		}
-
-		return $userData;
-	}
-
-	final public static function setRights(array $rights): void
-	{
-		AuthSession::saveToSession(AuthSession::$rightsIndicator, $rights);
-	}
-
-	final public static function getRights(): array
-	{
-		$indicator = AuthSession::$rightsIndicator;
-		$rights = AuthSession::getFromSession($indicator);
-		if (is_null($rights)) {
-			$rights = [];
-			AuthSession::saveToSession($indicator, $rights);
-		}
-
-		return $rights;
-	}
-
-	final public static function updateLastActivity(int $lastActivity): void
-	{
-		AuthSession::saveToSession(AuthSession::$lastActivityIndicator, $lastActivity);
-	}
-
-	final public static function getLastActivity(): ?int
-	{
-		return AuthSession::getFromSession(AuthSession::$lastActivityIndicator);
-	}
-
-	final public static function resetSession(): void
-	{
-		if (array_key_exists(AuthSession::SESSION_KEY, $_SESSION)) {
-			unset($_SESSION[AuthSession::SESSION_KEY]);
-		}
+		AuthSession::setIsLoggedIn(isLoggedIn: false);
+		AuthSession::setAuthUserID(authUserID: 0);
+		AbstractSessionHandler::getSessionHandler()->regenerateID();
 	}
 }

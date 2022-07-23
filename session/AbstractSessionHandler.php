@@ -63,7 +63,6 @@ abstract class AbstractSessionHandler extends SessionHandler
 		if (!session_start()) {
 			throw new Exception(message: 'Could not start session');
 		}
-
 		if (!$this->isSessionCreated()) {
 			$this->initDefaultSessionData(destroyOldSession: false);
 		} else if ($this->getTrustedRemoteAddress() !== $this->clientRemoteAddress || $this->getTrustedUserAgent() !== $this->clientUserAgent) {
@@ -283,6 +282,16 @@ abstract class AbstractSessionHandler extends SessionHandler
 			session_write_close();
 		}
 		session_set_cookie_params(['samesite' => 'Lax']);
+		session_start();
+	}
+
+	public function changeCookieSameSiteToNone(): void
+	{
+		if ((session_status() === PHP_SESSION_ACTIVE)) {
+			// Prevent from "Session cookie parameters cannot be changed when a session is active" exception
+			session_write_close();
+		}
+		session_set_cookie_params(['samesite' => 'None']);
 		session_start();
 	}
 }

@@ -7,264 +7,152 @@
 namespace framework\auth;
 
 use framework\core\HttpRequest;
-use framework\core\HttpResponse;
-use framework\core\Request;
-use framework\db\FrameworkDB;
-use framework\exception\UnauthorizedException;
 use framework\session\AbstractSessionHandler;
 use LogicException;
-use stdClass;
 
-class Authenticator
+abstract class Authenticator
 {
-	public const ERROR_UNKNOWN = 0;
-	public const ERROR_NO_ERROR = 1;
-	public const ERROR_NO_LOGIN = 2;
-	public const ERROR_NO_PASSWORD = 3;
-	public const ERROR_WRONG_LOGIN = 4;
-	public const ERROR_INACTIVE = 5;
-	public const ERROR_OUTTRIED = 7;
-	public const ERROR_WRONG_PASSWORD = 8;
-	public const ERROR_NOT_CONFIRMED = 9;
-
 	private static ?Authenticator $instance = null;
+	private AuthResult $authResult = AuthResult::UNDEFINED;
 
-	private int $lastErrorCode = Authenticator::ERROR_UNKNOWN;
-	private ?FrameworkDB $authDb = null;
-	private ?stdClass $loginUserDataCache = null;
-
-	public static function getInstance(AuthSettings $authSettings): Authenticator
+	protected function __construct(private readonly int $maxAllowedWrongPasswordAttempts)
 	{
-		if (is_null(Authenticator::$instance)) {
-			Authenticator::$instance = new Authenticator(authSettings: $authSettings);
+		if (!is_null(value: Authenticator::$instance)) {
+			throw new LogicException(message: 'There can only be one Authenticator instance.');
 		}
-
-		return Authenticator::$instance;
+		Authenticator::$instance = $this;
 	}
 
-	protected static function setInstance(Authenticator $authenticator): void
+	protected function doLogin(string $userName, ?string $passwordToCheck): bool
 	{
-		Authenticator::$instance = $authenticator;
-	}
-
-	protected function __construct(private readonly AuthSettings $authSettings)
-	{
-		$now = time();
-		$lastActivity = AuthSession::getLastActivity();
-		if (!is_null($lastActivity) && $this->isLoggedIn() && $now > $lastActivity + $authSettings->getMaxIdleSeconds()) {
-			$this->logout();
+		if ($this->authResult !== AuthResult::UNDEFINED) {
+			throw new LogicException(message: 'It is not allowed to execute this method multiple times.');
 		}
-		AuthSession::updateLastActivity($now);
-	}
-
-	protected function checkLoginCredentials(string $login, string $password): bool
-	{
-		$userDataFromDb = $this->getUserDataFromDb($login, false);
-		if ($this->getLastErrorCode() === Authenticator::ERROR_WRONG_LOGIN) {
-			return false;
+		if (AuthSession::isLoggedIn()) {
+			throw new LogicException(message: 'It is not allowed to log in, if user is already logged in.');
 		}
-
-		if (property_exists($userDataFromDb, 'confirmed') && is_null($userDataFromDb->confirmed)) {
-			$this->setCredentialCheckError(Authenticator::ERROR_NOT_CONFIRMED);
+		$sessionID = AbstractSessionHandler::getSessionHandler()->getID();
+		$ipAddress = HttpRequest::getRemoteAddress();
+		$authUser = $this->createAuthUserByUserName(userName: $userName);
+		if (is_null(value: $authUser)) {
+			$this->authResult = AuthResult::ERROR_UNKNOWN_USER_NAME;
+			$this->logAuthResult(
+				userID: null,
+				sessionID: $sessionID,
+				ip: $ipAddress,
+				userName: $userName,
+				authResult: $this->authResult
+			);
 
 			return false;
 		}
-
-		if (isset($userDataFromDb->active) && (int)$userDataFromDb->active !== 1) {
-			$this->setCredentialCheckError(Authenticator::ERROR_INACTIVE);
-
-			return false;
-		}
-
-		$authSettings = $this->authSettings;
-		if (isset($userDataFromDb->wronglogin) && $userDataFromDb->wronglogin >= $authSettings->getMaxAllowedWrongPasswordAttempts()) {
-			$this->setCredentialCheckError(Authenticator::ERROR_OUTTRIED);
-
-			return false;
-		}
-
-		$salt = $userDataFromDb->salt ?? 'noSalt';
-		$inputPwHash = $this->encryptPassword($salt, $password);
-
-		if (!isset($userDataFromDb->password) || $userDataFromDb->password !== $inputPwHash) {
-			$wrongPasswordQuery = $authSettings->getWrongPasswordQuery();
-			if (!is_null($wrongPasswordQuery)) {
-				$this->getAuthDb()->execute($wrongPasswordQuery, [$login]);
+		$userID = $authUser->ID;
+		if (!$this->checkLoginCredentials(authUser: $authUser)) {
+			if ($this->authResult === AuthResult::UNDEFINED) {
+				throw new LogicException(message: 'Undefined authResult');
 			}
-			$this->setCredentialCheckError(Authenticator::ERROR_WRONG_PASSWORD);
+			$this->logAuthResult(
+				userID: $userID,
+				sessionID: $sessionID,
+				ip: $ipAddress,
+				userName: $userName,
+				authResult: $this->authResult
+			);
 
 			return false;
 		}
+		if (!$authUser->isActive) {
+			$this->authResult = AuthResult::ERROR_INACTIVE;
+			$this->logAuthResult(
+				userID: $userID,
+				sessionID: $sessionID,
+				ip: $ipAddress,
+				userName: $userName,
+				authResult: $this->authResult
+			);
 
-		$this->setLastErrorCode(Authenticator::ERROR_NO_ERROR);
-
-		return true;
-	}
-
-	public function getSettings(): AuthSettings
-	{
-		return $this->authSettings;
-	}
-
-	protected function getUserDataFromDb(string $login, bool $forceReload): stdClass
-	{
-		if (!$forceReload && !is_null($this->loginUserDataCache)) {
-			return $this->loginUserDataCache;
+			return false;
 		}
+		if ($authUser->getWrongPasswordAttempts() >= $this->maxAllowedWrongPasswordAttempts) {
+			$this->authResult = AuthResult::ERROR_OUT_TRIED;
+			$this->logAuthResult(
+				userID: $userID,
+				sessionID: $sessionID,
+				ip: $ipAddress,
+				userName: $userName,
+				authResult: $this->authResult
+			);
 
-		$db = $this->getAuthDb();
-		$res = $db->select($this->authSettings->getCheckLoginQuery(), [$login]);
-		if (count($res) !== 1) {
-			$this->setCredentialCheckError(Authenticator::ERROR_WRONG_LOGIN);
-			$this->loginUserDataCache = new stdClass();
+			return false;
+		}
+		if (is_null(value: $passwordToCheck)) {
+			$this->authResult = AuthResult::SUCCESSFUL_SSO_LOGIN;
 		} else {
-			$this->loginUserDataCache = $res[0];
+			if (!$authUser->hasOneOfRights(
+				accessRightCollection: AccessRightCollection::createFromStringArray(input: [AccessRightCollection::ACCESS_DO_PASSWORD_LOGIN]))
+			) {
+				$this->authResult = AuthResult::ERROR_NO_PASSWORD_LOGIN_ACTIVE;
+				$this->logAuthResult(
+					userID: $userID,
+					sessionID: $sessionID,
+					ip: $ipAddress,
+					userName: $userName,
+					authResult: $this->authResult
+				);
+
+				return false;
+			}
+			if (!$authUser->isPasswordValid(inputPassword: $passwordToCheck)) {
+				$authUser->increaseWrongPasswordAttempts();
+				$this->authResult = AuthResult::ERROR_WRONG_PASSWORD;
+				$this->logAuthResult(
+					userID: $userID,
+					sessionID: $sessionID,
+					ip: $ipAddress,
+					userName: $userName,
+					authResult: $this->authResult
+				);
+
+				return false;
+			}
+			$this->authResult = AuthResult::SUCCESSFUL_PASSWORD_LOGIN;
 		}
-
-		return $this->loginUserDataCache;
-	}
-
-	private function resetLoginUserData(): void
-	{
-		$this->loginUserDataCache = null;
-	}
-
-	protected function doFullLogin(string $login): void
-	{
-		if ($this->getLastErrorCode() !== Authenticator::ERROR_NO_ERROR) {
-			throw new LogicException('It is not allowed to do a full login if Authenticator has errors');
-		}
-		if ($this->isLoggedIn()) {
-			throw new LogicException('It is not allowed to do a full login if user is already logged in');
-		}
-		$this->regenerateSessionID();
-		AuthSession::setIsLoggedIn(true);
-		AuthSession::setUserData($this->getUserDataFromDb($login, false));
-		AuthSession::setRights($this->getRightsForLogin($login));
-
-		$this->getAuthDb()->execute($this->authSettings->getConfirmLoginQuery(), [$login]);
-	}
-
-	private function getRightsForLogin(string $login): array
-	{
-		$loadRightsQuery = $this->authSettings->getLoadRightsQuery();
-		if (is_null($loadRightsQuery)) {
-			return [];
-		}
-		$accessRights = [];
-		$res = $this->getAuthDb()->select($loadRightsQuery, [$login]);
-		foreach ($res as $row) {
-			$accessRights[] = $row->accessright;
-		}
-
-		return $accessRights;
-	}
-
-	public function doLogin(string $login, string $password): bool
-	{
-		if (!$this->checkLoginCredentials($login, $password)) {
-			return false;
-		}
-
-		$this->doFullLogin($login);
+		$this->logAuthResult(
+			userID: $userID,
+			sessionID: $sessionID,
+			ip: $ipAddress,
+			userName: $userName,
+			authResult: $this->authResult
+		);
+		$authUser->confirmSuccessfulLogin();
+		AuthSession::logIn(authUser: $authUser);
 
 		return true;
 	}
 
-	public function getLastErrorCode(): int
+	public function passwordLogin(string $userName, string $inputPassword): bool
 	{
-		return $this->lastErrorCode;
+		return $this->doLogin(userName: $userName, passwordToCheck: $inputPassword);
 	}
 
-	protected function setCredentialCheckError(int $lastErrorCode): void
+	protected function authWebTokenLogin(AuthWebToken $authWebToken): bool
 	{
-		$this->resetLoginUserData();
-		$this->setLastErrorCode($lastErrorCode);
+		return $this->doLogin(userName: $authWebToken->getUserName(), passwordToCheck: null);
 	}
 
-	protected function setLastErrorCode(int $lastErrorCode): void
+	abstract protected function createAuthUserByUserName(string $userName): ?AuthUser;
+
+	abstract protected function logAuthResult(?int $userID, string $sessionID, string $ip, string $userName, AuthResult $authResult);
+
+	abstract protected function checkLoginCredentials(AuthUser $authUser): bool;
+
+	protected function setAuthResult(AuthResult $authResult): void
 	{
-		$this->lastErrorCode = $lastErrorCode;
+		$this->authResult = $authResult;
 	}
 
-	public function logout(): void
+	public function getAuthResult(): AuthResult
 	{
-		if (!$this->isLoggedIn()) {
-			return;
-		}
-
-		AuthSession::resetSession();
-		$this->regenerateSessionID();
-	}
-
-	protected function regenerateSessionID(): void
-	{
-		AbstractSessionHandler::getSessionHandler()->regenerateID();
-	}
-
-	public function checkAccess(bool $accessOnlyForLoggedInUsers, array $requiredAccessRights, bool $autoRedirect): bool
-	{
-		$hasAccess = $this->doAccessCheck($accessOnlyForLoggedInUsers, $requiredAccessRights);
-		if (!$hasAccess && $autoRedirect) {
-			$request = Request::get();
-			if ($request->route === $request->defaultRoutesByLanguage->getRouteForLanguage(languageCode: $request->language->code)) {
-				$this->redirectToLoginPage();
-			}
-
-			throw new UnauthorizedException();
-		}
-
-		return $hasAccess;
-	}
-
-	public function redirectToLoginPage(): void
-	{
-		$pageAfterLogin = base64_encode(HttpRequest::getURI());
-		HttpResponse::redirectAndExit(relativeOrAbsoluteUri: $this->authSettings->getLoginPage() . '?pageAfterLogin=' . $pageAfterLogin);
-	}
-
-	private function doAccessCheck(bool $accessOnlyForLoggedInUsers, array $requiredAccessRights): bool
-	{
-		if (!$this->isLoggedIn()) {
-			return !$accessOnlyForLoggedInUsers;
-		}
-
-		// User is logged in
-		if (!$accessOnlyForLoggedInUsers) {
-			return false;
-		}
-
-		// Content is only for logged in users
-		if (count($requiredAccessRights) === 0) {
-			return true;
-		}
-
-		$userAccessRights = AuthSession::getRights();
-		foreach ($requiredAccessRights as $requiredRight) {
-			if (in_array($requiredRight, $userAccessRights)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	protected function getAuthDb(): FrameworkDB
-	{
-		if (is_null($this->authDb)) {
-			$this->authDb = FrameworkDB::getInstance($this->authSettings->getAuthDbSettingsModel());
-		}
-
-		return $this->authDb;
-	}
-
-	public function isLoggedIn(): bool
-	{
-		return AuthSession::isLoggedIn();
-	}
-
-	public function encryptPassword(string $salt, string $password): string
-	{
-		return hash($this->authSettings->getHashAlgorithm(), $salt . $password);
+		return $this->authResult;
 	}
 }
