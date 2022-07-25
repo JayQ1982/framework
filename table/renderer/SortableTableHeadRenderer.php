@@ -70,55 +70,50 @@ class SortableTableHeadRenderer extends TableHeadRenderer
 	public function render(SmartTable $smartTable): string
 	{
 		if (!($smartTable instanceof DbResultTable)) {
-			throw new LogicException('$smartTable must be an instance of DbResultTable');
+			throw new LogicException(message: '$smartTable must be an instance of DbResultTable');
 		}
 
 		$this->dbResultTable = $smartTable;
 
-		return parent::render($smartTable);
+		return parent::render(smartTable: $smartTable);
 	}
 
 	protected function renderColumnHead(AbstractTableColumn $abstractTableColumn): string
 	{
-		$columnLabel = $abstractTableColumn->getLabel();
-		$columnCssClasses = [];
+		$columnLabel = $abstractTableColumn->label;
+		$columnCssClasses = $abstractTableColumn->getColumnCssClasses();
 
-		if (!$abstractTableColumn->isSortable()) {
+		if (!$abstractTableColumn->isSortable) {
 			$labelHtml = $columnLabel;
 		} else {
 			$dbResultTable = $this->dbResultTable;
-
-			$isActiveSortColumn = ($dbResultTable->getCurrentSortColumn() === $abstractTableColumn->getIdentifier());
-
+			$isActiveSortColumn = ($dbResultTable->getCurrentSortColumn() === $abstractTableColumn->identifier);
 			if ($isActiveSortColumn) {
 				$columnSortDirection = TableHelper::OPPOSITE_SORT_DIRECTION[$dbResultTable->getCurrentSortDirection()];
 			} else {
-				$columnSortDirection = $abstractTableColumn->isSortAscendingByDefault() ? TableHelper::SORT_ASC : TableHelper::SORT_DESC;
+				$columnSortDirection = $abstractTableColumn->sortAscendingByDefault ? TableHelper::SORT_ASC : TableHelper::SORT_DESC;
 			}
-
 			$getAttributes = [];
 			foreach (array_merge([
-				'sort' => implode('|', [
-					$dbResultTable->getIdentifier(),
-					$abstractTableColumn->getIdentifier(),
+				'sort' => implode(separator: '|', array: [
+					$dbResultTable->identifier,
+					$abstractTableColumn->identifier,
 					$columnSortDirection,
 				]),
 			], $dbResultTable->getAdditionalLinkParameters()) as $key => $val) {
 				$getAttributes[] = $key . '=' . $val;
 			}
-
 			$sortLinkAttributes = [
 				'a',
-				'href="?' . implode('&', $getAttributes) . '"',
+				'href="?' . implode(separator: '&', array: $getAttributes) . '"',
 			];
-
 			if ($isActiveSortColumn) {
-				$lowerCaseSortDirection = strtolower(TableHelper::OPPOSITE_SORT_DIRECTION[$columnSortDirection]);
+				$lowerCaseSortDirection = strtolower(string: TableHelper::OPPOSITE_SORT_DIRECTION[$columnSortDirection]);
 
-				if (($lowerCaseSortDirection === 'asc') && !empty($this->sortLinkClassActiveAsc)) {
+				if (($lowerCaseSortDirection === 'asc') && $this->sortLinkClassActiveAsc !== '') {
 					$sortLinkAttributes[] = 'class="' . $this->sortLinkClassActiveAsc . '"';
 				}
-				if (($lowerCaseSortDirection === 'desc') && !empty($this->sortLinkClassActiveDesc)) {
+				if (($lowerCaseSortDirection === 'desc') && $this->sortLinkClassActiveDesc !== '') {
 					$sortLinkAttributes[] = 'class="' . $this->sortLinkClassActiveDesc . '"';
 				}
 
@@ -129,17 +124,17 @@ class SortableTableHeadRenderer extends TableHeadRenderer
 				$labelAddition = $this->sortableColumnLabelAddition;
 			}
 
-			$labelHtml = '<' . implode(' ', $sortLinkAttributes) . '>' . $columnLabel . $labelAddition . '</a>';
+			$labelHtml = '<' . implode(separator: ' ', array: $sortLinkAttributes) . '>' . $columnLabel . $labelAddition . '</a>';
 		}
 
 		$attributesArr = ['th'];
 		if ($this->isAddColumnScopeAttribute()) {
 			$attributesArr[] = 'scope="col"';
 		}
-		if (!empty($columnCssClasses)) {
-			$attributesArr[] = 'class="' . implode(' ', $columnCssClasses) . '"';
+		if (count(value: $columnCssClasses) > 0) {
+			$attributesArr[] = 'class="' . implode(separator: ' ', array: $columnCssClasses) . '"';
 		}
 
-		return '<' . implode(' ', $attributesArr) . '>' . $labelHtml . '</th>';
+		return '<' . implode(separator: ' ', array: $attributesArr) . '>' . $labelHtml . '</th>';
 	}
 }

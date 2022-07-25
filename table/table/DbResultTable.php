@@ -7,7 +7,6 @@
 namespace framework\table\table;
 
 use framework\core\HttpRequest;
-use framework\datacheck\Sanitizer;
 use framework\db\DbQuery;
 use framework\db\FrameworkDB;
 use framework\table\column\AbstractTableColumn;
@@ -36,21 +35,20 @@ class DbResultTable extends SmartTable
 	private array $additionalLinkParameters = [];
 
 	public function __construct(
-		string                     $identifier, // Can be the name of main table, but must be unique per site
-		private                    readonly FrameworkDB          $db,
-		private                    readonly DbQuery              $dbQuery,
-		private                    readonly ?AbstractTableFilter $abstractTableFilter = null,
-		?TablePaginationRenderer   $tablePaginationRenderer = null,
-		?SortableTableHeadRenderer $sortableTableHeadRenderer = null,
-		private                    readonly int                  $itemsPerPage = 25, // Max rows in table before pagination starts, if result is not limited to one page
-		private bool               $limitToOnePage = false // Set to true to disable pagination
+		string                                $identifier, // Can be the name of main table, but must be unique per site
+		private readonly FrameworkDB          $db,
+		private readonly DbQuery              $dbQuery,
+		private readonly ?AbstractTableFilter $abstractTableFilter = null,
+		?TablePaginationRenderer              $tablePaginationRenderer = null,
+		?SortableTableHeadRenderer            $sortableTableHeadRenderer = null,
+		private readonly int                  $itemsPerPage = 25, // Max rows in table before pagination starts, if result is not limited to one page
+		private bool                          $limitToOnePage = false // Set to true to disable pagination
 	)
 	{
 		if (is_null(value: $sortableTableHeadRenderer)) {
 			$sortableTableHeadRenderer = new SortableTableHeadRenderer();
 		}
 		parent::__construct(identifier: $identifier, tableHeadRenderer: $sortableTableHeadRenderer);
-
 		$this->setNoDataHtml(noDataHtml: DbResultTable::filter . $this->getNoDataHtml());
 		$this->setFullHtml(fullHtml: DbResultTable::filter . SmartTable::totalAmount . DbResultTable::pagination . '<div class="table-global-wrap">' . SmartTable::table . '</div>' . DbResultTable::pagination);
 		$this->tablePaginationRenderer = is_null(value: $tablePaginationRenderer) ? new TablePaginationRenderer() : $tablePaginationRenderer;
@@ -72,17 +70,17 @@ class DbResultTable extends SmartTable
 
 	public function getCurrentSortColumn(): ?string
 	{
-		return DbResultTable::getFromSession(dataType: DbResultTable::sessionDataType, identifier: $this->getIdentifier(), index: 'sort_column');
+		return DbResultTable::getFromSession(dataType: DbResultTable::sessionDataType, identifier: $this->identifier, index: 'sort_column');
 	}
 
 	public function getCurrentSortDirection(): string
 	{
-		return DbResultTable::getFromSession(dataType: DbResultTable::sessionDataType, identifier: $this->getIdentifier(), index: 'sort_direction');
+		return DbResultTable::getFromSession(dataType: DbResultTable::sessionDataType, identifier: $this->identifier, index: 'sort_direction');
 	}
 
 	public function getCurrentPaginationPage(): int
 	{
-		return (int)DbResultTable::getFromSession(dataType: DbResultTable::sessionDataType, identifier: $this->getIdentifier(), index: 'pagination_page');
+		return (int)DbResultTable::getFromSession(dataType: DbResultTable::sessionDataType, identifier: $this->identifier, index: 'pagination_page');
 	}
 
 	public function addColumn(AbstractTableColumn $abstractTableColumn, bool $isDefaultSortColumn = false): void
@@ -101,15 +99,15 @@ class DbResultTable extends SmartTable
 		$html = parent::render();
 
 		return str_replace(
-			[
+			search: [
 				DbResultTable::filter,
 				DbResultTable::pagination,
 			],
-			[
+			replace: [
 				is_null($this->abstractTableFilter) ? '' : $this->abstractTableFilter->render(),
 				$this->tablePaginationRenderer->render(dbResultTable: $this, entriesPerPage: $this->itemsPerPage),
 			],
-			$html
+			subject: $html
 		);
 	}
 
@@ -119,7 +117,7 @@ class DbResultTable extends SmartTable
 			return;
 		}
 
-		if (!is_null($this->abstractTableFilter)) {
+		if (!is_null(value: $this->abstractTableFilter)) {
 			$this->abstractTableFilter->validate(dbResultTable: $this);
 		}
 		$this->initSorting();
@@ -136,22 +134,22 @@ class DbResultTable extends SmartTable
 			rowCount: $this->itemsPerPage
 		);
 		foreach ($res as $dataItem) {
-			$this->addDataItem(tableItemModel: new TableItemModel($dataItem));
+			$this->addDataItem(tableItemModel: new TableItemModel(dataObject: $dataItem));
 		}
 		$this->filledDataBySelectQuery = true;
-		$this->filledAmount = count($res);
+		$this->filledAmount = count(value: $res);
 	}
 
 	private function initSorting(): void
 	{
 		$availableSortOptions = [];
 		foreach ($this->getColumns() as $abstractTableColumn) {
-			if ($abstractTableColumn->isSortable()) {
-				$availableSortOptions[] = $abstractTableColumn->getIdentifier();
+			if ($abstractTableColumn->isSortable) {
+				$availableSortOptions[] = $abstractTableColumn->identifier;
 			}
 		}
 
-		$requestedSorting = Sanitizer::trimmedString(HttpRequest::getInputString(DbResultTable::PARAM_SORT));
+		$requestedSorting = trim(string: (string)HttpRequest::getInputString(keyName: DbResultTable::PARAM_SORT));
 		if ($requestedSorting !== '') {
 			$requestedSortingArr = explode(separator: '|', string: $requestedSorting);
 			if (count(value: $requestedSortingArr) === 3) {
@@ -160,43 +158,63 @@ class DbResultTable extends SmartTable
 				$requestedSortDirection = $requestedSortingArr[2];
 
 				if (
-					$requestedSortTable === $this->getIdentifier()
+					$requestedSortTable === $this->identifier
 					&& in_array(needle: $requestedSortColumn, haystack: $availableSortOptions)
 					&& array_key_exists(key: $requestedSortDirection, array: TableHelper::OPPOSITE_SORT_DIRECTION)
 				) {
-					DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->getIdentifier(), index: 'sort_column', value: $requestedSortColumn);
-					DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->getIdentifier(), index: 'sort_direction', value: $requestedSortDirection);
+					DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->identifier, index: 'sort_column', value: $requestedSortColumn);
+					DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->identifier, index: 'sort_direction', value: $requestedSortDirection);
 				}
 			}
 		}
 
-		if (empty($this->getCurrentSortColumn()) || !is_null(HttpRequest::getInputString(keyName: DbResultTable::PARAM_RESET))) {
+		if (empty($this->getCurrentSortColumn()) || !is_null(value: HttpRequest::getInputString(keyName: DbResultTable::PARAM_RESET))) {
 			$defaultSortColumn = $this->defaultSortColumn;
-			if (is_null($defaultSortColumn)) {
-				DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->getIdentifier(), index: 'sort_column', value: current(array: $this->getColumns())->getIdentifier());
-				DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->getIdentifier(), index: 'sort_direction', value: TableHelper::SORT_ASC);
+			if (is_null(value: $defaultSortColumn)) {
+				DbResultTable::saveToSession(
+					dataType: DbResultTable::sessionDataType,
+					identifier: $this->identifier,
+					index: 'sort_column',
+					value: current(array: $this->getColumns())->identifier
+				);
+				DbResultTable::saveToSession(
+					dataType: DbResultTable::sessionDataType,
+					identifier: $this->identifier,
+					index: 'sort_direction',
+					value: TableHelper::SORT_ASC
+				);
 			} else {
-				DbResultTable::saveToSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'sort_column', $defaultSortColumn->getIdentifier());
-				DbResultTable::saveToSession(DbResultTable::sessionDataType, $this->getIdentifier(), 'sort_direction', $defaultSortColumn->isSortAscendingByDefault() ? TableHelper::SORT_ASC : TableHelper::SORT_DESC);
+				DbResultTable::saveToSession(
+					dataType: DbResultTable::sessionDataType,
+					identifier: $this->identifier,
+					index: 'sort_column',
+					value: $defaultSortColumn->identifier
+				);
+				DbResultTable::saveToSession(
+					dataType: DbResultTable::sessionDataType,
+					identifier: $this->identifier,
+					index: 'sort_direction',
+					value: $defaultSortColumn->sortAscendingByDefault ? TableHelper::SORT_ASC : TableHelper::SORT_DESC
+				);
 			}
 		}
 	}
 
 	private function initPaginationPage(): void
 	{
-		$inputPageArr = explode(separator: '|', string: Sanitizer::trimmedString(HttpRequest::getInputString(keyName: DbResultTable::PARAM_PAGE)));
+		$inputPageArr = explode(separator: '|', string: trim(string: (string)HttpRequest::getInputString(keyName: DbResultTable::PARAM_PAGE)));
 		$inputPage = (int)$inputPageArr[0];
-		$inputTable = Sanitizer::trimmedString($inputPageArr[1] ?? '');
-		if ($inputTable === $this->getIdentifier() && $inputPage > 0) {
-			DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->getIdentifier(), index: 'pagination_page', value: $inputPage);
+		$inputTable = trim(string: $inputPageArr[1] ?? '');
+		if ($inputTable === $this->identifier && $inputPage > 0) {
+			DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->identifier, index: 'pagination_page', value: $inputPage);
 		}
 
 		if (
 			$this->getCurrentPaginationPage() < 1
-			|| !is_null(HttpRequest::getInputString(keyName: DbResultTable::PARAM_FIND))
-			|| !is_null(HttpRequest::getInputString(keyName: DbResultTable::PARAM_RESET))
+			|| !is_null(value: HttpRequest::getInputString(keyName: DbResultTable::PARAM_FIND))
+			|| !is_null(value: HttpRequest::getInputString(keyName: DbResultTable::PARAM_RESET))
 		) {
-			DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->getIdentifier(), index: 'pagination_page', value: 1);
+			DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->identifier, index: 'pagination_page', value: 1);
 		}
 	}
 
@@ -227,7 +245,7 @@ class DbResultTable extends SmartTable
 
 	public function addAdditionalLinkParameter(string $key, string $value): void
 	{
-		$this->additionalLinkParameters[urlencode($key)] = urlencode(string: $value);
+		$this->additionalLinkParameters[urlencode(string: $key)] = urlencode(string: $value);
 	}
 
 	public function getAdditionalLinkParameters(): array

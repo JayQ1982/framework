@@ -11,10 +11,12 @@ use framework\table\table\DbResultTable;
 
 class TablePaginationRenderer
 {
+	public function __construct(public readonly Pagination $pagination = new Pagination()) { }
+
 	public function render(DbResultTable $dbResultTable, int $entriesPerPage = 25, int $beforeAfter = 2, int $startEnd = 1): string
 	{
-		return (new Pagination())->render(
-			listIdentifier: $dbResultTable->getIdentifier(),
+		return $this->pagination->render(
+			listIdentifier: $dbResultTable->identifier,
 			totalAmount: $dbResultTable->getTotalAmount(),
 			currentPage: $dbResultTable->getCurrentPaginationPage(),
 			entriesPerPage: $entriesPerPage,

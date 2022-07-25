@@ -10,11 +10,13 @@ use framework\table\TableItemModel;
 
 class OptionsColumn extends AbstractTableColumn
 {
-	private array $options;
-
-	public function __construct(string $identifier, string $label, array $options, bool $isOrderAble, bool $orderAscending = true)
-	{
-		$this->options = $options;
+	public function __construct(
+		string                 $identifier,
+		string                 $label,
+		private readonly array $options,
+		bool                   $isOrderAble,
+		bool                   $orderAscending = true
+	) {
 		parent::__construct(
 			identifier: $identifier,
 			label: $label,
@@ -25,11 +27,11 @@ class OptionsColumn extends AbstractTableColumn
 
 	protected function renderCellValue(TableItemModel $tableItemModel): string
 	{
-		$rawValue = $tableItemModel->getRawValue($this->getIdentifier());
+		$rawValue = $tableItemModel->getRawValue($this->identifier);
 		if (array_key_exists(key: $rawValue, array: $this->options)) {
 			return $this->options[$rawValue];
 		}
 
-		return $tableItemModel->renderValue(name: $this->getIdentifier());
+		return $tableItemModel->renderValue(name: $this->identifier);
 	}
 }

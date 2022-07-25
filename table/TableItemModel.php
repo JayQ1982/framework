@@ -15,7 +15,7 @@ class TableItemModel
 
 	public function __construct(stdClass $dataObject)
 	{
-		$this->data = get_object_vars($dataObject);
+		$this->data = get_object_vars(object: $dataObject);
 	}
 
 	public function getRawValue(string $name)
@@ -26,12 +26,12 @@ class TableItemModel
 	public function renderValue(string $name, bool $renderNewLines = false): string
 	{
 		$value = $this->data[$name];
-		if (is_null($value)) {
+		if (is_null(value: $value)) {
 			return '';
 		}
 
 		if ($renderNewLines) {
-			return nl2br(string: HtmlEncoder::encodeKeepQuotes(value: str_replace(search: '<br>', replace: "\n", subject: $value)));
+			return nl2br(string: HtmlEncoder::encodeKeepQuotes(value: str_replace(search: '<br>', replace: PHP_EOL, subject: $value)));
 		}
 
 		return HtmlEncoder::encodeKeepQuotes(value: $value);

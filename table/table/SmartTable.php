@@ -8,6 +8,7 @@ namespace framework\table\table;
 
 use framework\table\column\AbstractTableColumn;
 use framework\table\renderer\TableHeadRenderer;
+use framework\table\TableItemCollection;
 use framework\table\TableItemModel;
 use LogicException;
 
@@ -35,24 +36,19 @@ class SmartTable
 
 	/** @var SmartTable[] */
 	private static array $instances = [];
-	private string $identifier;
 
-	private TableHeadRenderer $tableHeadRenderer;
-	/** @var TableItemModel[] */
-	private array $dataItems = [];
 	private array $cssClasses = [];
 	/** @var AbstractTableColumn[] */
 	private array $columns = [];
 
-	public function __construct(string $identifier, ?TableHeadRenderer $tableHeadRenderer = null)
-	{
-		if (array_key_exists($identifier, SmartTable::$instances)) {
-			throw new LogicException('There is already a table with the same identifier ' . $identifier);
+	public function __construct(
+		public readonly string              $identifier,
+		private readonly TableHeadRenderer  $tableHeadRenderer = new TableHeadRenderer(),
+		public readonly TableItemCollection $tableItemCollection = new TableItemCollection(),
+	) {
+		if (array_key_exists(key: $identifier, array: SmartTable::$instances)) {
+			throw new LogicException(message: 'There is already a table with the same identifier ' . $identifier);
 		}
-
-		$this->identifier = $identifier;
-		$this->tableHeadRenderer = is_null($tableHeadRenderer) ? new TableHeadRenderer() : $tableHeadRenderer;
-
 		SmartTable::$instances[$this->identifier] = $this;
 	}
 
@@ -111,19 +107,14 @@ class SmartTable
 		$this->cssClasses[] = $className;
 	}
 
-	public function getIdentifier(): string
-	{
-		return $this->identifier;
-	}
-
 	public function addColumn(AbstractTableColumn $abstractTableColumn): void
 	{
-		$columnIdentifier = $abstractTableColumn->getIdentifier();
-		if (array_key_exists($columnIdentifier, $this->columns)) {
-			throw new LogicException('There is already a column with the same identifier ' . $columnIdentifier);
+		$columnIdentifier = $abstractTableColumn->identifier;
+		if (array_key_exists(key: $columnIdentifier, array: $this->columns)) {
+			throw new LogicException(message: 'There is already a column with the same identifier ' . $columnIdentifier);
 		}
 
-		$abstractTableColumn->setTableIdentifier($this->identifier);
+		$abstractTableColumn->setTableIdentifier(tableIdentifier: $this->identifier);
 		$this->columns[$columnIdentifier] = $abstractTableColumn;
 	}
 
@@ -134,25 +125,17 @@ class SmartTable
 
 	public function addDataItem(TableItemModel $tableItemModel): void
 	{
-		$this->dataItems[] = $tableItemModel;
-	}
-
-	/**
-	 * @return TableItemModel[]
-	 */
-	public function getDataItems(): array
-	{
-		return $this->dataItems;
+		$this->tableItemCollection->add(tableItemModel: $tableItemModel);
 	}
 
 	public function getDisplayedAmount(): int
 	{
-		return count($this->dataItems);
+		return $this->tableItemCollection->count();
 	}
 
 	public function getTotalAmount(): int
 	{
-		return count($this->dataItems);
+		return $this->tableItemCollection->count();
 	}
 
 	public function render(): string
@@ -161,49 +144,66 @@ class SmartTable
 		if ($totalAmountOfItems === 1) {
 			$totalAmountMessage = $this->totalAmountMessage_oneResult;
 		} else {
-			$totalAmountMessage = str_replace(SmartTable::amount, number_format($totalAmountOfItems, 0, '.', '\''), $this->totalAmountMessage_numResults);
+			$totalAmountMessage = str_replace(
+				search: SmartTable::amount,
+				replace: number_format(num: $totalAmountOfItems, thousands_separator: '\''),
+				subject: $this->totalAmountMessage_numResults
+			);
 		}
-
 		$bodyArr = [];
-
 		$rowNumber = 0;
-		foreach ($this->dataItems as $tableItemModel) {
+		foreach ($this->tableItemCollection->list() as $tableItemModel) {
 			$rowNumber++;
-
 			$cells = [];
 			foreach ($this->columns as $abstractTableColumn) {
-				$cells[] = $abstractTableColumn->renderCell($tableItemModel);
+				$cells[] = $abstractTableColumn->renderCell(tableItemModel: $tableItemModel);
 			}
-
 			$rowHtml = (($rowNumber % 2) === 0) ? $this->evenRowHtml : $this->oddRowHtml;
-			$bodyArr[] = str_replace(SmartTable::cells, implode(PHP_EOL, $cells), $rowHtml);
+			$bodyArr[] = str_replace(
+				search: SmartTable::cells,
+				replace: implode(separator: PHP_EOL, array: $cells),
+				subject: $rowHtml
+			);
 		}
-
 		$tableAttributes = ['table'];
-		if (count($this->cssClasses) > 0) {
-			$tableAttributes[] = 'class="' . implode(' ', $this->cssClasses) . '"';
+		if (count(value: $this->cssClasses) > 0) {
+			$tableAttributes[] = 'class="' . implode(separator: ' ', array: $this->cssClasses) . '"';
 		}
-
-		$tableHtml = str_replace([
-			SmartTable::tableHeader,
-			SmartTable::tableBody,
-		], [
-			$this->tableHeadRenderer->render($this),
-			implode(PHP_EOL, $bodyArr),
-		], $this->tableHtml);
+		$tableHtml = str_replace(
+			search: [
+				SmartTable::tableHeader,
+				SmartTable::tableBody,
+			],
+			replace: [
+				$this->tableHeadRenderer->render(smartTable: $this),
+				implode(separator: PHP_EOL, array: $bodyArr),
+			],
+			subject: $this->tableHtml
+		);
 
 		$placeholders = [
-			SmartTable::totalAmount => str_replace(SmartTable::totalAmountMessagePlaceholder, $totalAmountMessage, $this->totalAmountHtml),
-			SmartTable::table       => implode(PHP_EOL, [
-				'<' . implode(' ', $tableAttributes) . '>',
+			SmartTable::totalAmount => str_replace(
+				search: SmartTable::totalAmountMessagePlaceholder,
+				replace: $totalAmountMessage,
+				subject: $this->totalAmountHtml
+			),
+			SmartTable::table       => implode(separator: PHP_EOL, array: [
+				'<' . implode(separator: ' ', array: $tableAttributes) . '>',
 				$tableHtml,
 				'</table>',
 			]),
 		];
 
-		$srcArr = array_keys($placeholders);
-		$rplArr = array_values($placeholders);
+		$srcArr = array_keys(array: $placeholders);
+		$rplArr = array_values(array: $placeholders);
 
-		return ($totalAmountOfItems === 0) ? str_replace($srcArr, $rplArr, $this->noDataHtml) : str_replace($srcArr, $rplArr, $this->fullHtml);
+		return ($totalAmountOfItems === 0) ? str_replace(
+			search: $srcArr,
+			replace: $rplArr,
+			subject: $this->noDataHtml) : str_replace(
+			search: $srcArr,
+			replace: $rplArr,
+			subject: $this->fullHtml
+		);
 	}
 }

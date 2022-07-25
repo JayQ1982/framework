@@ -31,20 +31,24 @@ class TableHeadRenderer
 			$columns[] = $this->renderColumnHead($abstractTableColumn);
 		}
 
-		return implode(PHP_EOL, [
+		return implode(separator: PHP_EOL, array: [
 			'<tr>',
-			implode(PHP_EOL, $columns),
+			implode(separator: PHP_EOL, array: $columns),
 			'</tr>',
 		]);
 	}
 
 	protected function renderColumnHead(AbstractTableColumn $abstractTableColumn): string
 	{
+		$columnCssClasses = $abstractTableColumn->getColumnCssClasses();
 		$attributesArr = ['th'];
 		if ($this->addColumnScopeAttribute) {
 			$attributesArr[] = 'scope="col"';
 		}
+		if (count(value: $columnCssClasses) > 0) {
+			$attributesArr[] = 'class="' . implode(separator: ' ', array: $columnCssClasses) . '"';
+		}
 
-		return '<' . implode(' ', $attributesArr) . '>' . $abstractTableColumn->getLabel() . '</th>';
+		return '<' . implode(separator: ' ', array: $attributesArr) . '>' . $abstractTableColumn->label . '</th>';
 	}
 }

@@ -6,7 +6,7 @@
 
 namespace framework\table\column;
 
-use DateTime;
+use DateTimeImmutable;
 use framework\table\TableItemModel;
 
 class DateColumn extends AbstractTableColumn
@@ -20,8 +20,8 @@ class DateColumn extends AbstractTableColumn
 
 	protected function renderCellValue(TableItemModel $tableItemModel): string
 	{
-		$value = $tableItemModel->getRawValue($this->getIdentifier());
+		$value = trim(string: (string)$tableItemModel->getRawValue(name: $this->identifier));
 
-		return empty($value) ? '' : (new DateTime($value))->format($this->format);
+		return ($value === '') ? '' : (new DateTimeImmutable(datetime: $value))->format(format: $this->format);
 	}
 }

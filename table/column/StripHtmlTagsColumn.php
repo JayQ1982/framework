@@ -13,7 +13,7 @@ class StripHtmlTagsColumn extends AbstractTableColumn
 {
 	protected function renderCellValue(TableItemModel $tableItemModel): string
 	{
-		$strippedTags = strip_tags($tableItemModel->getRawValue($this->getIdentifier()));
+		$strippedTags = strip_tags(string: $tableItemModel->getRawValue(name: $this->identifier));
 
 		return HtmlEncoder::encodeKeepQuotes(value: $strippedTags);
 	}

@@ -25,9 +25,9 @@ class BooleanColumn extends AbstractTableColumn
 
 	protected function renderCellValue(TableItemModel $tableItemModel): string
 	{
-		$value = $tableItemModel->getRawValue($this->getIdentifier());
+		$value = $tableItemModel->getRawValue(name: $this->identifier);
 
-		if (is_null($value)) {
+		if (is_null(value: $value)) {
 			return '';
 		}
 
@@ -39,6 +39,6 @@ class BooleanColumn extends AbstractTableColumn
 			return $this->falseLabel;
 		}
 
-		return $tableItemModel->renderValue($this->getIdentifier());
+		return $tableItemModel->renderValue(name: $this->identifier);
 	}
 }

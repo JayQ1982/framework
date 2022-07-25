@@ -19,6 +19,6 @@ class DefaultColumn extends AbstractTableColumn
 
 	protected function renderCellValue(TableItemModel $tableItemModel): string
 	{
-		return $tableItemModel->renderValue($this->getIdentifier(), $this->renderNewLines);
+		return $tableItemModel->renderValue(name: $this->identifier, renderNewLines: $this->renderNewLines);
 	}
 }

@@ -20,11 +20,11 @@ class FileSizeColumn extends AbstractTableColumn
 
 	protected function renderCellValue(TableItemModel $tableItemModel): string
 	{
-		$bytes = $tableItemModel->getRawValue($this->getIdentifier());
-		if (is_null($bytes)) {
+		$bytes = $tableItemModel->getRawValue(name: $this->identifier);
+		if (is_null(value: $bytes)) {
 			return '';
 		}
 
-		return StringUtils::formatBytes($bytes, $this->decimals);
+		return StringUtils::formatBytes(bytes: $bytes, precision: $this->decimals);
 	}
 }
