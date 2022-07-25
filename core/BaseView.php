@@ -22,11 +22,16 @@ use stdClass;
 abstract class BaseView
 {
 	protected function __construct(
+		string                                    $requiredViewGroupName,
 		array                                     $ipWhitelist,
 		private readonly ?AuthUser                $authUser,
 		AccessRightCollection                     $requiredAccessRights,
 		private readonly InputParameterCollection $inputParameterCollection
 	) {
+		$viewGroup = RequestHandler::get()->route->viewGroup;
+		if ($viewGroup !== $requiredViewGroupName) {
+			throw new LogicException(message: 'View group needs to be ' . $requiredViewGroupName . ' instead of ' . $viewGroup);
+		}
 		if (count(value: $ipWhitelist) > 0 && !in_array(needle: HttpRequest::getRemoteAddress(), haystack: $ipWhitelist)) {
 			throw new UnauthorizedIpAddressException();
 		}
