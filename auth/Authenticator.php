@@ -142,7 +142,7 @@ abstract class Authenticator
 
 	abstract protected function createAuthUserByUserName(string $userName): ?AuthUser;
 
-	abstract protected function logAuthResult(?int $userID, string $sessionID, string $ip, string $userName, AuthResult $authResult);
+	abstract protected function logAuthResult(?int $userID, string $sessionID, string $ip, string $userName, AuthResult $authResult): void;
 
 	abstract protected function checkLoginCredentials(AuthUser $authUser): bool;
 
