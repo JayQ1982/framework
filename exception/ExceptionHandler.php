@@ -36,8 +36,7 @@ class ExceptionHandler
 
 	final public function handleException(Throwable $throwable): void
 	{
-		$contentHandler = ContentHandler::get();
-		$this->contentType = !is_null(value: $contentHandler) ? $contentHandler->getContentType() : ContentType::createHtml();
+		$this->contentType = ContentHandler::isRegistered() ? ContentHandler::get()->getContentType() : ContentType::createHtml();
 		if (EnvironmentSettingsModel::get()->debug) {
 			$this->sendDebugHttpResponseAndExit(throwable: $throwable);
 		}

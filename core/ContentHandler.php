@@ -20,14 +20,19 @@ class ContentHandler
 	private ContentType $contentType;
 	private bool $suppressCspHeader = false;
 
-	public static function get(): ?ContentHandler
-	{
-		return ContentHandler::$registeredInstance;
-	}
-
 	public static function register(): ContentHandler
 	{
 		return new ContentHandler();
+	}
+
+	public static function isRegistered(): bool
+	{
+		return !is_null(value: ContentHandler::$registeredInstance);
+	}
+
+	public static function get(): ContentHandler
+	{
+		return ContentHandler::$registeredInstance;
 	}
 
 	private function __construct()

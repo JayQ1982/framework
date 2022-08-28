@@ -15,14 +15,19 @@ class LocaleHandler
 	private array $languageBlocks = [];
 	private array $loadedLangFiles = [];
 
-	public static function get(): LocaleHandler
-	{
-		return LocaleHandler::$registeredInstance;
-	}
-
 	public static function register(): void
 	{
 		new LocaleHandler();
+	}
+
+	public static function isRegistered(): bool
+	{
+		return !is_null(value: LocaleHandler::$registeredInstance);
+	}
+
+	public static function get(): LocaleHandler
+	{
+		return LocaleHandler::$registeredInstance;
 	}
 
 	private function __construct()
