@@ -10,33 +10,33 @@ use framework\core\HttpResponse;
 
 class FileHandler
 {
-	private string $path;
-	private ?string $individualFileName;
-	private int $maxAge;
-
-	public function __construct(string $path, ?string $individualFileName = null, int $maxAge = 0)
-	{
-		$this->path = $path;
-		$this->individualFileName = $individualFileName;
-		$this->maxAge = $maxAge;
+	public function __construct(
+		private readonly string  $path,
+		private readonly ?string $individualFileName = null,
+		private readonly int     $maxAge = 0
+	) {
 	}
 
 	public static function getExtension(string $filename): false|string
 	{
-		return substr($filename, strrpos($filename, '.') + 1);
+		return substr(string: $filename, offset: strrpos(haystack: $filename, needle: '.') + 1);
 	}
 
 	public function output(bool $forceDownload = false): void
 	{
-		$httpResponse = HttpResponse::createResponseFromFilePath($this->path, $forceDownload, $this->individualFileName, $this->maxAge);
-		$httpResponse->sendAndExit();
+		HttpResponse::createResponseFromFilePath(
+			absolutePathToFile: $this->path,
+			forceDownload: $forceDownload,
+			individualFileName: $this->individualFileName,
+			maxAge: $this->maxAge
+		)->sendAndExit();
 	}
 
 	public static function removeFile(string $directory, string $token, string $filename): void
 	{
-		$path = $directory . $token . '.' . FileHandler::getExtension($filename);
-		if (file_exists($path) && is_file($path)) {
-			unlink($path);
+		$path = $directory . $token . '.' . FileHandler::getExtension(filename: $filename);
+		if (file_exists(filename: $path) && is_file(filename: $path)) {
+			unlink(filename: $path);
 		}
 	}
 
