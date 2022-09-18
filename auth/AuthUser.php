@@ -6,7 +6,6 @@
 
 namespace framework\auth;
 
-use framework\common\StringUtils;
 use LogicException;
 
 abstract class AuthUser
@@ -18,9 +17,7 @@ abstract class AuthUser
 		public readonly bool                   $isActive,
 		private int                            $wrongPasswordAttempts,
 		private readonly AccessRightCollection $accessRightCollection,
-		private string                         $salt,
-		private string                         $password,
-		private readonly string                $passwordHashAlgorithm = 'sha256'
+		private Password                       $password
 	) {
 		if (!is_null(value: AuthUser::$instance)) {
 			throw new LogicException(message: 'There can only be one AuthUser instance.');
@@ -37,20 +34,9 @@ abstract class AuthUser
 		return $this->accessRightCollection->hasOneOfAccessRights(accessRightCollection: $accessRightCollection);
 	}
 
-	public function isPasswordValid(string $inputPassword): bool
-	{
-		return ($this->encryptPasswordString(inputPassword: $inputPassword) === $this->password);
-	}
-
 	protected function changePassword(string $newUnencryptedPassword): void
 	{
-		$this->salt = StringUtils::generateSalt();
-		$this->password = $this->encryptPasswordString(inputPassword: $newUnencryptedPassword);
-	}
-
-	private function encryptPasswordString(string $inputPassword): string
-	{
-		return hash(algo: $this->passwordHashAlgorithm, data: $this->salt . $inputPassword);
+		$this->password = Password::generateNew(rawPassword: $newUnencryptedPassword);
 	}
 
 	public function getWrongPasswordAttempts(): int
@@ -60,26 +46,22 @@ abstract class AuthUser
 
 	public function increaseWrongPasswordAttempts(): void
 	{
-		$this->dbIncreaseWrongPasswordAttempts(userID: $this->ID);
+		$this->dbIncreaseWrongPasswordAttempts();
 		$this->wrongPasswordAttempts++;
 	}
 
-	public function confirmSuccessfulLogin(): void
+	public function confirmSuccessfulLogin(): int
 	{
-		$this->dbConfirmSuccessfulLogin(userID: $this->ID);
 		$this->wrongPasswordAttempts = 0;
+
+		return $this->dbConfirmSuccessfulLogin();
 	}
 
-	abstract protected function dbIncreaseWrongPasswordAttempts(int $userID): void;
+	abstract protected function dbIncreaseWrongPasswordAttempts(): void;
 
-	abstract protected function dbConfirmSuccessfulLogin(int $userID): void;
+	abstract protected function dbConfirmSuccessfulLogin(): int;
 
-	protected function getSalt(): string
-	{
-		return $this->salt;
-	}
-
-	protected function getPassword(): string
+	public function getPassword(): Password
 	{
 		return $this->password;
 	}

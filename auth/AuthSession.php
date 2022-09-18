@@ -12,12 +12,12 @@ class AuthSession
 {
 	private const SESSION_KEY = 'auth_userSession';
 	private const isLoggedInIndicator = 'isLoggedIn';
-	private const authUserIdIndicator = 'authUserID';
+	private const authSessionIdIndicator = 'authSessionID';
 
-	final public static function logIn(AuthUser $authUser): void
+	final public static function logIn(int $authSessionID): void
 	{
 		AuthSession::setIsLoggedIn(isLoggedIn: true);
-		AuthSession::setAuthUserID(authUserID: $authUser->ID);
+		AuthSession::setAuthSessionID(authSessionID: $authSessionID);
 	}
 
 	final public static function logOut(): void
@@ -50,9 +50,9 @@ class AuthSession
 		AuthSession::saveToSession(key: AuthSession::isLoggedInIndicator, value: $isLoggedIn);
 	}
 
-	private static function setAuthUserID(int $authUserID): void
+	private static function setAuthSessionID(int $authSessionID): void
 	{
-		AuthSession::saveToSession(key: AuthSession::authUserIdIndicator, value: $authUserID);
+		AuthSession::saveToSession(key: AuthSession::authSessionIdIndicator, value: $authSessionID);
 	}
 
 	final public static function isLoggedIn(): bool
@@ -67,15 +67,15 @@ class AuthSession
 		return $isLoggedIn;
 	}
 
-	final public static function getAuthUserID(): int
+	final public static function getAuthSessionID(): int
 	{
-		return AuthSession::getFromSession(key: AuthSession::authUserIdIndicator);
+		return AuthSession::getFromSession(key: AuthSession::authSessionIdIndicator);
 	}
 
 	private static function resetSession(): void
 	{
 		AuthSession::setIsLoggedIn(isLoggedIn: false);
-		AuthSession::setAuthUserID(authUserID: 0);
+		AuthSession::setAuthSessionID(authSessionID: 0);
 		AbstractSessionHandler::getSessionHandler()->regenerateID();
 	}
 }

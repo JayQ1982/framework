@@ -102,7 +102,7 @@ abstract class Authenticator
 
 				return false;
 			}
-			if (!$authUser->isPasswordValid(inputPassword: $passwordToCheck)) {
+			if (!$authUser->getPassword()->isValid(rawPassword: $passwordToCheck)) {
 				$authUser->increaseWrongPasswordAttempts();
 				$this->authResult = AuthResult::ERROR_WRONG_PASSWORD;
 				$this->logAuthResult(
@@ -124,8 +124,7 @@ abstract class Authenticator
 			userName: $userName,
 			authResult: $this->authResult
 		);
-		$authUser->confirmSuccessfulLogin();
-		AuthSession::logIn(authUser: $authUser);
+		AuthSession::logIn(authSessionID: $authUser->confirmSuccessfulLogin());
 
 		return true;
 	}
