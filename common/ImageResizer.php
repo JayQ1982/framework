@@ -8,31 +8,28 @@ namespace framework\common;
 
 class ImageResizer
 {
-	public function resize(
-		string $tmp_name,
+	public static function resize(
+		string $temporaryPath,
 		string $fileExtension,
 		string $destinationDirectory = '',
 		string $newImageName = '',
-		int    $thumbnailWith = 0,
+		int    $thumbnailWidth = 0,
 		int    $thumbnailHeight = 0,
 		int    $newImageQuality = 90,
 		bool   $cut = false,
 		bool   $keepOriginal = true
 	): ImageResizerResult {
-		if (!is_dir(filename: $destinationDirectory)) {
-			mkdir(directory: $destinationDirectory);
-		}
 		$destinationPath = $destinationDirectory . 'orig_' . $newImageName . '.' . $fileExtension;
 		if ($keepOriginal) {
-			copy(from: $tmp_name, to: $destinationPath);
+			copy(from: $temporaryPath, to: $destinationPath);
 		} else {
-			$destinationPath = $tmp_name;
+			$destinationPath = $temporaryPath;
 		}
 		if (!file_exists(filename: $destinationPath)) {
-			return ImageResizerResult::FAILED_TO_CREATE_DESTINATION_FILE;
+			return ImageResizerResult::MISSING_SOURCE_IMAGE;
 		}
 		$originalImageSize = getimagesize(filename: $destinationPath);
-		$originalWith = (int)$originalImageSize[0];
+		$originalWidth = (int)$originalImageSize[0];
 		$originalHeight = (int)$originalImageSize[1];
 
 		$destinationPositionX = 0;
@@ -41,87 +38,90 @@ class ImageResizer
 		$sourcePositionX = 0;
 		$sourcePositionY = 0;
 
-		$factor = 1;
+		$resizeFactor = 1;
 
-		if ($originalWith < $thumbnailWith) {
-			$thumbnailWith = $originalWith;
+		if ($originalWidth < $thumbnailWidth) {
+			$thumbnailWidth = $originalWidth;
 		}
 		if ($originalHeight < $thumbnailHeight) {
 			$thumbnailHeight = $originalHeight;
 		}
 
-		if ($thumbnailWith === 0) {
+		if ($thumbnailWidth === 0) {
 			if ($thumbnailHeight > 0 && $originalHeight > $thumbnailHeight) {
-				$newWidth = $originalWith * $thumbnailHeight / $originalHeight;
-				$thumbnailWith = $newWidth;
+				$newWidth = $originalWidth * $thumbnailHeight / $originalHeight;
+				$thumbnailWidth = $newWidth;
 			} else {
-				$thumbnailWith = $originalWith;
+				$thumbnailWidth = $originalWidth;
 			}
 		}
 
 		if ($thumbnailHeight === 0) {
-			if ($thumbnailWith > 0 && $originalWith > $thumbnailWith) {
-				$newHeight = $originalHeight * $thumbnailWith / $originalWith;
+			if ($thumbnailWidth > 0 && $originalWidth > $thumbnailWidth) {
+				$newHeight = $originalHeight * $thumbnailWidth / $originalWidth;
 				$thumbnailHeight = $newHeight;
 			} else {
 				$thumbnailHeight = $originalHeight;
 			}
 		}
 
-		if ($originalWith > $thumbnailWith && $originalHeight > $thumbnailHeight) {
-			$factorWith = $thumbnailWith / $originalWith;
+		if ($originalWidth > $thumbnailWidth && $originalHeight > $thumbnailHeight) {
+			$factorWidth = $thumbnailWidth / $originalWidth;
 			$factorHeight = $thumbnailHeight / $originalHeight;
-			if ($factorWith > $factorHeight) {
-				$factor = ($cut) ? $factorWith : $factorHeight;
+			if ($factorWidth > $factorHeight) {
+				$resizeFactor = ($cut) ? $factorWidth : $factorHeight;
 			} else {
-				$factor = ($cut) ? $factorHeight : $factorWith;
+				$resizeFactor = ($cut) ? $factorHeight : $factorWidth;
 			}
-			$newWidth = (int)round(num: $originalWith * $factor);
-			$newHeight = (int)round(num: $originalHeight * $factor);
+			$newWidth = (int)round(num: $originalWidth * $resizeFactor);
+			$newHeight = (int)round(num: $originalHeight * $resizeFactor);
 		} else {
-			$newWidth = $originalWith;
+			$newWidth = $originalWidth;
 			$newHeight = $originalHeight;
 		}
 
-		if ($newWidth > $thumbnailWith) {
-			$sourcePositionX = (int)round(num: ($newWidth - $thumbnailWith) / 2 / $factor);
-		} else if ($newWidth < $thumbnailWith) {
-			$destinationPositionX = (int)round(num: ($thumbnailWith - $newWidth) / 2);
+		if ($newWidth > $thumbnailWidth) {
+			$sourcePositionX = (int)round(num: ($newWidth - $thumbnailWidth) / 2 / $resizeFactor);
+		} else if ($newWidth < $thumbnailWidth) {
+			$destinationPositionX = (int)round(num: ($thumbnailWidth - $newWidth) / 2);
 		}
 
 		if ($newHeight > $thumbnailHeight) {
-			$sourcePositionY = (int)round(num: ($newHeight - $thumbnailHeight) / 2 / $factor);
+			$sourcePositionY = (int)round(num: ($newHeight - $thumbnailHeight) / 2 / $resizeFactor);
 		} else if ($newHeight < $thumbnailHeight) {
 			$destinationPositionY = (int)round(num: ($thumbnailHeight - $newHeight) / 2);
 		}
 		switch (strtolower(string: $fileExtension)) {
 			case 'gif':
 				$originalImage = imagecreatefromgif(filename: $destinationPath);
-				$thumbnailImage = imagecreate(width: $thumbnailWith, height: $thumbnailHeight);
+				$thumbnailImage = imagecreate(width: $thumbnailWidth, height: $thumbnailHeight);
 				break;
 
 			case 'jpg':
 			case 'jpeg':
 				$originalImage = imagecreatefromjpeg(filename: $destinationPath);
-				$thumbnailImage = imagecreatetruecolor(width: $thumbnailWith, height: $thumbnailHeight);
+				$thumbnailImage = imagecreatetruecolor(width: $thumbnailWidth, height: $thumbnailHeight);
 				break;
 
 			case 'png':
 				$originalImage = imagecreatefrompng(filename: $destinationPath);
-				$thumbnailImage = imagecreatetruecolor(width: $thumbnailWith, height: $thumbnailHeight);
+				$thumbnailImage = imagecreatetruecolor(width: $thumbnailWidth, height: $thumbnailHeight);
 				break;
 
 			default:
 				$originalImage = imagecreate(width: 100, height: 100);
-				$thumbnailImage = imagecreate(width: $thumbnailWith, height: $thumbnailHeight);
+				$thumbnailImage = imagecreate(width: $thumbnailWidth, height: $thumbnailHeight);
 				break;
+		}
+		if ($originalImage === false) {
+			return ImageResizerResult::CREATE_ORIGINAL_FAILED;
 		}
 		$backgroundColor = imagecolorallocate(image: $thumbnailImage, red: 255, green: 255, blue: 255);
 		ImageFilledRectangle(
 			image: $thumbnailImage,
 			x1: 0,
 			y1: 0,
-			x2: $thumbnailWith,
+			x2: $thumbnailWidth,
 			y2: $thumbnailHeight,
 			color: $backgroundColor
 		);
@@ -134,7 +134,7 @@ class ImageResizer
 			src_y: $sourcePositionY,
 			dst_width: $newWidth,
 			dst_height: $newHeight,
-			src_width: $originalWith,
+			src_width: $originalWidth,
 			src_height: $originalHeight
 		);
 		imagedestroy(image: $originalImage);
@@ -156,6 +156,6 @@ class ImageResizer
 		}
 		imagedestroy(image: $thumbnailImage);
 
-		return file_exists(filename: $newImage) ? ImageResizerResult::SUCCESS : ImageResizerResult::FAILED_TO_CREATE_NEW_IMAGE;
+		return file_exists(filename: $newImage) ? ImageResizerResult::SUCCESS : ImageResizerResult::CREATE_NEW_FAILED;
 	}
 }

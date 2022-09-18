@@ -6,9 +6,10 @@
 
 namespace framework\common;
 
-enum ImageResizerResult: int
+enum ImageResizerResult
 {
-	case SUCCESS = 1;
-	case FAILED_TO_CREATE_DESTINATION_FILE = 2;
-	case FAILED_TO_CREATE_NEW_IMAGE = 3;
+	case SUCCESS;
+	case MISSING_SOURCE_IMAGE;
+	case CREATE_ORIGINAL_FAILED;
+	case CREATE_NEW_FAILED;
 }
