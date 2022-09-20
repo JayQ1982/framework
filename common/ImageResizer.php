@@ -147,7 +147,7 @@ class ImageResizer
 
 			case 'jpg':
 			case 'jpeg':
-				imagejpeg(image: $thumbnailImage, filename: $newImage, quality: $newImageQuality);
+				imagejpeg(image: $thumbnailImage, file: $newImage, quality: $newImageQuality);
 				break;
 
 			case 'png':
