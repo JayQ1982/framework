@@ -49,7 +49,7 @@ class ImageResizer
 
 		if ($thumbnailWidth === 0) {
 			if ($thumbnailHeight > 0 && $originalHeight > $thumbnailHeight) {
-				$newWidth = $originalWidth * $thumbnailHeight / $originalHeight;
+				$newWidth = (int)($originalWidth * $thumbnailHeight / $originalHeight);
 				$thumbnailWidth = $newWidth;
 			} else {
 				$thumbnailWidth = $originalWidth;
@@ -58,7 +58,7 @@ class ImageResizer
 
 		if ($thumbnailHeight === 0) {
 			if ($thumbnailWidth > 0 && $originalWidth > $thumbnailWidth) {
-				$newHeight = $originalHeight * $thumbnailWidth / $originalWidth;
+				$newHeight = (int)($originalHeight * $thumbnailWidth / $originalWidth);
 				$thumbnailHeight = $newHeight;
 			} else {
 				$thumbnailHeight = $originalHeight;
