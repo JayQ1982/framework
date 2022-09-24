@@ -13,7 +13,7 @@ class AccessRightCollection
 	/** @var string[] */
 	private array $accessRights = [];
 
-	private function __construct() { }
+	protected function __construct() { }
 
 	public static function createEmpty(): AccessRightCollection
 	{
