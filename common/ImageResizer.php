@@ -6,6 +6,8 @@
 
 namespace framework\common;
 
+use Throwable;
+
 class ImageResizer
 {
 	public static function resize(
@@ -91,31 +93,25 @@ class ImageResizer
 		} else if ($newHeight < $thumbnailHeight) {
 			$destinationPositionY = (int)round(num: ($thumbnailHeight - $newHeight) / 2);
 		}
-		switch (strtolower(string: $fileExtension)) {
-			case 'gif':
-				$originalImage = imagecreatefromgif(filename: $destinationPath);
-				$thumbnailImage = imagecreate(width: $thumbnailWidth, height: $thumbnailHeight);
-				break;
 
-			case 'jpg':
-			case 'jpeg':
-				$originalImage = imagecreatefromjpeg(filename: $destinationPath);
-				$thumbnailImage = imagecreatetruecolor(width: $thumbnailWidth, height: $thumbnailHeight);
-				break;
-
-			case 'png':
-				$originalImage = imagecreatefrompng(filename: $destinationPath);
-				$thumbnailImage = imagecreatetruecolor(width: $thumbnailWidth, height: $thumbnailHeight);
-				break;
-
-			default:
-				$originalImage = imagecreate(width: 100, height: 100);
-				$thumbnailImage = imagecreate(width: $thumbnailWidth, height: $thumbnailHeight);
-				break;
+		$lcFileExtension = strtolower(string: $fileExtension);
+		try {
+			$originalImage = match ($lcFileExtension) {
+				'gif' => imagecreatefromgif(filename: $destinationPath),
+				'jpg', 'jpeg' => imagecreatefromjpeg(filename: $destinationPath),
+				'png' => imagecreatefrompng(filename: $destinationPath),
+				default => imagecreate(width: 100, height: 100),
+			};
+		} catch(Throwable) {
+			$originalImage = false;
 		}
 		if ($originalImage === false) {
 			return ImageResizerResult::CREATE_ORIGINAL_FAILED;
 		}
+		$thumbnailImage = match ($lcFileExtension) {
+			'jpg', 'jpeg', 'png' => imagecreatetruecolor(width: $thumbnailWidth, height: $thumbnailHeight),
+			default => imagecreate(width: $thumbnailWidth, height: $thumbnailHeight),
+		};
 		$backgroundColor = imagecolorallocate(image: $thumbnailImage, red: 255, green: 255, blue: 255);
 		ImageFilledRectangle(
 			image: $thumbnailImage,
