@@ -6,13 +6,13 @@
 
 namespace framework\session;
 
-class SessionSettingsModel
+readonly class SessionSettingsModel
 {
 	public function __construct(
-		public readonly string $savePath = '',
-		public readonly string $individualName = '',
-		public readonly ?int   $maxLifeTime = null,
-		public readonly bool   $isSameSiteStrict = true
+		public string $savePath = '',
+		public string $individualName = '',
+		public ?int   $maxLifeTime = null,
+		public bool   $isSameSiteStrict = true
 	) {
 	}
 }

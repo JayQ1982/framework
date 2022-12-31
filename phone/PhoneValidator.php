@@ -110,7 +110,7 @@ class PhoneValidator
 	private static function isPossibleNumberWithReason(PhoneNumber $phoneNumber): int
 	{
 		$nationalNumber = $phoneNumber->getNationalSignificantNumber();
-		$countryCode = $phoneNumber->getCountryCode();
+		$countryCode = $phoneNumber->countryCode;
 		$regionCode = PhoneRegionCountryCodeMap::getRegionCodeForCountryCode(countryCallingCode: $countryCode);
 		// Metadata cannot be null because the country calling code is valid.
 		$phoneMetaData = PhoneMetaData::getForRegionOrCallingCode(countryCallingCode: $countryCode, regionCode: $regionCode);

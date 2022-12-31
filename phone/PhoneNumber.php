@@ -9,14 +9,14 @@
 
 namespace framework\phone;
 
-class PhoneNumber
+readonly class PhoneNumber
 {
 	public function __construct(
-		private readonly string $extension,
-		private readonly int    $countryCode,
-		private readonly ?bool  $italianLeadingZero,
-		private readonly int    $numberOfLeadingZeros,
-		private readonly string $nationalNumber
+		public string $extension,
+		public int    $countryCode,
+		public ?bool  $italianLeadingZero,
+		public int    $numberOfLeadingZeros,
+		public string $nationalNumber
 	) {
 	}
 
@@ -30,40 +30,15 @@ class PhoneNumber
 		return $phoneNumber;
 	}
 
-	public function getExtension(): string
-	{
-		return $this->extension;
-	}
-
-	public function getCountryCode(): int
-	{
-		return $this->countryCode;
-	}
-
-	public function isItalianLeadingZero(): ?bool
-	{
-		return $this->italianLeadingZero;
-	}
-
-	public function getNumberOfLeadingZeros(): int
-	{
-		return $this->numberOfLeadingZeros;
-	}
-
-	public function getNationalNumber(): string
-	{
-		return $this->nationalNumber;
-	}
-
 	public function getNationalSignificantNumber(): string
 	{
 		// If leading zero(s) have been set, we prefix this now. Note this is not a national prefix.
 		$nationalNumber = '';
-		if ($this->isItalianLeadingZero() && $this->getNumberOfLeadingZeros() > 0) {
-			$zeros = str_repeat(string: '0', times: $this->getNumberOfLeadingZeros());
+		if ($this->italianLeadingZero && $this->numberOfLeadingZeros > 0) {
+			$zeros = str_repeat(string: '0', times: $this->numberOfLeadingZeros);
 			$nationalNumber .= $zeros;
 		}
-		$nationalNumber .= $this->getNationalNumber();
+		$nationalNumber .= $this->nationalNumber;
 
 		return $nationalNumber;
 	}

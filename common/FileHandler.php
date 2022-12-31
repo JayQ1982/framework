@@ -8,12 +8,12 @@ namespace framework\common;
 
 use framework\core\HttpResponse;
 
-class FileHandler
+readonly class FileHandler
 {
 	public function __construct(
-		private readonly string  $path,
-		private readonly ?string $individualFileName = null,
-		private readonly int     $maxAge = 0
+		private string  $path,
+		private ?string $individualFileName = null,
+		private int     $maxAge = 0
 	) {
 	}
 

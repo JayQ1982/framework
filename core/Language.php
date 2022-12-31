@@ -6,11 +6,11 @@
 
 namespace framework\core;
 
-class Language
+readonly class Language
 {
 	public function __construct(
-		public readonly string $code,
-		public readonly string $locale
+		public string $code,
+		public string $locale
 	) {
 	}
 }

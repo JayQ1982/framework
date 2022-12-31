@@ -6,7 +6,6 @@
 
 namespace framework\form\rule;
 
-use framework\common\StringUtils;
 use framework\common\ValidatedEmailAddress;
 use framework\datacheck\Sanitizer;
 use framework\form\component\FormField;
@@ -40,7 +39,7 @@ class ValidEmailAddressRule extends FormRule
 		}
 
 		$emailParts = explode('@', $fieldValue);
-		$domain = StringUtils::utf8_to_punycode($emailParts[1]);
+		$domain = idn_to_ascii(domain: $emailParts[1]);
 		$formField->setValue($emailParts[0] . '@' . $domain);
 
 		if (!$this->dnsCheck) {

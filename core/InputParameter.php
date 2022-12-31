@@ -6,13 +6,13 @@
 
 namespace framework\core;
 
-class InputParameter
+readonly class InputParameter
 {
 	public function __construct(
-		public readonly string $name,
-		public readonly bool   $isRequired,
-		public readonly string $description = ''
-	) {
-
+		public string $name,
+		public bool   $isRequired,
+		public string $description = ''
+	)
+	{
 	}
 }

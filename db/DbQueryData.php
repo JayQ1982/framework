@@ -6,21 +6,11 @@
 
 namespace framework\db;
 
-class DbQueryData
+readonly class DbQueryData
 {
 	public function __construct(
-		private readonly string $query,
-		private readonly array $params
+		public string $query,
+		public array  $params
 	) {
-	}
-
-	public function getQuery(): string
-	{
-		return $this->query;
-	}
-
-	public function getParams(): array
-	{
-		return $this->params;
 	}
 }

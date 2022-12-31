@@ -82,7 +82,7 @@ class ValidatedEmailAddress
 
 			return false;
 		}
-		$domain = StringUtils::utf8_to_punycode(string: $emailParts[1]);
+		$domain = idn_to_ascii(domain: $emailParts[1]);
 
 		if ($domain === false) {
 			$this->lastErrorCode = 'invalidDomainName';

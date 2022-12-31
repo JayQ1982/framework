@@ -6,7 +6,6 @@
 
 namespace framework\datacheck\validatorTypes;
 
-use framework\common\StringUtils;
 use framework\datacheck\Validator;
 
 class DomainValidator
@@ -28,7 +27,7 @@ class DomainValidator
 		if (!TldValidator::validate(input: $realTld)) {
 			return false;
 		}
-		$encodedData = StringUtils::utf8_to_punycode(string: $input);
+		$encodedData = idn_to_ascii(domain: $input);
 		if ($encodedData === false) {
 			return false;
 		}

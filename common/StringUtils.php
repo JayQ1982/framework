@@ -184,30 +184,20 @@ class StringUtils
 		return ($string === '') ? null : $string;
 	}
 
-	public static function utf8_to_punycode(string $string): false|string
-	{
-		return idn_to_ascii($string, 0, INTL_IDNA_VARIANT_UTS46);
-	}
-
 	public static function utf8_to_punycode_email(string $email): string
 	{
-		$fragments = explode('@', $email);
-		$lastFragment = array_pop($fragments);
+		$fragments = explode(separator: '@', string: $email);
+		$lastFragment = array_pop(array: $fragments);
 
-		return implode(separator: '@', array: $fragments) . '@' . StringUtils::utf8_to_punycode($lastFragment);
-	}
-
-	public static function punycode_to_utf8(string $string): false|string
-	{
-		return idn_to_utf8($string, 0, INTL_IDNA_VARIANT_UTS46);
+		return implode(separator: '@', array: $fragments) . '@' . idn_to_ascii(domain: $lastFragment);
 	}
 
 	public static function punycode_to_utf8_email(string $email): string
 	{
-		$fragments = explode('@', $email);
-		$lastFragment = array_pop($fragments);
+		$fragments = explode(separator: '@', string: $email);
+		$lastFragment = array_pop(array: $fragments);
 
-		return implode(separator: '@', array: $fragments) . '@' . StringUtils::punycode_to_utf8($lastFragment);
+		return implode(separator: '@', array: $fragments) . '@' . idn_to_utf8(domain: $lastFragment);
 	}
 
 	public static function formatBytes(int|float $bytes, int $precision = 2): string

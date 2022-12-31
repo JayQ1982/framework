@@ -52,11 +52,11 @@ class TextFilterField extends AbstractTableFilterField
 				subject: $this->dataTableColumnReference
 			) => $this->value,
 		]);
-		$query = $dbQueryData->getQuery();
+		$query = $dbQueryData->query;
 		if (Sanitizer::trimmedString(input: $query) === '') {
 			return [];
 		}
-		foreach ($dbQueryData->getParams() as $param) {
+		foreach ($dbQueryData->params as $param) {
 			$this->sqlParams[] = $param;
 		}
 

@@ -9,9 +9,9 @@ namespace framework\table\renderer;
 use framework\common\Pagination;
 use framework\table\table\DbResultTable;
 
-class TablePaginationRenderer
+readonly class TablePaginationRenderer
 {
-	public function __construct(public readonly Pagination $pagination = new Pagination()) { }
+	public function __construct(public Pagination $pagination = new Pagination()) { }
 
 	public function render(DbResultTable $dbResultTable, int $entriesPerPage = 25, int $beforeAfter = 2, int $startEnd = 1): string
 	{

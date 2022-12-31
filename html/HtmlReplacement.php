@@ -8,10 +8,10 @@ namespace framework\html;
 
 use stdClass;
 
-class HtmlReplacement
+readonly class HtmlReplacement
 {
 	private function __construct(
-		public readonly null|HtmlText|bool|stdClass|HtmlTextCollection|HtmlDataObjectCollection|int $content
+		public null|HtmlText|bool|stdClass|HtmlTextCollection|HtmlDataObjectCollection|int $content
 	) {
 
 	}

@@ -168,15 +168,17 @@ class TemplateEngine
 
 	protected function replaceInlineTag(string $value): string
 	{
-		$inlineTags = null;
-
-		preg_match_all('@{' . $this->tplNsPrefix . ':(.+?)(?:\\s+(\\w+=\'.+?\'))?\\s*}@', $value, $inlineTags, PREG_SET_ORDER);
-
-		if (count($inlineTags) <= 0) {
+		preg_match_all(
+			pattern: '@{' . $this->tplNsPrefix . ':(.+?)(?:\\s+(\\w+=\'.+?\'))?\\s*}@',
+			subject: $value,
+			matches: $inlineTags,
+			flags: PREG_SET_ORDER
+		);
+		$amountOfInlineTags = count(value: $inlineTags);
+		if ($amountOfInlineTags === 0) {
 			return $value;
 		}
-
-		for ($j = 0; $j < count($inlineTags); $j++) {
+		for ($j = 0; $j < $amountOfInlineTags; $j++) {
 			$tagName = $inlineTags[$j][1];
 
 			if (isset($this->customTags[$tagName]) === false) {

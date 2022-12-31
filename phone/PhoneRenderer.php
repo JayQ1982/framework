@@ -13,12 +13,12 @@ class PhoneRenderer
 {
 	public static function renderInternalFormat(PhoneNumber $phoneNumber): string
 	{
-		return PhoneConstants::PLUS_SIGN . $phoneNumber->getCountryCode() . '.' . $phoneNumber->getNationalNumber();
+		return PhoneConstants::PLUS_SIGN . $phoneNumber->countryCode . '.' . $phoneNumber->nationalNumber;
 	}
 
 	public static function renderInternationalFormat(PhoneNumber $phoneNumber): string
 	{
-		$countryCallingCode = $phoneNumber->getCountryCode();
+		$countryCallingCode = $phoneNumber->countryCode;
 		$nationalSignificantNumber = $phoneNumber->getNationalSignificantNumber();
 
 		if (!PhoneRegionCountryCodeMap::countryCodeExists(countryCodeToCheck: $countryCallingCode)) {
@@ -91,11 +91,11 @@ class PhoneRenderer
 
 	private static function maybeAppendFormattedExtension(PhoneNumber $phoneNumber, PhoneMetaData $phoneMetaData, string &$formattedNumber): void
 	{
-		if (mb_strlen(string: $phoneNumber->getExtension()) > 0) {
+		if (mb_strlen(string: $phoneNumber->extension) > 0) {
 			if ($phoneMetaData->hasPreferredExtnPrefix()) {
-				$formattedNumber .= $phoneMetaData->getPreferredExtnPrefix() . $phoneNumber->getExtension();
+				$formattedNumber .= $phoneMetaData->getPreferredExtnPrefix() . $phoneNumber->extension;
 			} else {
-				$formattedNumber .= PhoneConstants::DEFAULT_EXTN_PREFIX . $phoneNumber->getExtension();
+				$formattedNumber .= PhoneConstants::DEFAULT_EXTN_PREFIX . $phoneNumber->extension;
 			}
 		}
 	}
