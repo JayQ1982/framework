@@ -51,7 +51,7 @@ class Logger
 			}
 		}
 
-		$hash = hash(algo: 'sha256', data: $hashableContent, binary: false);
+		$hash = hash(algo: 'sha256', data: $hashableContent);
 		$this->deliverMessage(hash: $hash, message: $message);
 	}
 

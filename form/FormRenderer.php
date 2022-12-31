@@ -66,7 +66,7 @@ abstract class FormRenderer
 		foreach ($formComponentWithErrors->getErrorsAsHtmlTextObjects() as $htmlText) {
 			$errorsHTML[] = $htmlText->render();
 		}
-		$divTag->addText(HtmlText::encoded(implode('<br>', $errorsHTML)));
+		$divTag->addText(HtmlText::encoded(implode(separator: '<br>', array: $errorsHTML)));
 		$parentHtmlTag->addTag($divTag);
 	}
 
@@ -93,7 +93,7 @@ abstract class FormRenderer
 			$ariaDescribedBy[] = $formField->getName() . '-info';
 		}
 		if (count($ariaDescribedBy) > 0) {
-			$parentHtmlTag->addHtmlTagAttribute(new HtmlTagAttribute('aria-describedby', implode(' ', $ariaDescribedBy), true));
+			$parentHtmlTag->addHtmlTagAttribute(new HtmlTagAttribute('aria-describedby', implode(separator: ' ', array: $ariaDescribedBy), true));
 		}
 	}
 }

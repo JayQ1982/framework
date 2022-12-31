@@ -90,7 +90,7 @@ class ElementNode extends HtmlNode
 			foreach ($node->attributes as $htmlTagAttribute) {
 				$attrs[] = $htmlTagAttribute->render();
 			}
-			$attrStr = (count($attrs) > 0) ? ' ' . implode(' ', $attrs) : '';
+			$attrStr = (count($attrs) > 0) ? ' ' . implode(separator: ' ', array: $attrs) : '';
 
 			$html .= '<' . $tagStr . $attrStr . $node->tagExtension . (($node->tagType === ElementNode::TAG_SELF_CLOSING) ? ' /' : '') . '>' . $node->content;
 

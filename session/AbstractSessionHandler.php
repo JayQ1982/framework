@@ -194,8 +194,7 @@ abstract class AbstractSessionHandler extends SessionHandler
 		if (is_null(value: $this->fingerprint)) {
 			$this->fingerprint = hash(
 				algo: 'sha256',
-				data: $this->getID() . $this->clientUserAgent,
-				binary: false
+				data: $this->getID() . $this->clientUserAgent
 			);
 		}
 

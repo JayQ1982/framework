@@ -23,7 +23,7 @@ class DbRuntimeException extends RuntimeException
 		}
 
 		$message = $throwable->getMessage() . ';' . PHP_EOL;
-		$message .= 'SQL-Parameters: ' . ((count($parameters) !== 0) ? ' "' . implode('", "', $parameters) . '"' : '-none-') . PHP_EOL;
+		$message .= 'SQL-Parameters: ' . ((count($parameters) !== 0) ? ' "' . implode(separator: '", "', array: $parameters) . '"' : '-none-') . PHP_EOL;
 		$message .= 'SQL-String: "' . $sql . '"' . PHP_EOL;
 
 		parent::__construct(message: $message, code: $realCode, previous: $throwable);

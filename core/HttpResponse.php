@@ -162,7 +162,7 @@ class HttpResponse
 		if (!is_null(value: $this->contentString)) {
 			echo $this->contentString;
 		} else if (!is_null(value: $this->contentFilePath)) {
-			readfile(filename: $this->contentFilePath, use_include_path: false);
+			readfile(filename: $this->contentFilePath);
 		}
 		exit;
 	}

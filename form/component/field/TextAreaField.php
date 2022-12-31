@@ -79,7 +79,7 @@ class TextAreaField extends FormField
 				$htmlArray[] = HtmlEncoder::encode(value: $row);
 			}
 
-			return implode(PHP_EOL, $htmlArray);
+			return implode(separator: PHP_EOL, array: $htmlArray);
 		}
 
 		return HtmlEncoder::encode(value: $currentValue);

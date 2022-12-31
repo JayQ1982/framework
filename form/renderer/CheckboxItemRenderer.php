@@ -31,7 +31,7 @@ class CheckboxItemRenderer extends FormRenderer
 		if ($checkboxOptionsField->hasErrors(withChildElements: true)) {
 			$formItemCheckboxClasses[] = 'has-error';
 		}
-		$formItemCheckboxDiv = new HtmlTag('div', false, [new HtmlTagAttribute('class', implode(' ', $formItemCheckboxClasses), true)]);
+		$formItemCheckboxDiv = new HtmlTag('div', false, [new HtmlTagAttribute('class', implode(separator: ' ', array: $formItemCheckboxClasses), true)]);
 
 		$labelTag = new HtmlTag('label', false);
 		$labelTag->addTag($this->getInputTag());
@@ -82,7 +82,7 @@ class CheckboxItemRenderer extends FormRenderer
 		}
 
 		if (count($ariaDescribedBy) > 0) {
-			$attributes[] = new HtmlTagAttribute('aria-describedby', implode(' ', $ariaDescribedBy), true);
+			$attributes[] = new HtmlTagAttribute('aria-describedby', implode(separator: ' ', array: $ariaDescribedBy), true);
 		}
 
 		return new HtmlTag('input', true, $attributes);

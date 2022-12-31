@@ -91,7 +91,7 @@ class DefinitionListRenderer extends FormRenderer
 			$ddClasses[] = 'has-error';
 		}
 
-		$ddAttributes = (count($ddClasses) === 0) ? [] : [new HtmlTagAttribute('class', implode(' ', $ddClasses), true)];
+		$ddAttributes = (count($ddClasses) === 0) ? [] : [new HtmlTagAttribute('class', implode(separator: ' ', array: $ddClasses), true)];
 		$ddTag = new HtmlTag('dd', false, $ddAttributes);
 
 		foreach ($this->htmlTagsBeforeFormField as $htmlTag) {

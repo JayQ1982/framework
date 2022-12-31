@@ -140,7 +140,7 @@ class Pagination
 		$html[] = '</ul>';
 		$html[] = '</div>';
 
-		return implode(PHP_EOL, $html);
+		return implode(separator: PHP_EOL, array: $html);
 	}
 
 	private function getLinkTarget(string $listIdentifier, int $pageNumber, array $additionalLinkParameters): string
@@ -150,6 +150,6 @@ class Pagination
 			$getAttributes[] = $key . '=' . $val;
 		}
 
-		return '?' . implode('&', $getAttributes);
+		return '?' . implode(separator: '&', array: $getAttributes);
 	}
 }

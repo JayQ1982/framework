@@ -31,7 +31,7 @@ class DefaultFormRenderer extends FormRenderer
 		];
 		$cssClasses = $form->getCssClasses();
 		if (count($cssClasses) > 0) {
-			$attributes[] = new HtmlTagAttribute('class', implode(' ', $cssClasses), true);
+			$attributes[] = new HtmlTagAttribute('class', implode(separator: ' ', array: $cssClasses), true);
 		}
 		if ($form->acceptUpload()) {
 			$attributes[] = new HtmlTagAttribute('enctype', 'multipart/form-data', true);

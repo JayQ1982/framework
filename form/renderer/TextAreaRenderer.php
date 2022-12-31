@@ -35,7 +35,7 @@ class TextAreaRenderer extends FormRenderer
 
 		$cssClassesForRenderer = $textAreaField->getCssClassesForRenderer();
 		if (count($cssClassesForRenderer) > 0) {
-			$attributes[] = new HtmlTagAttribute('class', implode(' ', $cssClassesForRenderer), true);
+			$attributes[] = new HtmlTagAttribute('class', implode(separator: ' ', array: $cssClassesForRenderer), true);
 		}
 
 		if (!is_null($textAreaField->getPlaceholder())) {
@@ -51,7 +51,7 @@ class TextAreaRenderer extends FormRenderer
 			foreach ($value as $row) {
 				$rows[] = HtmlEncoder::encode(value: $row);
 			}
-			$html = implode(PHP_EOL, $rows);
+			$html = implode(separator: PHP_EOL, array: $rows);
 		} else {
 			$html = HtmlEncoder::encode(value: $value);
 		}

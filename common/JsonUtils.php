@@ -93,6 +93,6 @@ class JsonUtils
 		}
 		$new_str[] = $rc;
 
-		return implode('', $new_str);
+		return implode(separator: StringUtils::IMPLODE_DEFAULT_SEPARATOR, array: $new_str);
 	}
 }

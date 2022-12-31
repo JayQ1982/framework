@@ -21,6 +21,7 @@
 
 namespace framework\mailer;
 
+use framework\common\StringUtils;
 use framework\mailer\attachment\MailerFileAttachment;
 use framework\mailer\attachment\MailerStringAttachment;
 
@@ -335,7 +336,7 @@ class MailMimeBody
 
 		$mime[] = '--' . $boundary . '--' . MailerConstants::CRLF;
 
-		return implode(separator: '', array: $mime); // TODO: PHP 8.1 throws error if we remove redundant separator argument
+		return implode(separator: StringUtils::IMPLODE_DEFAULT_SEPARATOR, array: $mime);
 	}
 
 	private function endBoundary(string $boundary): string

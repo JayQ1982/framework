@@ -517,7 +517,7 @@ class SearchHelper
 			}
 		}
 
-		return new DbQueryData(query: implode(' AND ', $whereConditions), params: $sqlParams);
+		return new DbQueryData(query: implode(separator: ' AND ', array: $whereConditions), params: $sqlParams);
 	}
 
 	public static function addWildcardToString(string $string): string

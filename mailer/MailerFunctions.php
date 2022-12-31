@@ -52,8 +52,7 @@ class MailerFunctions
 	{
 		return !MailerFunctions::has8bitChars(text: $domain) ? $domain : idn_to_ascii(
 			domain: $domain,
-			flags: IDNA_DEFAULT | IDNA_USE_STD3_RULES | IDNA_CHECK_BIDI | IDNA_CHECK_CONTEXTJ | IDNA_NONTRANSITIONAL_TO_ASCII,
-			variant: INTL_IDNA_VARIANT_UTS46
+			flags: IDNA_DEFAULT | IDNA_USE_STD3_RULES | IDNA_CHECK_BIDI | IDNA_CHECK_CONTEXTJ | IDNA_NONTRANSITIONAL_TO_ASCII
 		);
 	}
 

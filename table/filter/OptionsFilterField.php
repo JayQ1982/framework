@@ -86,7 +86,7 @@ class OptionsFilterField extends AbstractTableFilterField
 				$attributes[] = 'selected';
 			}
 
-			$html .= '<' . implode(' ', $attributes) . '>' . $filterOption->getLabel() . '</option>';
+			$html .= '<' . implode(separator: ' ', array: $attributes) . '>' . $filterOption->getLabel() . '</option>';
 		}
 		$html .= '</select>';
 

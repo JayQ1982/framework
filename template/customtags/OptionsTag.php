@@ -72,7 +72,7 @@ class OptionsTag extends TemplateTag implements TagNode
 				if (in_array($key, $selection)) {
 					$attributes[] = 'selected';
 				}
-				$html .= '<' . implode(' ', $attributes) . '>' . $value . '</option>' . PHP_EOL;
+				$html .= '<' . implode(separator: ' ', array: $attributes) . '>' . $value . '</option>' . PHP_EOL;
 			}
 		}
 

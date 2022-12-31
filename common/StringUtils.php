@@ -8,6 +8,8 @@ namespace framework\common;
 
 class StringUtils
 {
+	public const IMPLODE_DEFAULT_SEPARATOR = ''; // https://github.com/php/php-src/issues/10197
+
 	public static function beforeLast(string $str, string $before): string
 	{
 		$posUntil = mb_strrpos($str, $before);
@@ -192,7 +194,7 @@ class StringUtils
 		$fragments = explode('@', $email);
 		$lastFragment = array_pop($fragments);
 
-		return implode('@', $fragments) . '@' . StringUtils::utf8_to_punycode($lastFragment);
+		return implode(separator: '@', array: $fragments) . '@' . StringUtils::utf8_to_punycode($lastFragment);
 	}
 
 	public static function punycode_to_utf8(string $string): false|string
@@ -205,7 +207,7 @@ class StringUtils
 		$fragments = explode('@', $email);
 		$lastFragment = array_pop($fragments);
 
-		return implode('@', $fragments) . '@' . StringUtils::punycode_to_utf8($lastFragment);
+		return implode(separator: '@', array: $fragments) . '@' . StringUtils::punycode_to_utf8($lastFragment);
 	}
 
 	public static function formatBytes(int|float $bytes, int $precision = 2): string
@@ -252,7 +254,7 @@ class StringUtils
 			)];
 		}
 
-		$allCharacters = implode('', $characterSets);
+		$allCharacters = implode(separator: StringUtils::IMPLODE_DEFAULT_SEPARATOR, array: $characterSets);
 		$currentRandomStringLength = mb_strlen(string: $unShuffledRandomString);
 		while ($currentRandomStringLength < $requiredStringLength) {
 			$unShuffledRandomString .= $allCharacters[mt_rand(

@@ -59,7 +59,7 @@ class LangTag extends TemplateTag implements TagNode, TagInline
 				$varsFull[] = '\'' . $v . '\' => LangTag::getData(\'' . $v . '\')';
 			}
 
-			$phpVars = ',array(' . implode(', ', $varsFull) . ')';
+			$phpVars = ',array(' . implode(separator: ', ', array: $varsFull) . ')';
 		}
 
 		return '<?php echo ' . __CLASS__ . '::getText(\'' . $key . '\'' . $phpVars . '); ?>';

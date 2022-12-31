@@ -49,11 +49,14 @@ class FrameworkDB extends PDO
 			$initSetCommands[] = 'sql_safe_updates=1';
 		}
 
-		$dsn = implode(';', [
-			'mysql:host=' . $dbSettingsModel->getHostName(),
-			'dbname=' . $dbSettingsModel->getDatabaseName(),
-			'charset=' . $dbSettingsModel->getCharset(),
-		]);
+		$dsn = implode(
+			separator: ';',
+			array: [
+				'mysql:host=' . $dbSettingsModel->getHostName(),
+				'dbname=' . $dbSettingsModel->getDatabaseName(),
+				'charset=' . $dbSettingsModel->getCharset(),
+			]
+		);
 
 		// For following values, please see http://php.net/manual/de/ref.pdo-mysql.php
 		$attributeOptions = [
@@ -61,7 +64,7 @@ class FrameworkDB extends PDO
 			PDO::ATTR_EMULATE_PREPARES => false, // Simulated "prepared statements" are NOT wanted
 		];
 		if (count($initSetCommands) > 0) {
-			$attributeOptions[PDO::MYSQL_ATTR_INIT_COMMAND] = 'SET ' . implode(', ', $initSetCommands);
+			$attributeOptions[PDO::MYSQL_ATTR_INIT_COMMAND] = 'SET ' . implode(separator: ', ', array: $initSetCommands);
 		}
 		try {
 			parent::__construct($dsn, $dbSettingsModel->getUserName(), $dbSettingsModel->getPassword(), $attributeOptions);
@@ -256,7 +259,7 @@ class FrameworkDB extends PDO
 	 */
 	public function createInQuery(array $paramArr): string
 	{
-		return implode(',', array_fill(0, count($paramArr), '?'));
+		return implode(separator: ',', array: array_fill(0, count($paramArr), '?'));
 	}
 
 	/**

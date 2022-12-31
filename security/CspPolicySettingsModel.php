@@ -92,6 +92,6 @@ class CspPolicySettingsModel
 			$dataArray[] = 'frame-ancestors ' . $this->frameAncestors;
 		}
 
-		return empty($dataArray) ? '' : implode('; ', $dataArray) . ';';
+		return empty($dataArray) ? '' : implode(separator: '; ', array: $dataArray) . ';';
 	}
 }

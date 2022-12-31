@@ -103,7 +103,7 @@ class ToggleField extends OptionsField
 		if ($this->hasErrors(withChildElements: false)) {
 			$ulTagClasses[] = 'list-has-error';
 		}
-		$ulTag = new HtmlTag('ul', false, [new HtmlTagAttribute('class', implode(' ', $ulTagClasses), true)]);
+		$ulTag = new HtmlTag('ul', false, [new HtmlTagAttribute('class', implode(separator: ' ', array: $ulTagClasses), true)]);
 
 		foreach ($this->getFormOptions()->getData() as $key => $htmlText) {
 			$combinedSpecifier = $this->getName() . '_' . $key;
@@ -184,7 +184,7 @@ class ToggleField extends OptionsField
 			if ($this->hasErrors(withChildElements: true)) {
 				$divClasses[] = 'has-error';
 			}
-			$divTag = new HtmlTag('div', false, [new HtmlTagAttribute('class', implode(' ', $divClasses), true)]);
+			$divTag = new HtmlTag('div', false, [new HtmlTagAttribute('class', implode(separator: ' ', array: $divClasses), true)]);
 			$divTag->addTag($ulTag);
 
 			FormRenderer::addErrorsToParentHtmlTag($this, $divTag);

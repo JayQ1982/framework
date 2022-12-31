@@ -6,11 +6,11 @@
 
 namespace framework\table\column;
 
+use framework\common\StringUtils;
 use framework\table\TableItemModel;
 
 abstract class AbstractTableColumn
 {
-	private const EMPTY_STRING = '';
 	private array $columnCssClasses = [];
 	private array $cellCssClasses = [];
 	private ?string $tableIdentifier = null;
@@ -64,7 +64,7 @@ abstract class AbstractTableColumn
 			$attributesArr[] = 'class="' . implode(separator: ' ', array: $this->cellCssClasses) . '"';
 		}
 
-		return implode(separator: AbstractTableColumn::EMPTY_STRING, array: [
+		return implode(separator: StringUtils::IMPLODE_DEFAULT_SEPARATOR, array: [
 			'<' . implode(separator: ' ', array: $attributesArr) . '>',
 			$this->renderCellValue(tableItemModel: $tableItemModel),
 			'</td>',

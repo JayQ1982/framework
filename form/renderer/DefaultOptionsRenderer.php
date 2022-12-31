@@ -41,7 +41,7 @@ abstract class DefaultOptionsRenderer extends FormRenderer
 
 		$htmlTagAttributes = [];
 		if (count($listTagClasses) > 0) {
-			$htmlTagAttributes[] = new HtmlTagAttribute('class', implode(' ', $listTagClasses), true);
+			$htmlTagAttributes[] = new HtmlTagAttribute('class', implode(separator: ' ', array: $listTagClasses), true);
 		}
 
 		$ulTag = new HtmlTag('ul', false, $htmlTagAttributes);
