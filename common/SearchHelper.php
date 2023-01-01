@@ -335,18 +335,16 @@ class SearchHelper
 		if ($date === '') {
 			return null;
 		}
-
 		try {
 			$dateTime = new DateTime(datetime: $date);
-			$dtErrors = DateTime::getLastErrors();
-			if ($dtErrors['warning_count'] > 0 || $dtErrors['error_count'] > 0) {
+			if (DateTime::getLastErrors() !== false) {
 				return null;
 			}
+
+			return $dateTime;
 		} catch (Throwable) {
 			return null;
 		}
-
-		return $dateTime;
 	}
 
 	public function checkDateRangeFilter(array $dateRange, string $fromField, string $toField, ?string $defaultFrom = null, ?string $defaultTo = null): array

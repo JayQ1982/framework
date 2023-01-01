@@ -6,7 +6,7 @@
 
 namespace framework\form\rule;
 
-use DateTime;
+use DateTimeImmutable;
 use framework\form\component\FormField;
 use framework\form\FormRule;
 use Throwable;
@@ -18,23 +18,19 @@ class ValidDateRule extends FormRule
 		if ($formField->isValueEmpty()) {
 			return true;
 		}
-
 		$value = $formField->getRawValue();
-		if (preg_match('/^\d{1,2}\.\d{1,2}\.\d{4}$/', $value) !== 1) {
+		if (preg_match(pattern: '/^\d{1,2}\.\d{1,2}\.\d{4}$/', subject: $value) !== 1) {
 			return false;
 		}
-
 		try {
-			$dateTime = new DateTime($value);
-			$dtErrors = DateTime::getLastErrors();
-			if ($dtErrors['warning_count'] > 0 || $dtErrors['error_count'] > 0) {
+			$dateTime = new DateTimeImmutable(datetime: $value);
+			if (DateTimeImmutable::getLastErrors() !== false) {
 				return false;
 			}
+			$formField->setValue(value: $dateTime->format(format: 'Y-m-d'));
 		} catch (Throwable) {
 			return false;
 		}
-
-		$formField->setValue($dateTime->format('Y-m-d'));
 
 		return true;
 	}

@@ -11,11 +11,15 @@ use framework\html\HtmlText;
 
 class DateField extends DateTimeFieldCore
 {
-	protected string $renderValueFormat = 'd.m.Y';
-
 	public function __construct(string $name, HtmlText $label, ?string $value, HtmlText $invalidError, ?HtmlText $requiredError = null)
 	{
-		parent::__construct($name, $label, $value, $requiredError);
-		$this->addRule(new ValidDateRule($invalidError));
+		parent::__construct(
+			name: $name,
+			label: $label,
+			value: $value,
+			requiredError: $requiredError
+		);
+		$this->setRenderValueFormat(renderValueFormat: 'd.m.Y');
+		$this->addRule(formRule: new ValidDateRule(defaultErrorMessage: $invalidError));
 	}
 }

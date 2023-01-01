@@ -11,11 +11,15 @@ use framework\html\HtmlText;
 
 class TimeField extends DateTimeFieldCore
 {
-	protected string $renderValueFormat = 'H:i';
-
 	public function __construct(string $name, HtmlText $label, ?string $value, HtmlText $invalidError, ?HtmlText $requiredError = null)
 	{
-		parent::__construct($name, $label, $value, $requiredError);
-		$this->addRule(new ValidTimeRule($invalidError));
+		parent::__construct(
+			name: $name,
+			label: $label,
+			value: $value,
+			requiredError: $requiredError
+		);
+		$this->setRenderValueFormat(renderValueFormat: 'H:i');
+		$this->addRule(formRule: new ValidTimeRule(defaultErrorMessage: $invalidError));
 	}
 }

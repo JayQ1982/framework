@@ -52,13 +52,11 @@ class DateFilterField extends AbstractTableFilterField
 
 		try {
 			$forceTimePart = '';
-			if (!str_contains($inputValue, ':')) {
+			if (!str_contains(haystack: $inputValue, needle: ':')) {
 				$forceTimePart = $this->mustBeLaterThan ? ' 00:00:00' : ' 23:59:59';
 			}
-
 			$dateTimeObject = new DateTime(datetime: $inputValue . $forceTimePart);
-			$dtErrors = DateTime::getLastErrors();
-			if ($dtErrors['warning_count'] > 0 || $dtErrors['error_count'] > 0) {
+			if (DateTime::getLastErrors() !== false) {
 				$this->reset();
 
 				return;

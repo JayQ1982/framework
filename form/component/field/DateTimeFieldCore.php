@@ -6,17 +6,14 @@
 
 namespace framework\form\component\field;
 
-use DateTime;
+use DateTimeImmutable;
 use framework\datacheck\Sanitizer;
 use framework\html\HtmlEncoder;
 use Throwable;
 
-/**
- * Hint: use derived Class "DateField" or "TimeField" in forms
- */
 abstract class DateTimeFieldCore extends TextField
 {
-	protected string $renderValueFormat;
+	private string $renderValueFormat;
 
 	public function setRenderValueFormat(string $renderValueFormat): void
 	{
@@ -34,9 +31,7 @@ abstract class DateTimeFieldCore extends TextField
 			return HtmlEncoder::encode(value: Sanitizer::trimmedString(input: $originalValue));
 		}
 		try {
-			$dateTime = new DateTime($originalValue);
-
-			return $dateTime->format($this->renderValueFormat);
+			return (new DateTimeImmutable(datetime: $originalValue))->format(format: $this->renderValueFormat);
 		} catch (Throwable) {
 			// Should not be reached. Anyway ... invalid value; show original input
 			return HtmlEncoder::encode(value: Sanitizer::trimmedString(input: $originalValue));
