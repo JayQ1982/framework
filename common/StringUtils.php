@@ -67,18 +67,6 @@ class StringUtils
 		return StringUtils::beforeLast($str, $beforeLast) . $newStr . $beforeLast . StringUtils::afterLast($str, $beforeLast);
 	}
 
-	public static function startsWith(string $str, string $startStr): bool
-	{
-		return (mb_strpos($str, $startStr) === 0);
-	}
-
-	public static function endsWith(string $str, string $endStr): bool
-	{
-		$endStrLen = mb_strlen($endStr);
-
-		return (mb_strrpos($str, $endStr) + $endStrLen === mb_strlen($str));
-	}
-
 	public static function breakUp(string $sentence, int $atIndex): string
 	{
 		if (mb_strlen($sentence) > $atIndex) {

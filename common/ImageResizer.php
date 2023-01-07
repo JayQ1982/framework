@@ -102,7 +102,7 @@ class ImageResizer
 				'png' => imagecreatefrompng(filename: $destinationPath),
 				default => imagecreate(width: 100, height: 100),
 			};
-		} catch(Throwable) {
+		} catch (Throwable) {
 			$originalImage = false;
 		}
 		if ($originalImage === false) {

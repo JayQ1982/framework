@@ -11,7 +11,7 @@ use stdClass;
 
 class JsonUtils
 {
-	public static function decodeJsonString($jsonString, bool $returnAssociativeArray): stdClass|array
+	public static function decodeJsonString(string $jsonString, bool $returnAssociativeArray): stdClass|array
 	{
 		return json_decode(json: $jsonString, associative: $returnAssociativeArray, flags: JSON_BIGINT_AS_STRING | JSON_THROW_ON_ERROR);
 	}
@@ -21,12 +21,12 @@ class JsonUtils
 		return json_encode(value: $valueToConvert, flags: JSON_UNESCAPED_UNICODE | JSON_BIGINT_AS_STRING | JSON_THROW_ON_ERROR);
 	}
 
-	public static function decodeFile($filePath, $isMinified, $returnAssociativeArray = false): stdClass|array
+	public static function decodeFile(string $filePath, bool $isMinified, bool $returnAssociativeArray = false): stdClass|array
 	{
-		if (file_exists($filePath) === false) {
-			throw new Exception('JSON-File does not exist: ' . $filePath);
+		if (file_exists(filename: $filePath) === false) {
+			throw new Exception(message: 'JSON-File does not exist: ' . $filePath);
 		}
-		$jsonString = file_get_contents($filePath);
+		$jsonString = file_get_contents(filename: $filePath);
 
 		if ($isMinified === false && $jsonString !== '{}') {
 			$jsonString = JsonUtils::minify(jsonString: $jsonString);

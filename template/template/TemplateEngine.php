@@ -8,7 +8,6 @@ namespace framework\template\template;
 
 use ArrayObject;
 use Exception;
-use framework\common\StringUtils;
 use framework\template\customtags\CheckboxOptionsTag;
 use framework\template\customtags\CheckboxTag;
 use framework\template\customtags\DateTag;
@@ -441,13 +440,11 @@ class TemplateEngine
 	public function checkRequiredAttributes(ElementNode $contextTag, array $attributes): bool
 	{
 		foreach ($attributes as $attribute) {
-			$val = $contextTag->getAttribute($attribute)->getValue();
-
-			if (!is_null($val)) {
+			$val = $contextTag->getAttribute(name: $attribute)->getValue();
+			if (!is_null(value: $val)) {
 				continue;
 			}
-
-			throw new Exception('Could not parse the template: Missing attribute \'' . $attribute . '\' for custom tag \'' . $contextTag->tagName . '\' in ' . $this->currentTemplateFile . ' on line ' . $contextTag->line);
+			throw new Exception(message: 'Could not parse the template: Missing attribute \'' . $attribute . '\' for custom tag \'' . $contextTag->tagName . '\' in ' . $this->currentTemplateFile . ' on line ' . $contextTag->line);
 		}
 
 		return true;
@@ -492,24 +489,19 @@ class TemplateEngine
 
 		foreach ($selParts as $part) {
 			$nextSel = $currentSel . '.' . $part;
-
 			if ($varData instanceof ArrayObject === true) {
 				if ($varData->offsetExists($part) === false) {
 					throw new Exception('Array key "' . $part . '" does not exist in ArrayObject "' . $currentSel . '"');
 				}
-
 				$varData = $varData->offsetGet($part);
 			} else if (is_object($varData) === true) {
 				$args = [];
-
 				$argPos = strpos($part, '(');
 				if ($argPos !== false) {
 					$argStr = substr($part, $argPos + 1, -1);
 					$part = substr($part, 0, $argPos);
-
 					foreach (preg_split('/,/x', $argStr) as $no => $arg) {
-
-						if (StringUtils::startsWith($argStr, '\'') === false || StringUtils::endsWith($argStr, '\'') === false) {
+						if (!str_starts_with(haystack: $argStr, needle: '\'') || !str_ends_with(haystack: $argStr, needle: '\'')) {
 							$args[$no] = $this->getSelectorValue($argStr, $returnNull);
 						} else {
 							$args[$no] = substr($arg, 1, -1);
