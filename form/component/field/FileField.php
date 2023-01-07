@@ -10,7 +10,6 @@ use DirectoryIterator;
 use framework\datacheck\Sanitizer;
 use framework\form\component\FormField;
 use framework\form\FormRenderer;
-use framework\form\listener\FileFieldListener;
 use framework\form\model\FileDataModel;
 use framework\form\renderer\FileFieldRenderer;
 use framework\form\rule\RequiredRule;
@@ -33,45 +32,50 @@ class FileField extends FormField
 	public const ERRMSG_FILE_TOO_BIG = 'Die Datei war zu gross: ';
 	public const ERRMSG_FILE_TECHERROR = 'Es ist ein technischer Fehler beim Hochladen der Datei aufgetreten: ';
 
-	private int $maxFileUploadCount;
 	private string $uniqueSessFileStorePointer;
 	private HtmlText $tooManyFilesErrMsg;
+	private HtmlText $alreadyExistsErrorMessage;
 	private ?string $deleteFileHash = null;
 
 	/**
 	 * @param string        $name
 	 * @param HtmlText      $label
-	 * @param HtmlText|null $requiredError      : NULL, if file upload is not required, otherwise the error message if no file was uploaded
-	 * @param int           $maxFileUploadCount : Maximal amount of allowed files (1 by default) with that field
-	 * @param ?HtmlText     $tooManyFilesErrMsg : Individual error message if more than allowed amount of files are uploaded. Placeholder [max] will be replaced
+	 * @param HtmlText|null $requiredError      NULL, if file upload is not required, otherwise the error message if no file was uploaded
+	 * @param int           $maxFileUploadCount Maximal amount of allowed files (1 by default) with that field
+	 * @param ?HtmlText     $tooManyFilesErrMsg Individual error message if more than allowed amount of files are uploaded. Placeholder [max] will be replaced
 	 *                                          by the max amount.
+	 * @param HtmlText|null $alreadyExistsErrorMessage
 	 */
-	public function __construct(string $name, HtmlText $label, ?HtmlText $requiredError = null, int $maxFileUploadCount = 1, ?HtmlText $tooManyFilesErrMsg = null)
-	{
-		if ($maxFileUploadCount < 1) {
-			$maxFileUploadCount = 1; // silent correction
+	public function __construct(
+		string      $name,
+		HtmlText    $label,
+		?HtmlText   $requiredError = null,
+		private int $maxFileUploadCount = 1,
+		?HtmlText   $tooManyFilesErrMsg = null,
+		?HtmlText   $alreadyExistsErrorMessage = null
+	) {
+		if ($this->maxFileUploadCount < 1) {
+			$this->maxFileUploadCount = 1; // Silent correction
 		}
-		$this->maxFileUploadCount = $maxFileUploadCount;
-		$this->uniqueSessFileStorePointer = $this->sanitizeUniqueID(uniqid(date('ymdHis') . '__', true));
-		$this->tooManyFilesErrMsg = is_null($tooManyFilesErrMsg) ? HtmlText::encoded('Nur [max] Datei(en) möglich.') : $tooManyFilesErrMsg;
-
+		$this->uniqueSessFileStorePointer = $this->sanitizeUniqueID(uid: uniqid(prefix: date(format: 'ymdHis') . '__', more_entropy: true));
+		$this->tooManyFilesErrMsg = is_null(value: $tooManyFilesErrMsg) ? HtmlText::encoded(textContent: 'Nur [max] Datei(en) möglich.') : $tooManyFilesErrMsg;
+		$this->alreadyExistsErrorMessage = is_null(value: $alreadyExistsErrorMessage) ? HtmlText::encoded(textContent: 'Es wurde bereits eine Datei mit dem Dateinamen "[fileName]" hochgeladen.') : $alreadyExistsErrorMessage;
 		// To always handle value internally as array we force an empty array on initialization
 		parent::__construct(
 			name: $name,
 			label: $label,
 			value: [],
-			labelInfoText: HtmlText::encoded('(max. ' . $maxFileUploadCount . ')')
+			labelInfoText: HtmlText::encoded(textContent: '(max. ' . $this->maxFileUploadCount . ')')
 		);
-
-		if (!is_null($requiredError)) {
-			$this->addRule(new RequiredRule($requiredError));
+		if (!is_null(value: $requiredError)) {
+			$this->addRule(formRule: new RequiredRule(defaultErrorMessage: $requiredError));
 		}
 	}
 
 	private function sanitizeUniqueID(string $uid): string
 	{
-		// We do not allow dangerous characters in the pointer, as it will become part of
-		//   an filesystem path; And we want to easily detect these later in the external input:
+		// We do not allow dangerous characters in the pointer, as it will become part of a filesystem path;
+		// And we want to easily detect these later in the external input:
 		return preg_replace(
 			pattern: '/[^a-z\d_]/',
 			replacement: '',
@@ -81,7 +85,7 @@ class FileField extends FormField
 
 	public function getDefaultRenderer(): FormRenderer
 	{
-		return new FileFieldRenderer($this);
+		return new FileFieldRenderer(fileField: $this);
 	}
 
 	/**
@@ -95,45 +99,24 @@ class FileField extends FormField
 		if ($overwriteValue) {
 			// Remove all temporary files older than 2 days
 			$this->removeOldFiles();
-
 			// The following two checks must be done before parent::validate() to have the required data available
-			if (isset($inputData[FileField::FIELD_PREFIX]) && is_scalar($inputData[FileField::FIELD_PREFIX])) {
-				$receivedUid = Sanitizer::trimmedString($inputData[FileField::FIELD_PREFIX]);
+			if (array_key_exists(key: FileField::FIELD_PREFIX, array: $inputData) && is_scalar(value: $inputData[FileField::FIELD_PREFIX])) {
+				$receivedUid = Sanitizer::trimmedString(input: $inputData[FileField::FIELD_PREFIX]);
 				// If that value is tampered by a "black hat hacker", he should just grab securely into an "empty bowl".
-				//   Therefore we look for only allowed characters given in sanitizeUniqueID():
-				$cleanedUid = $this->sanitizeUniqueID($receivedUid);
+				// Therefore, we look for only allowed characters given in sanitizeUniqueID():
+				$cleanedUid = $this->sanitizeUniqueID(uid: $receivedUid);
 				if ($receivedUid === $cleanedUid) {
 					// ONLY THEN take it:
 					$this->uniqueSessFileStorePointer = $cleanedUid;
 				}
 			}
-
-			if (isset($inputData[FileField::FIELD_PREFIX . '_removeAttachment']) && is_scalar($inputData[FileField::FIELD_PREFIX . '_removeAttachment'])) {
+			if (array_key_exists(key: FileField::FIELD_PREFIX . '_removeAttachment', array: $inputData) && is_scalar(value: $inputData[FileField::FIELD_PREFIX . '_removeAttachment'])) {
 				// Referenced usage at FileFieldRenderer::prepare()
-				$this->deleteFileHash = Sanitizer::trimmedString($inputData[FileField::FIELD_PREFIX . '_removeAttachment']);
+				$this->deleteFileHash = Sanitizer::trimmedString(input: $inputData[FileField::FIELD_PREFIX . '_removeAttachment']);
 			}
 		}
 
-		// parent::validate() does already correctly trigger $this->setValue() which is overwritten below
-		parent::validate($inputData, $overwriteValue);
-
-		// Trigger additional file field specific listeners
-		foreach ($this->listeners as $formFieldListener) {
-			if (!($formFieldListener instanceof FileFieldListener)) {
-				continue;
-			}
-
-			$value = $this->getRawValue();
-			foreach ($value as $fileInfo) {
-				if ($fileInfo[FileField::VALUE_ERROR] === UPLOAD_ERR_OK) {
-					$formFieldListener->onUploadSuccess($this->topFormComponent, $this, $fileInfo);
-				} else {
-					$formFieldListener->onUploadFail($this->topFormComponent, $this, $fileInfo);
-				}
-			}
-		}
-
-		return !$this->hasErrors(withChildElements: true);
+		return parent::validate(inputData: $inputData, overwriteValue: $overwriteValue);
 	}
 
 	/**
@@ -146,18 +129,16 @@ class FileField extends FormField
 	protected function convertMultiFileArray(array $filesArr): array
 	{
 		$files = [];
-		$filesCount = count($filesArr[FileField::VALUE_NAME]);
-
+		$filesCount = count(value: $filesArr[FileField::VALUE_NAME]);
 		for ($i = 0; $i < $filesCount; ++$i) {
 			if ($filesArr[FileField::VALUE_ERROR][$i] === UPLOAD_ERR_NO_FILE) {
 				// This represents "no files uploaded"
 				continue;
 			}
-
 			$fileDataModel = new FileDataModel(
-				Sanitizer::trimmedString($filesArr[FileField::VALUE_NAME][$i]),
-				Sanitizer::trimmedString($filesArr[FileField::VALUE_TMP_NAME][$i]),
-				Sanitizer::trimmedString($filesArr[FileField::VALUE_TYPE][$i]),
+				Sanitizer::trimmedString(input: $filesArr[FileField::VALUE_NAME][$i]),
+				Sanitizer::trimmedString(input: $filesArr[FileField::VALUE_TMP_NAME][$i]),
+				Sanitizer::trimmedString(input: $filesArr[FileField::VALUE_TYPE][$i]),
 				(int)$filesArr[FileField::VALUE_ERROR][$i],
 				(int)$filesArr[FileField::VALUE_SIZE][$i]
 			);
@@ -176,13 +157,13 @@ class FileField extends FormField
 	private function getAlreadyUploadedFiles(): array
 	{
 		$usfsp = $this->getUniqueSessFileStorePointer();
-		if (!isset($_SESSION[$usfsp])) {
+		if (!array_key_exists(key: $usfsp, array: $_SESSION)) {
 			return $_SESSION[$usfsp] = [];
 		}
 
 		/** @var FileDataModel $fileDataModel */
 		foreach ($_SESSION[$usfsp] as $hash => $fileDataModel) {
-			if (!file_exists($fileDataModel->getTmpName())) {
+			if (!file_exists(filename: $fileDataModel->getTmpName())) {
 				unset($_SESSION[$usfsp][$hash]);
 			}
 		}
@@ -191,86 +172,100 @@ class FileField extends FormField
 	}
 
 	/**
-	 * @param null|array $value : Array with additional (uploaded) files to be added
+	 * @param null|array $value Array with additional (uploaded) files to be added
 	 */
 	public function setValue($value = []): void
 	{
 		// Always respect already uploaded files when (re)setting the value
 		$fileArray = $this->getAlreadyUploadedFiles();
-
 		// Remove an already uploaded file, if requested
-		if (!is_null($this->deleteFileHash) && isset($fileArray[$this->deleteFileHash])) {
-
-			if (file_exists($fileArray[$this->deleteFileHash]->getTmpName())) {
-				unlink($fileArray[$this->deleteFileHash]->getTmpName());
+		if (!is_null(value: $this->deleteFileHash) && array_key_exists(key: $this->deleteFileHash, array: $fileArray)) {
+			if (file_exists(filename: $fileArray[$this->deleteFileHash]->getTmpName())) {
+				unlink(filename: $fileArray[$this->deleteFileHash]->getTmpName());
 			}
-
 			unset($fileArray[$this->deleteFileHash]);
 		}
-
 		// Add new (uploaded) files to fileArray
-		if (is_array($value)) {
-			$fileArray = $this->addFilesFromDataArray($fileArray, $value);
+		if (is_array(value: $value)) {
+			$fileArray = $this->addFilesFromDataArray(originalFileArray: $fileArray, addFileArray: $value);
 		}
-
 		// Store new fileArray to session and current field value
-		parent::setValue($_SESSION[$this->getUniqueSessFileStorePointer()] = $fileArray);
+		parent::setValue(value: $_SESSION[$this->getUniqueSessFileStorePointer()] = $fileArray);
 	}
 
+	/**
+	 * @param FileDataModel[] $originalFileArray
+	 * @param array           $addFileArray
+	 *
+	 * @return array
+	 */
 	private function addFilesFromDataArray(array $originalFileArray, array $addFileArray): array
 	{
 		// Check if the data is available in the expected form
 		if (
-			!isset($addFileArray[FileField::VALUE_NAME])
-			|| !isset($addFileArray[FileField::VALUE_TMP_NAME])
-			|| !isset($addFileArray[FileField::VALUE_TYPE])
-			|| !isset($addFileArray[FileField::VALUE_ERROR])
-			|| !isset($addFileArray[FileField::VALUE_SIZE])
+			!array_key_exists(key: FileField::VALUE_NAME, array: $addFileArray)
+			|| !array_key_exists(key: FileField::VALUE_TMP_NAME, array: $addFileArray)
+			|| !array_key_exists(key: FileField::VALUE_TYPE, array: $addFileArray)
+			|| !array_key_exists(key: FileField::VALUE_ERROR, array: $addFileArray)
+			|| !array_key_exists(key: FileField::VALUE_SIZE, array: $addFileArray)
 		) {
 			return $originalFileArray;
 		}
-
 		// Convert input data into an array of fileData objects
-		$convertedMultiFileArray = $this->convertMultiFileArray($addFileArray);
-
+		$convertedMultiFileArray = $this->convertMultiFileArray(filesArr: $addFileArray);
 		// If new amount of files exceeds the limit, we add error and return the originalFileArray
-		if ((count($originalFileArray) + count($convertedMultiFileArray)) > $this->maxFileUploadCount) {
-			$this->addError(str_replace('[max]', $this->maxFileUploadCount, $this->tooManyFilesErrMsg->render()), true);
+		if ((count(value: $originalFileArray) + count(value: $convertedMultiFileArray)) > $this->maxFileUploadCount) {
+			$this->addError(errorMessage: str_replace(search: '[max]', replace: $this->maxFileUploadCount, subject: $this->tooManyFilesErrMsg->render()), isEncodedForRendering: true);
 
 			return $originalFileArray;
 		}
-
+		$existingFileNames = [];
+		foreach ($originalFileArray as $fileDataModel) {
+			$existingFileNames[] = $fileDataModel->getName();
+		}
 		$newFileArray = $originalFileArray;
-
 		foreach ($convertedMultiFileArray as $fileDataModel) {
 			$encodedFileName = HtmlEncoder::encode(value: $fileDataModel->getName());
 			// If upload was okay:
 			if ($fileDataModel->getError() === UPLOAD_ERR_OK) {
-				// Special case from LIVE/PROD:
-				if ($fileDataModel->getSize() === 0) {
-					$this->addError(FileField::ERRMSG_FILE_EMPTY . $encodedFileName, true);
+				if (in_array(needle: $fileDataModel->getName(), haystack: $existingFileNames)) {
+					$this->addError(
+						errorMessage: str_replace(
+							search: '[fileName]',
+							replace: $encodedFileName,
+							subject: $this->alreadyExistsErrorMessage->render()
+						),
+						isEncodedForRendering: true
+					);
 					continue;
 				}
-				$fileDataModel = $this->saveNewFile($fileDataModel);
-				// Usage of sha1 is save here
-				$hash = sha1($fileDataModel->getTmpName());
+
+				// Special case from LIVE/PROD:
+				if ($fileDataModel->getSize() === 0) {
+					$this->addError(errorMessage: FileField::ERRMSG_FILE_EMPTY . $encodedFileName, isEncodedForRendering: true);
+					continue;
+				}
+				$fileDataModel = $this->saveNewFile(fileDataModel: $fileDataModel);
+				// Usage of sha1 is safe here
+				$hash = sha1(string: $fileDataModel->getTmpName());
 				$newFileArray[$hash] = $fileDataModel;
+				$existingFileNames[] = $fileDataModel->getName();
 				continue;
 			}
 			// Anything other are errors
 			switch ($fileDataModel->getError()) {
-				case UPLOAD_ERR_INI_SIZE : // fallthrough
+				case UPLOAD_ERR_INI_SIZE:
 				case UPLOAD_ERR_FORM_SIZE:
-					$this->addError(FileField::ERRMSG_FILE_TOO_BIG . $encodedFileName, true);
+					$this->addError(errorMessage: FileField::ERRMSG_FILE_TOO_BIG . $encodedFileName, isEncodedForRendering: true);
 					break;
 				case UPLOAD_ERR_PARTIAL:
-					$this->addError(FileField::ERRMSG_FILE_INCOMPLETE . $encodedFileName, true);
+					$this->addError(errorMessage: FileField::ERRMSG_FILE_INCOMPLETE . $encodedFileName, isEncodedForRendering: true);
 					break;
 				case UPLOAD_ERR_NO_FILE:
 					// Silently ignore
 					break;
 				default:
-					$this->addError(FileField::ERRMSG_FILE_TECHERROR . $encodedFileName, true);
+					$this->addError(errorMessage: FileField::ERRMSG_FILE_TECHERROR . $encodedFileName, isEncodedForRendering: true);
 					break;
 			}
 		}
@@ -287,8 +282,8 @@ class FileField extends FormField
 	private function getTempRootDirectory(): string
 	{
 		$rootDirectory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . FileField::FIELD_PREFIX . '__' . $_SERVER['SERVER_NAME'];
-		if (!is_dir($rootDirectory)) {
-			mkdir($rootDirectory);
+		if (!is_dir(filename: $rootDirectory)) {
+			mkdir(directory: $rootDirectory);
 		}
 
 		return $rootDirectory;
@@ -303,8 +298,8 @@ class FileField extends FormField
 	private function getUniqueFilesDirectory(): string
 	{
 		$uniqueFilesDirectory = $this->getTempRootDirectory() . DIRECTORY_SEPARATOR . $this->getUniqueSessFileStorePointer();
-		if (!is_dir($uniqueFilesDirectory)) {
-			mkdir($uniqueFilesDirectory);
+		if (!is_dir(filename: $uniqueFilesDirectory)) {
+			mkdir(directory: $uniqueFilesDirectory);
 		}
 
 		return $uniqueFilesDirectory;
@@ -314,15 +309,14 @@ class FileField extends FormField
 	{
 		// If tmp file already exists we just add a counter and increment it until we get a "free" file name
 		$counter = 0;
-		$dstFilePath = $baseFilePath = $this->getUniqueFilesDirectory() . DIRECTORY_SEPARATOR . basename($fileDataModel->getTmpName());
-		while (file_exists($dstFilePath)) {
+		$dstFilePath = $baseFilePath = $this->getUniqueFilesDirectory() . DIRECTORY_SEPARATOR . basename(path: $fileDataModel->getTmpName());
+		while (file_exists(filename: $dstFilePath)) {
 			$counter++;
 			$dstFilePath = $baseFilePath . $counter;
 		}
-
 		// "move" (copy-del) it to fileStore (creating a new file pointer, therefore it does not get deleted from fileStore after script execution)
-		move_uploaded_file($fileDataModel->getTmpName(), $dstFilePath);
-		$fileDataModel->setTmpName($dstFilePath);
+		move_uploaded_file(from: $fileDataModel->getTmpName(), to: $dstFilePath);
+		$fileDataModel->setTmpName(tmp_name: $dstFilePath);
 
 		return $fileDataModel;
 	}
@@ -340,7 +334,7 @@ class FileField extends FormField
 	/**
 	 * Returns a "clean" list about stored files, mainly for internal processing (because: hash)
 	 *
-	 * @return FileDataModel[] : Array with already uploaded files
+	 * @return FileDataModel[] Array with already uploaded files
 	 */
 	public function getFiles(): array
 	{
@@ -355,16 +349,16 @@ class FileField extends FormField
 	 */
 	public function getRemovedValues(): array
 	{
-		return !is_null($this->deleteFileHash) ? [$this->deleteFileHash] : [];
+		return !is_null(value: $this->deleteFileHash) ? [$this->deleteFileHash] : [];
 	}
 
 	/**
-	 * Completely remove tmp directory with it's files
+	 * Completely remove tmp directory with its files
 	 * To be used after successful form processing
 	 */
 	public function clearData(): void
 	{
-		$this->removeDirectory($this->getUniqueFilesDirectory());
+		$this->removeDirectory(path: $this->getUniqueFilesDirectory());
 	}
 
 	/**
@@ -374,12 +368,13 @@ class FileField extends FormField
 	 */
 	private function removeDirectory(string $path): void
 	{
-		foreach (new DirectoryIterator($path) as $fileInfo) {
-			if ($fileInfo->isFile()) {
-				unlink($fileInfo->getPathname());
+		/** @var DirectoryIterator $item */
+		foreach (new DirectoryIterator(directory: $path) as $item) {
+			if ($item->isFile()) {
+				unlink(filename: $item->getPathname());
 			}
 		}
-		rmdir($path);
+		rmdir(directory: $path);
 	}
 
 	/**
@@ -387,13 +382,13 @@ class FileField extends FormField
 	 */
 	public function removeOldFiles(): void
 	{
-		$rootDirectory = $this->getTempRootDirectory();
-		foreach (new DirectoryIterator($rootDirectory) as $fileInfo) {
-			if ($fileInfo->isDot()) {
+		/** @var DirectoryIterator $item */
+		foreach (new DirectoryIterator(directory: $this->getTempRootDirectory()) as $item) {
+			if ($item->isDot()) {
 				continue;
 			}
-			if ($fileInfo->isDir() && $fileInfo->getMTime() < time() - (60 * 60 * 24 * 2 /* 2 days */)) {
-				$this->removeDirectory($fileInfo->getPathname());
+			if ($item->isDir() && $item->getMTime() < time() - (60 * 60 * 24 * 2 /* 2 days */)) {
+				$this->removeDirectory(path: $item->getPathname());
 			}
 		}
 	}

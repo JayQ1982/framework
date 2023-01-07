@@ -12,8 +12,8 @@ readonly class HtmlReplacement
 {
 	private function __construct(
 		public null|HtmlText|bool|stdClass|HtmlTextCollection|HtmlDataObjectCollection|int $content
-	) {
-
+	)
+	{
 	}
 
 	public static function htmlText(?HtmlText $htmlText): HtmlReplacement
