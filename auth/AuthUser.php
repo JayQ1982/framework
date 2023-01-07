@@ -65,4 +65,9 @@ abstract class AuthUser
 	{
 		return $this->password;
 	}
+
+	protected static function resetInstance(): void
+	{
+		AuthUser::$instance = null;
+	}
 }

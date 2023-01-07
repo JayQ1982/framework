@@ -7,37 +7,13 @@
 namespace framework\auth;
 
 use framework\Core;
-use framework\core\HttpResponse;
 use framework\exception\UnauthorizedException;
-use framework\security\CspNonce;
 use OpenSSLAsymmetricKey;
 use stdClass;
 
 class MicrosoftIdToken extends AuthWebToken
 {
-	private const SSO_STATE_IDENTIFIER = 'ssoState';
-	private const AUTHORIZE_PATH = 'https://login.microsoftonline.com/{tenantID}/oauth2/v2.0/' . 'authorize';
 	private const PUBLIC_KEYS_PATH = 'https://login.microsoftonline.com/{tenantID}/discovery/keys';
-
-	public static function redirect(string $tenantID, string $clientID, string $redirectUri): void
-	{
-		$_SESSION[MicrosoftIdToken::SSO_STATE_IDENTIFIER] = uniqid();
-		// See https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-protocols-oidc
-		HttpResponse::redirectAndExit(
-			relativeOrAbsoluteUri: str_replace(search: '{tenantID}', replace: $tenantID, subject: MicrosoftIdToken::AUTHORIZE_PATH) . '?' . implode(
-				separator: '&',
-				array: [
-					'client_id=' . $clientID,
-					'response_type=id_token',
-					'redirect_uri=' . $redirectUri,
-					'response_mode=form_post',
-					'scope=openid',
-					'state=' . $_SESSION['ssoState'],
-					'nonce=' . CspNonce::get(),
-				]
-			)
-		);
-	}
 
 	public function __construct(
 		private readonly string $tenantID,
