@@ -45,6 +45,14 @@ class CurlPatchRequest extends AbstractCurlRequest
 		return $curlPatchRequest;
 	}
 
+	public static function prepareJsonApiRequest(string $requestTargetUrl, string $jsonString): CurlPatchRequest
+	{
+		$curlPatchRequest = new CurlPatchRequest(requestTargetUrl: $requestTargetUrl);
+		$curlPatchRequest->setJsonApiBody(jsonString: $jsonString);
+
+		return $curlPatchRequest;
+	}
+
 	public static function prepareWithPlainTextBody(string $requestTargetUrl, string $plainText): CurlPatchRequest
 	{
 		$curlPatchRequest = new CurlPatchRequest(requestTargetUrl: $requestTargetUrl);

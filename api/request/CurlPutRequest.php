@@ -45,6 +45,14 @@ class CurlPutRequest extends AbstractCurlRequest
 		return $curlPutRequest;
 	}
 
+	public static function prepareJsonApiRequest(string $requestTargetUrl, string $jsonString): CurlPutRequest
+	{
+		$curlPutRequest = new CurlPutRequest(requestTargetUrl: $requestTargetUrl);
+		$curlPutRequest->setJsonApiBody(jsonString: $jsonString);
+
+		return $curlPutRequest;
+	}
+
 	public static function prepareWithPlainTextBody(string $requestTargetUrl, string $plainText): CurlPutRequest
 	{
 		$curlPutRequest = new CurlPutRequest(requestTargetUrl: $requestTargetUrl);

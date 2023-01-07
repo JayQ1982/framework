@@ -92,6 +92,14 @@ abstract class AbstractCurlRequest
 		$this->curlOptions[CURLOPT_POSTFIELDS] = $jsonString;
 	}
 
+	protected function setJsonApiBody(string $jsonString): void
+	{
+		$this->httpHeaders[AbstractCurlRequest::CONTENT_TYPE] = 'application/vnd.api+json';
+		$this->httpHeaders['Accept'] = 'application/vnd.api+json';
+		$this->httpHeaders[AbstractCurlRequest::CONTENT_LENGTH] = strlen(string: $jsonString);
+		$this->curlOptions[CURLOPT_POSTFIELDS] = $jsonString;
+	}
+
 	protected function setPlainTextBody(string $plainText): void
 	{
 		$this->httpHeaders[AbstractCurlRequest::CONTENT_TYPE] = 'text/plain; charset=utf-8';
@@ -99,7 +107,8 @@ abstract class AbstractCurlRequest
 		$this->curlOptions[CURLOPT_POSTFIELDS] = $plainText;
 	}
 
-	public function setTimeoutInSeconds(int $connectTimeOut, int $requestTimeOut): void {
+	public function setTimeoutInSeconds(int $connectTimeOut, int $requestTimeOut): void
+	{
 		if ($connectTimeOut > $requestTimeOut) {
 			throw new LogicException(message: 'Connect timeout cannot be more than request timeout.');
 		}

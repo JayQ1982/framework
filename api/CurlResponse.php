@@ -17,12 +17,12 @@ class CurlResponse
 	public const ERROR_BAD_HTTP_RESPONSE_CODE = 900;
 
 	private function __construct(
-		private readonly false|string   $rawResponseBody,
-		private readonly array          $curlInfo,
-		private readonly HttpStatusCode $responseHttpCode,
-		private readonly float          $totalRequestTime,
-		private readonly int            $errorCode,
-		private readonly string         $errorMessage
+		public readonly false|string   $rawResponseBody,
+		public readonly array          $curlInfo,
+		public readonly HttpStatusCode $responseHttpCode,
+		public readonly float          $totalRequestTime,
+		public readonly int            $errorCode,
+		public readonly string         $errorMessage
 	) {
 	}
 
@@ -55,7 +55,10 @@ class CurlResponse
 			&& $responseHttpCode->value < 600
 			&& (
 				!$acceptRedirectionResponseCode
-				|| !in_array(needle: $responseHttpCode, haystack: [HttpStatusCode::HTTP_MOVED_PERMANENTLY, HttpStatusCode::HTTP_SEE_OTHER])
+				|| !in_array(needle: $responseHttpCode, haystack: [
+					HttpStatusCode::HTTP_MOVED_PERMANENTLY,
+					HttpStatusCode::HTTP_SEE_OTHER,
+				])
 			)
 		) {
 			$errorCode = CurlResponse::ERROR_BAD_HTTP_RESPONSE_CODE;
@@ -85,36 +88,6 @@ class CurlResponse
 	public function hasErrors(): bool
 	{
 		return ($this->errorCode !== CURLE_OK);
-	}
-
-	public function getCurlInfo(): array
-	{
-		return $this->curlInfo;
-	}
-
-	public function getResponseHttpCode(): HttpStatusCode
-	{
-		return $this->responseHttpCode;
-	}
-
-	public function getTotalRequestTime(): float
-	{
-		return $this->totalRequestTime;
-	}
-
-	public function getErrorCode(): int
-	{
-		return $this->errorCode;
-	}
-
-	public function getErrorMessage(): string
-	{
-		return $this->errorMessage;
-	}
-
-	public function getRawResponseBody(): false|string
-	{
-		return is_string($this->rawResponseBody) ? $this->rawResponseBody : '';
 	}
 
 	public function getJsonResponse(): stdClass
