@@ -18,7 +18,6 @@ class EnvironmentSettingsModel
 		public readonly LanguageCollection      $availableLanguages,
 		public readonly bool                    $debug,
 		public readonly int                     $copyrightYear,
-		public readonly string                  $errorLogRecipientEmail,
 		public readonly string                  $robots,
 		public readonly ?CspPolicySettingsModel $cspPolicySettingsModel
 	) {
