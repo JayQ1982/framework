@@ -36,7 +36,7 @@ class Core
 	public readonly string $logDirectory;
 	public readonly string $settingsDirectory;
 	public readonly string $viewDirectory;
-	private Logger $logger;
+	public readonly Logger $logger;
 
 	public static function get(): Core
 	{
@@ -44,6 +44,7 @@ class Core
 	}
 
 	public function __construct(
+		public readonly string $errorLogRecipientEmail,
 		string                 $defaultTimeZone = 'Europe/Zurich',
 		public readonly string $siteDirectoryName = 'site',
 		string                 $cacheDirectoryName = 'cache',
@@ -86,6 +87,7 @@ class Core
 		if (!HttpRequest::isSSL()) {
 			HttpResponse::redirectAndExit(relativeOrAbsoluteUri: HttpRequest::getURL(protocol: HttpRequest::PROTOCOL_HTTPS));
 		}
+		$this->logger = new Logger(logEmailRecipient: $errorLogRecipientEmail, logDirectory: $this->logDirectory);
 	}
 
 	public function prepareHttpResponse(
@@ -97,7 +99,6 @@ class Core
 		if (!is_null(value: Core::$httpResponse)) {
 			throw new LogicException(message: 'The HttpResponse is already prepared');
 		}
-		$this->logger = new Logger(logEmailRecipient: $environmentSettingsModel->errorLogRecipientEmail, logDirectory: $this->logDirectory);
 		ExceptionHandler::register(individualExceptionHandler: $individualExceptionHandler);
 		AbstractSessionHandler::register(individualSessionHandler: $individualSessionHandler);
 		RequestHandler::register(routeCollection: $routeCollection);
@@ -113,7 +114,7 @@ class Core
 			return Core::$httpResponse = HttpResponse::createHtmlResponse(
 				httpStatusCode: $httpStatusCode,
 				htmlContent: $content,
-				cspPolicySettingsModel: $contentHandler->isSuppressCspHeader() ? null : EnvironmentSettingsModel::get()->cspPolicySettingsModel,
+				cspPolicySettingsModel: $contentHandler->isSuppressCspHeader() ? null : $environmentSettingsModel->cspPolicySettingsModel,
 				nonce: CspNonce::get()
 			);
 		}
@@ -123,10 +124,5 @@ class Core
 			contentString: $content,
 			contentType: $contentType
 		);
-	}
-
-	public function getLogger(): Logger
-	{
-		return $this->logger;
 	}
 }

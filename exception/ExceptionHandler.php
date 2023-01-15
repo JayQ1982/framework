@@ -46,7 +46,7 @@ class ExceptionHandler
 		if ($throwable instanceof UnauthorizedException) {
 			$this->sendUnauthorizedHttpResponseAndExit(throwable: $throwable);
 		}
-		Core::get()->getLogger()->log(message: '', exceptionToLog: $throwable);
+		Core::get()->logger->log(message: '', exceptionToLog: $throwable);
 		$this->sendDefaultHttpResponseAndExit(throwable: $throwable);
 	}
 
