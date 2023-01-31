@@ -7,6 +7,7 @@
 namespace framework\core;
 
 use Exception;
+use LogicException;
 use Throwable;
 
 class Logger
@@ -14,54 +15,69 @@ class Logger
 	private const dnl = PHP_EOL . PHP_EOL;
 	private int $maxLogSize = 10000000;
 
+	private static ?Logger $registeredInstance = null;
+	private bool $lastIssueIsNew = false;
+
+	public static function register(Logger $logger): void
+	{
+		if (!is_null(value: Logger::$registeredInstance)) {
+			throw new LogicException(message: 'Logger is already registered.');
+		}
+		Logger::$registeredInstance = $logger;
+	}
+
+	public static function get(): Logger
+	{
+		return Logger::$registeredInstance;
+	}
+
 	public function __construct(
-		private readonly string $logEmailRecipient,
-		private readonly string $logDirectory
+		protected readonly string $logEmailRecipient,
+		private readonly string   $logDirectory
 	) {
 		if (!is_dir(filename: $this->logDirectory)) {
 			throw new Exception(message: 'Log directory does not exist: ' . $this->logDirectory);
 		}
 	}
 
-	public function log(string $message, ?Throwable $exceptionToLog = null): void
+	public function logException(Throwable $throwable): void
 	{
+		$previousException = $throwable->getPrevious();
+		$realException = is_null(value: $previousException) ? $throwable : $previousException;
+		$message = get_class(object: $realException) . ': (' . $realException->getCode() . ') "' . $realException->getMessage() . '"' . PHP_EOL;
+		$message .= 'thrown in file: ' . $realException->getFile() . ' (Line: ' . $realException->getLine() . ')' . Logger::dnl;
 		$hashableContent = $message;
+		$message .= $realException->getTraceAsString();
 
-		if (!is_null(value: $exceptionToLog)) {
-			$previousException = $exceptionToLog->getPrevious();
-			$realException = is_null(value: $previousException) ? $exceptionToLog : $previousException;
-
-			if (trim(string: $message) !== '') {
-				$message .= Logger::dnl;
-			}
-			$message .= get_class(object: $realException) . ': (' . $realException->getCode() . ') "' . $realException->getMessage() . '"' . PHP_EOL;
-			$message .= 'thrown in file: ' . $realException->getFile() . ' (Line: ' . $realException->getLine() . ')' . Logger::dnl;
-			$hashableContent = $message;
-			$message .= $realException->getTraceAsString();
-
-			// Don't use dynamic data ($traceLineArray['args']) from backtrace for hash-able content
-			foreach ($realException->getTrace() as $traceLineArray) {
-				$hashableContent .=
-					($traceLineArray['file'] ?? '') .
-					($traceLineArray['line'] ?? '') .
-					($traceLineArray['class'] ?? '') .
-					($traceLineArray['type'] ?? '') .
-					($traceLineArray['function'] ?? '') .
-					PHP_EOL;
-			}
+		// Don't use dynamic data ($traceLineArray['args']) from backtrace for hash-able content
+		foreach ($realException->getTrace() as $traceLineArray) {
+			$hashableContent .=
+				($traceLineArray['file'] ?? '') .
+				($traceLineArray['line'] ?? '') .
+				($traceLineArray['class'] ?? '') .
+				($traceLineArray['type'] ?? '') .
+				($traceLineArray['function'] ?? '') .
+				PHP_EOL;
 		}
-
 		$hash = hash(algo: 'sha256', data: $hashableContent);
+		$this->deliverMessage(hash: $hash, message: $message);
+	}
+
+	public function logMessage(string $message): void
+	{
+		$hash = hash(algo: 'sha256', data: $message);
 		$this->deliverMessage(hash: $hash, message: $message);
 	}
 
 	private function deliverMessage(string $hash, string $message): void
 	{
+		$this->lastIssueIsNew = false;
 		$ticketFile = 'ticket_' . $hash . '.txt';
 		$ticketFullPath = $this->logDirectory . $ticketFile;
 		$isNewIssue = $this->isNewIssue(ticketFullPath: $ticketFullPath);
 		$this->writeMessage(message: $message, filenameFullPath: $ticketFullPath);
 		if ($isNewIssue) {
+			$this->lastIssueIsNew = true;
 			$this->mailMessage(fullMessage: 'Ticketfile: ' . $ticketFile . Logger::dnl . $message);
 		}
 	}
@@ -153,5 +169,13 @@ class Logger
 
 		$fp = fopen(filename: $filenameFullPath, mode: 'w+');
 		fclose(stream: $fp);
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function lastIssueIsNew(): bool
+	{
+		return $this->lastIssueIsNew;
 	}
 }

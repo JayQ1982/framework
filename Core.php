@@ -36,7 +36,6 @@ class Core
 	public readonly string $logDirectory;
 	public readonly string $settingsDirectory;
 	public readonly string $viewDirectory;
-	public readonly Logger $logger;
 
 	public static function get(): Core
 	{
@@ -44,7 +43,6 @@ class Core
 	}
 
 	public function __construct(
-		public readonly string $errorLogRecipientEmail,
 		string                 $defaultTimeZone = 'Europe/Zurich',
 		public readonly string $siteDirectoryName = 'site',
 		string                 $cacheDirectoryName = 'cache',
@@ -87,11 +85,11 @@ class Core
 		if (!HttpRequest::isSSL()) {
 			HttpResponse::redirectAndExit(relativeOrAbsoluteUri: HttpRequest::getURL(protocol: HttpRequest::PROTOCOL_HTTPS));
 		}
-		$this->logger = new Logger(logEmailRecipient: $errorLogRecipientEmail, logDirectory: $this->logDirectory);
 	}
 
 	public function prepareHttpResponse(
 		EnvironmentSettingsModel $environmentSettingsModel,
+		Logger                   $logger,
 		RouteCollection          $routeCollection,
 		?ExceptionHandler        $individualExceptionHandler,
 		?AbstractSessionHandler  $individualSessionHandler
@@ -99,6 +97,8 @@ class Core
 		if (!is_null(value: Core::$httpResponse)) {
 			throw new LogicException(message: 'The HttpResponse is already prepared');
 		}
+		EnvironmentSettingsModel::register(environmentSettingsModel: $environmentSettingsModel);
+		Logger::register(logger: $logger);
 		ExceptionHandler::register(individualExceptionHandler: $individualExceptionHandler);
 		AbstractSessionHandler::register(individualSessionHandler: $individualSessionHandler);
 		RequestHandler::register(routeCollection: $routeCollection);
