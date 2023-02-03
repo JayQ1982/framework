@@ -12,6 +12,7 @@ use framework\core\ContentType;
 use framework\core\EnvironmentSettingsModel;
 use framework\core\HttpResponse;
 use framework\core\HttpStatusCode;
+use framework\core\Logger;
 use framework\response\HttpErrorResponseContent;
 use framework\security\CspNonce;
 use framework\security\CsrfToken;
@@ -46,7 +47,7 @@ class ExceptionHandler
 		if ($throwable instanceof UnauthorizedException) {
 			$this->sendUnauthorizedHttpResponseAndExit(throwable: $throwable);
 		}
-		Core::get()->logger->log(message: '', exceptionToLog: $throwable);
+		Logger::get()->logException(throwable: $throwable);
 		$this->sendDefaultHttpResponseAndExit(throwable: $throwable);
 	}
 

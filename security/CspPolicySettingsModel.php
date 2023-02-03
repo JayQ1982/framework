@@ -14,7 +14,6 @@ readonly class CspPolicySettingsModel
 	public const HOST_PLACEHOLDER = '{HOST}';
 
 	// Content Security Policy Reference: https://content-security-policy.com/
-
 	private string $defaultSrc;
 
 	public function __construct(

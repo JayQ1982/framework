@@ -11,7 +11,20 @@ use LogicException;
 
 class EnvironmentSettingsModel
 {
-	private static ?EnvironmentSettingsModel $instance = null;
+	private static ?EnvironmentSettingsModel $registeredInstance = null;
+
+	public static function register(EnvironmentSettingsModel $environmentSettingsModel): void
+	{
+		if (!is_null(value: EnvironmentSettingsModel::$registeredInstance)) {
+			throw new LogicException(message: 'EnvironmentSettingsModel is already registered.');
+		}
+		EnvironmentSettingsModel::$registeredInstance = $environmentSettingsModel;
+	}
+
+	public static function get(): EnvironmentSettingsModel
+	{
+		return EnvironmentSettingsModel::$registeredInstance;
+	}
 
 	public function __construct(
 		public readonly array                   $allowedDomains,
@@ -21,14 +34,5 @@ class EnvironmentSettingsModel
 		public readonly string                  $robots,
 		public readonly ?CspPolicySettingsModel $cspPolicySettingsModel
 	) {
-		if (!is_null(value: EnvironmentSettingsModel::$instance)) {
-			throw new LogicException(message: 'There is already an instance of EnvironmentSettingsModel');
-		}
-		EnvironmentSettingsModel::$instance = $this;
-	}
-
-	public static function get(): EnvironmentSettingsModel
-	{
-		return EnvironmentSettingsModel::$instance;
 	}
 }

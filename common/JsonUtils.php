@@ -57,11 +57,7 @@ class JsonUtils
 			if (!$in_multiline_comment && !$in_singleline_comment) {
 				$tmp2 = substr($lc, $from);
 				if (!$in_string) {
-					$tmp2 = preg_replace(
-						pattern: "/(\n|\r|\s)*/",
-						replacement: '',
-						subject: $tmp2
-					);
+					$tmp2 = preg_replace(pattern: "/(\n|\r|\s)*/", replacement: '', subject: $tmp2);
 				}
 
 				$new_str[] = $tmp2;
