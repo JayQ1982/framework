@@ -17,10 +17,10 @@ class TextFilterField extends AbstractTableFilterField
 	private array $sqlParams = [];
 
 	public function __construct(
-		AbstractTableFilter $parentFilter,
-		string              $identifier,
-		private             readonly string      $label,
-		private             readonly string      $dataTableColumnReference
+		AbstractTableFilter     $parentFilter,
+		string                  $identifier,
+		private readonly string $label,
+		private readonly string $dataTableColumnReference
 	) {
 		parent::__construct(parentFilter: $parentFilter, filterFieldIdentifier: $identifier);
 	}
