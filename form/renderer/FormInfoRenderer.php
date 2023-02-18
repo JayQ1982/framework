@@ -25,21 +25,21 @@ class FormInfoRenderer extends FormRenderer
 		$formInfo = $this->formInfo;
 
 		$dtTag = new HtmlTag('dt', false);
-		$dtClasses = $formInfo->getDtClasses();
+		$dtClasses = $formInfo->dtClasses;
 		if (count($dtClasses) > 0) {
 			$dtTag->addHtmlTagAttribute(new HtmlTagAttribute('class', implode(separator: ' ', array: $dtClasses), true));
 		}
-		$dtTag->addText($formInfo->getTitle());
+		$dtTag->addText($formInfo->title);
 
 		$ddTag = new HtmlTag('dd', false);
-		$ddClasses = $formInfo->getDdClasses();
+		$ddClasses = $formInfo->ddClasses;
 		if (count($ddClasses) > 0) {
 			$ddTag->addHtmlTagAttribute(new HtmlTagAttribute('class', implode(separator: ' ', array: $ddClasses), true));
 		}
-		$ddTag->addText($formInfo->getContent());
+		$ddTag->addText($formInfo->content);
 
 		$dlTag = new HtmlTag('dl', false);
-		$dlClasses = $formInfo->getDlClasses();
+		$dlClasses = $formInfo->dlClasses;
 		if (count($dlClasses) > 0) {
 			$dlTag->addHtmlTagAttribute(new HtmlTagAttribute('class', implode(separator: ' ', array: $dlClasses), true));
 		}

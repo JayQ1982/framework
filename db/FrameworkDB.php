@@ -22,7 +22,7 @@ class FrameworkDB extends PDO
 
 	public static function getInstance(DbSettingsModel $dbSettingsModel): FrameworkDB
 	{
-		$identifier = $dbSettingsModel->getIdentifier();
+		$identifier = $dbSettingsModel->identifier;
 		if (isset(FrameworkDB::$instances[$identifier])) {
 			return FrameworkDB::$instances[$identifier];
 		}
@@ -32,19 +32,19 @@ class FrameworkDB extends PDO
 
 	protected function __construct(DbSettingsModel $dbSettingsModel)
 	{
-		$identifier = $dbSettingsModel->getIdentifier();
+		$identifier = $dbSettingsModel->identifier;
 		if (array_key_exists($identifier, FrameworkDB::$instances)) {
 			throw new LogicException('It is not allowed to instantiate this class multiple times with the same identifier ' . $identifier);
 		}
 		FrameworkDB::$instances[$identifier] = $this;
 
 		$initSetCommands = [];
-		$timeNamesLanguage = $dbSettingsModel->getTimeNamesLanguage();
+		$timeNamesLanguage = $dbSettingsModel->timeNamesLanguage;
 		if (!is_null($timeNamesLanguage)) {
 			$initSetCommands[] = 'lc_time_names=' . $timeNamesLanguage;
 		}
 
-		if ($dbSettingsModel->isSqlSafeUpdates()) {
+		if ($dbSettingsModel->sqlSafeUpdates) {
 			// see: https://dev.mysql.com/doc/refman/8.0/en/mysql-tips.html
 			$initSetCommands[] = 'sql_safe_updates=1';
 		}
@@ -52,9 +52,9 @@ class FrameworkDB extends PDO
 		$dsn = implode(
 			separator: ';',
 			array: [
-				'mysql:host=' . $dbSettingsModel->getHostName(),
-				'dbname=' . $dbSettingsModel->getDatabaseName(),
-				'charset=' . $dbSettingsModel->getCharset(),
+				'mysql:host=' . $dbSettingsModel->hostName,
+				'dbname=' . $dbSettingsModel->databaseName,
+				'charset=' . $dbSettingsModel->charset,
 			]
 		);
 
@@ -67,7 +67,7 @@ class FrameworkDB extends PDO
 			$attributeOptions[PDO::MYSQL_ATTR_INIT_COMMAND] = 'SET ' . implode(separator: ', ', array: $initSetCommands);
 		}
 		try {
-			parent::__construct($dsn, $dbSettingsModel->getUserName(), $dbSettingsModel->getPassword(), $attributeOptions);
+			parent::__construct($dsn, $dbSettingsModel->userName, $dbSettingsModel->password, $attributeOptions);
 		} catch (Throwable $t) {
 			// We do NOT want to leak the database password in the StackTrace of the caught (PDO)Exception.
 			throw new PDOException(

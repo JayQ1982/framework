@@ -282,7 +282,7 @@ class MailMimeBody
 		$mime = [];
 
 		foreach ($attachments as $attachment) {
-			if ($attachment->isDispositionInline() && !$dispositionInline) {
+			if ($attachment->dispositionInline && !$dispositionInline) {
 				continue;
 			}
 
@@ -290,14 +290,14 @@ class MailMimeBody
 			$path = '';
 			$isStringAttachment = ($attachment instanceof MailerStringAttachment);
 			if ($isStringAttachment) {
-				$string = $attachment->getContentString();
+				$string = $attachment->contentString;
 			} else {
-				$path = $attachment->getPath();
+				$path = $attachment->path;
 			}
 
-			$fileName = $attachment->getFileName();
-			$encoding = $attachment->getEncoding();
-			$type = $attachment->getType();
+			$fileName = $attachment->fileName;
+			$encoding = $attachment->encoding;
+			$type = $attachment->type;
 
 			$mime[] = '--' . $boundary . MailerConstants::CRLF;
 			$mime[] = 'Content-Type: ' . $type . '; name=' . $this->quotedString(

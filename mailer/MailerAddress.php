@@ -36,9 +36,9 @@ class MailerAddress
 	private string $addressName;
 
 	private function __construct(
-		private readonly string $kind,
-		string                  $inputEmail,
-		string                  $inputName
+		public readonly string $kind,
+		string                 $inputEmail,
+		string                 $inputName
 	) {
 		$inputEmail = mb_strtolower(string: trim(string: $inputEmail));
 		$atPos = strrpos(haystack: $inputEmail, needle: '@');
@@ -122,11 +122,6 @@ class MailerAddress
 			inputEmail: $inputEmail,
 			inputName: $inputName
 		);
-	}
-
-	public function getKind(): string
-	{
-		return $this->kind;
 	}
 
 	public function isFromAddress(): bool
