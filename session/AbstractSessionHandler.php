@@ -40,6 +40,10 @@ abstract class AbstractSessionHandler extends SessionHandler
 
 	public static function getSessionHandler(): AbstractSessionHandler
 	{
+		if (is_null(value: AbstractSessionHandler::$registeredInstance)) {
+			AbstractSessionHandler::register(individualSessionHandler: null);
+		}
+
 		return AbstractSessionHandler::$registeredInstance;
 	}
 
