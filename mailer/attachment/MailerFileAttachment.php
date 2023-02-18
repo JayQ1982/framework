@@ -25,24 +25,23 @@ use framework\mailer\MailerConstants;
 use framework\mailer\MailerException;
 use framework\mailer\MailerFunctions;
 
-class MailerFileAttachment
+readonly class MailerFileAttachment
 {
-	private string $path;
-	private string $fileName;
-	private string $type;
+	public string $path;
+	public string $fileName;
+	public string $type;
 
 	public function __construct(
-		string                  $path,
-		string                  $fileName = '',
-		private readonly string $encoding = MailerConstants::ENCODING_BASE64,
-		string                  $type = '',
-		private readonly bool   $dispositionInline = false
+		string        $path,
+		string        $fileName = '',
+		public string $encoding = MailerConstants::ENCODING_BASE64,
+		string        $type = '',
+		public bool   $dispositionInline = false
 	) {
 		if (!in_array(needle: $this->encoding, haystack: MailerConstants::ENCODING_LIST)) {
 			throw new MailerException(message: 'Invalid encoding "' . $this->encoding . '". See MailerConstants::ENCODING_LIST[].');
 		}
-
-		$path = trim($path);
+		$path = trim(string: $path);
 		if ($path === '') {
 			throw new MailerException(message: 'Empty path.');
 		}
@@ -50,42 +49,15 @@ class MailerFileAttachment
 			throw new MailerException(message: 'Could not access file: ' . $path);
 		}
 		$this->path = $path;
-
-		$fileName = trim($fileName);
+		$fileName = trim(string: $fileName);
 		if ($fileName === '') {
 			$fileName = MailerFunctions::mb_pathinfo(path: $path, options: PATHINFO_BASENAME);
 		}
 		$this->fileName = $fileName;
-
-		$type = trim($type);
+		$type = trim(string: $type);
 		if ($type === '') {
 			$type = MailerFunctions::filenameToType(fileName: $path);
 		}
 		$this->type = $type;
-	}
-
-	public function getPath(): string
-	{
-		return $this->path;
-	}
-
-	public function getFileName(): string
-	{
-		return $this->fileName;
-	}
-
-	public function getEncoding(): string
-	{
-		return $this->encoding;
-	}
-
-	public function getType(): string
-	{
-		return $this->type;
-	}
-
-	public function isDispositionInline(): bool
-	{
-		return $this->dispositionInline;
 	}
 }

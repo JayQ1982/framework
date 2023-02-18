@@ -6,6 +6,7 @@
 
 namespace framework\table\table;
 
+use framework\common\Pagination;
 use framework\core\HttpRequest;
 use framework\db\DbQuery;
 use framework\db\FrameworkDB;
@@ -14,6 +15,7 @@ use framework\table\filter\AbstractTableFilter;
 use framework\table\renderer\SortableTableHeadRenderer;
 use framework\table\renderer\TablePaginationRenderer;
 use framework\table\TableHelper;
+use framework\table\TableItemCollection;
 use framework\table\TableItemModel;
 
 class DbResultTable extends SmartTable
@@ -36,8 +38,8 @@ class DbResultTable extends SmartTable
 
 	public function __construct(
 		string                                $identifier, // Can be the name of main table, but must be unique per site
-		private readonly FrameworkDB          $db,
-		private readonly DbQuery              $dbQuery,
+		public readonly FrameworkDB           $db,
+		public readonly DbQuery               $dbQuery,
 		private readonly ?AbstractTableFilter $abstractTableFilter = null,
 		?TablePaginationRenderer              $tablePaginationRenderer = null,
 		?SortableTableHeadRenderer            $sortableTableHeadRenderer = null,
@@ -48,10 +50,14 @@ class DbResultTable extends SmartTable
 		if (is_null(value: $sortableTableHeadRenderer)) {
 			$sortableTableHeadRenderer = new SortableTableHeadRenderer();
 		}
-		parent::__construct(identifier: $identifier, tableHeadRenderer: $sortableTableHeadRenderer);
+		parent::__construct(
+			identifier: $identifier,
+			tableHeadRenderer: $sortableTableHeadRenderer,
+			tableItemCollection: new TableItemCollection()
+		);
 		$this->setNoDataHtml(noDataHtml: DbResultTable::filter . $this->getNoDataHtml());
 		$this->setFullHtml(fullHtml: DbResultTable::filter . SmartTable::totalAmount . DbResultTable::pagination . '<div class="table-global-wrap">' . SmartTable::table . '</div>' . DbResultTable::pagination);
-		$this->tablePaginationRenderer = is_null(value: $tablePaginationRenderer) ? new TablePaginationRenderer() : $tablePaginationRenderer;
+		$this->tablePaginationRenderer = is_null(value: $tablePaginationRenderer) ? new TablePaginationRenderer(pagination: new Pagination()) : $tablePaginationRenderer;
 	}
 
 	public static function getFromSession(string $dataType, string $identifier, string $index): ?string
@@ -231,16 +237,6 @@ class DbResultTable extends SmartTable
 		}
 
 		return $this->totalAmount = $this->dbQuery->getTotalAmount(db: $this->db);
-	}
-
-	protected function getDb(): FrameworkDB
-	{
-		return $this->db;
-	}
-
-	public function getDbQuery(): DbQuery
-	{
-		return $this->dbQuery;
 	}
 
 	public function addAdditionalLinkParameter(string $key, string $value): void

@@ -14,42 +14,17 @@ use framework\html\HtmlText;
 class FormInfo extends FormComponent
 {
 	public function __construct(
-		private readonly HtmlText $title,
-		private readonly HtmlText $content,
-		private readonly array    $dlClasses = [],
-		private readonly array    $dtClasses = [],
-		private readonly array    $ddClasses = []
+		public readonly HtmlText $title,
+		public readonly HtmlText $content,
+		public readonly array    $dlClasses = [],
+		public readonly array    $dtClasses = [],
+		public readonly array    $ddClasses = []
 	) {
 		parent::__construct(uniqid());
 	}
 
-	public function getTitle(): HtmlText
-	{
-		return $this->title;
-	}
-
-	public function getContent(): HtmlText
-	{
-		return $this->content;
-	}
-
-	public function getDlClasses(): array
-	{
-		return $this->dlClasses;
-	}
-
-	public function getDtClasses(): array
-	{
-		return $this->dtClasses;
-	}
-
-	public function getDdClasses(): array
-	{
-		return $this->ddClasses;
-	}
-
 	public function getDefaultRenderer(): FormRenderer
 	{
-		return new FormInfoRenderer($this);
+		return new FormInfoRenderer(formInfo: $this);
 	}
 }

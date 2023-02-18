@@ -112,7 +112,7 @@ abstract class AbstractMail
 
 	public function addAttachment(MailerFileAttachment|MailerStringAttachment $mailerAttachment): void
 	{
-		$fileName = $mailerAttachment->getFileName();
+		$fileName = $mailerAttachment->fileName;
 		if (array_key_exists(key: $fileName, array: $this->attachments)) {
 			throw new MailerException(message: 'Attachment with fileName "' . $fileName . '" already exists.');
 		}
@@ -260,7 +260,7 @@ abstract class AbstractMail
 		}
 
 		if (array_key_exists($email, $this->recipients)) {
-			throw new MailerException(message: 'Recipient address exists already (' . $mailerAddress->getKind() . '): ' . $email);
+			throw new MailerException(message: 'Recipient address exists already (' . $mailerAddress->kind . '): ' . $email);
 		}
 		$this->recipients[$email] = $mailerAddress;
 	}
@@ -291,7 +291,7 @@ abstract class AbstractMail
 	private function inlineImageExists(array $attachments): bool
 	{
 		foreach ($attachments as $mailerAttachment) {
-			if ($mailerAttachment->isDispositionInline()) {
+			if ($mailerAttachment->dispositionInline) {
 				return true;
 			}
 		}
@@ -307,7 +307,7 @@ abstract class AbstractMail
 	private function attachmentExists(array $attachments): bool
 	{
 		foreach ($attachments as $mailerAttachment) {
-			if (!$mailerAttachment->isDispositionInline()) {
+			if (!$mailerAttachment->dispositionInline) {
 				return true;
 			}
 		}

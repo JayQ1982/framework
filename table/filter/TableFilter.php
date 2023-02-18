@@ -68,7 +68,7 @@ class TableFilter extends AbstractTableFilter
 			$whereConds[$key] = '(' . $val . ')';
 		}
 
-		$dbResultTable->getDbQuery()->addWherePart(
+		$dbResultTable->dbQuery->addWherePart(
 			wherePart: implode(separator: ' AND ', array: $whereConds),
 			parameters: $params
 		);
