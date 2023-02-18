@@ -43,8 +43,8 @@ class SmartTable
 
 	public function __construct(
 		public readonly string              $identifier,
-		private readonly TableHeadRenderer  $tableHeadRenderer = new TableHeadRenderer(),
-		public readonly TableItemCollection $tableItemCollection = new TableItemCollection(),
+		private readonly TableHeadRenderer  $tableHeadRenderer,
+		public readonly TableItemCollection $tableItemCollection,
 	) {
 		if (array_key_exists(key: $identifier, array: SmartTable::$instances)) {
 			throw new LogicException(message: 'There is already a table with the same identifier ' . $identifier);

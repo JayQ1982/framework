@@ -47,15 +47,15 @@ abstract class AbstractMail
 	private array $customHeaders = [];
 
 	protected function __construct(
-		string         $senderEmail,
-		string         $fromEmail,
-		string         $fromName,
-		string         $toEmail,
-		string         $toName,
-		private string $subject,
-		private string $charSet = MailerConstants::CHARSET_UTF8,
-		private        readonly string $encoding = MailerConstants::ENCODING_QUOTED_PRINTABLE,
-		private        readonly int    $priority = MailerConstants::PRIORITY_NORMAL
+		string                  $senderEmail,
+		string                  $fromEmail,
+		string                  $fromName,
+		string                  $toEmail,
+		string                  $toName,
+		private string          $subject,
+		private string          $charSet = MailerConstants::CHARSET_UTF8,
+		private readonly string $encoding = MailerConstants::ENCODING_QUOTED_PRINTABLE,
+		private readonly int    $priority = MailerConstants::PRIORITY_NORMAL
 	) {
 		$this->sender = MailerAddress::createSenderAddress(inputEmail: $senderEmail, inputName: '');
 		$this->fromAddress = MailerAddress::createFromAddress(inputEmail: $fromEmail, inputName: $fromName);

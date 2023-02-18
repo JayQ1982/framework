@@ -31,7 +31,11 @@ class TableHelper
 
 	public static function createTable(string $identifier, ?TableHeadRenderer $tableHeadRenderer = null): SmartTable
 	{
-		return new SmartTable(identifier: $identifier, tableHeadRenderer: $tableHeadRenderer);
+		return new SmartTable(
+			identifier: $identifier,
+			tableHeadRenderer: $tableHeadRenderer,
+			tableItemCollection: new TableItemCollection()
+		);
 	}
 
 	public static function createDbResultTable(

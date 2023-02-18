@@ -12,7 +12,6 @@ readonly class InputParameter
 		public string $name,
 		public bool   $isRequired,
 		public string $description = ''
-	)
-	{
+	) {
 	}
 }
