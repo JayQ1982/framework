@@ -6,7 +6,6 @@
 
 namespace framework\common;
 
-use ReturnTypeWillChange;
 use SimpleXMLElement;
 use stdClass;
 use Throwable;
@@ -28,21 +27,14 @@ class SimpleXMLExtended extends SimpleXMLElement
 		}
 	}
 
-	/**
-	 * @param string $qualifiedName
-	 * @param null   $value
-	 * @param null   $namespace
-	 *
-	 * @return SimpleXmlElement
-	 */
-	#[ReturnTypeWillChange] public function addChild(string $qualifiedName, $value = null, $namespace = null): SimpleXmlElement
+	public function addChild(string $qualifiedName, ?string $value = null, ?string $namespace = null): ?static
 	{
 		$new_child = parent::addChild($qualifiedName, null, $namespace);
 
 		if ($new_child !== null && $value !== null) {
 			$node = dom_import_simplexml($new_child);
 			$no = $node->ownerDocument;
-			$node->appendChild($no->createCDATASection((string)$value));
+			$node->appendChild($no->createCDATASection($value));
 		}
 
 		return $new_child;
