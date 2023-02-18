@@ -32,10 +32,10 @@ class MailerFileAttachment
 	private string $type;
 
 	public function __construct(
-		string  $path,
-		string  $fileName = '',
+		string                  $path,
+		string                  $fileName = '',
 		private readonly string $encoding = MailerConstants::ENCODING_BASE64,
-		string  $type = '',
+		string                  $type = '',
 		private readonly bool   $dispositionInline = false
 	) {
 		if (!in_array(needle: $this->encoding, haystack: MailerConstants::ENCODING_LIST)) {
