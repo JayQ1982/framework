@@ -96,7 +96,7 @@ class RequestHandler
 		}
 
 		if (!in_array(needle: $host, haystack: $allowedDomains)) {
-			throw new Exception(message: $host . ' is not set as allowed domain');
+			throw new NotFoundException(message: $host . ' is not set as allowed domain');
 		}
 	}
 

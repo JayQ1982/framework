@@ -33,9 +33,9 @@ class MailerStringAttachment
 	private string $encoding = MailerConstants::ENCODING_BASE64;
 
 	public function __construct(
-		string       $contentString,
-		string       $fileName,
-		string       $type,
+		string                $contentString,
+		string                $fileName,
+		string                $type,
 		private readonly bool $dispositionInline = false
 	) {
 		$contentString = trim($contentString);
