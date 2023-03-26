@@ -14,64 +14,39 @@ use framework\html\HtmlText;
 
 class SelectOptionsField extends OptionsField
 {
-	private HtmlText $emptyValueLabel;
-	private bool $renderAsChosenEnhancedField = false;
-	private bool $acceptMultipleSelections = false;
-	private bool $renderEmptyValueOption = true;
+	public readonly array $cssClasses;
+	public readonly HtmlText $emptyValueLabel;
 
 	public function __construct(
-		string            $name,
-		HtmlText          $label,
-		FormOptions       $formOptions,
-		null|string|array $initialValue,
-		?HtmlText         $requiredError = null,
-		?HtmlText         $individualEmptyValueLabel = null
+		string               $name,
+		HtmlText             $label,
+		FormOptions          $formOptions,
+		null|string|array    $initialValue,
+		?HtmlText            $requiredError = null,
+		?HtmlText            $individualEmptyValueLabel = null,
+		array                $cssClasses = [],
+		bool                 $renderAsChosenEnhancedField = false,
+		public readonly bool $acceptMultipleSelections = false,
+		public readonly bool $renderEmptyValueOption = true
 	) {
-		$this->emptyValueLabel = is_null($individualEmptyValueLabel) ? HtmlText::encoded('-- Bitte wählen --') : $individualEmptyValueLabel;
-
+		$this->emptyValueLabel = is_null(value: $individualEmptyValueLabel) ? HtmlText::encoded(textContent: '-- Bitte wählen --') : $individualEmptyValueLabel;
 		parent::__construct(
 			name: $name,
 			label: $label,
 			formOptions: $formOptions,
 			initialValue: $initialValue
 		);
-
-		if (!is_null($requiredError)) {
-			$this->addRule(new RequiredRule($requiredError));
+		if (!is_null(value: $requiredError)) {
+			$this->addRule(formRule: new RequiredRule(defaultErrorMessage: $requiredError));
 		}
-	}
-
-	public function setRenderAsChosenEnhancedField(bool $renderAsChosenEnhancedField): void
-	{
-		$this->renderAsChosenEnhancedField = $renderAsChosenEnhancedField;
-	}
-
-	public function setAcceptMultipleSelections(bool $acceptMultipleSelections): void
-	{
-		$this->acceptMultipleSelections = $acceptMultipleSelections;
-	}
-
-	public function setRenderEmptyValueOption(bool $renderEmptyValueOption): void
-	{
-		$this->renderEmptyValueOption = $renderEmptyValueOption;
+		if ($renderAsChosenEnhancedField) {
+			$cssClasses[] = 'chosen';
+		}
+		$this->cssClasses = $cssClasses;
 	}
 
 	public function getDefaultRenderer(): FormRenderer
 	{
-		$renderer = new SelectOptionsRenderer($this);
-		$renderer->setChosen($this->renderAsChosenEnhancedField);
-		$renderer->setMulti($this->acceptMultipleSelections);
-
-		return $renderer;
-	}
-
-	public function getEmptyValueLabel(): HtmlText
-	{
-		return $this->emptyValueLabel;
-	}
-
-	public function isRenderEmptyValueOption(): bool
-	{
-		return $this->renderEmptyValueOption;
+		return new SelectOptionsRenderer(selectOptionsField: $this);
 	}
 }
