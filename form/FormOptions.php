@@ -13,15 +13,7 @@ class FormOptions
 	/** @var HtmlText[] */
 	private array $data = [];
 
-	/**
-	 * @param HtmlText[] $data
-	 */
-	public function __construct(array $data = [])
-	{
-		foreach ($data as $key => $val) {
-			$this->addItem($key, $val);
-		}
-	}
+	public function __construct() { }
 
 	public function addItem(string $key, HtmlText $htmlText): void
 	{
@@ -30,7 +22,7 @@ class FormOptions
 
 	public function exists(string $key): bool
 	{
-		return array_key_exists($key, $this->data);
+		return array_key_exists(key: $key, array: $this->data);
 	}
 
 	/**
