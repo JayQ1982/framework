@@ -50,7 +50,7 @@ readonly class CspPolicySettingsModel
 		}
 		if ($this->styleSrc !== '') {
 			$val = $this->styleSrc;
-			if (!str_contains(haystack: $val, needle: "'none'")) {
+			if (!str_contains(haystack: $val, needle: "'none'") && !str_contains(haystack: $val, needle: "'unsafe-inline'")) {
 				$val .= " 'nonce-" . $nonce . "'";
 			}
 			$dataArray[] = 'style-src ' . $val;
@@ -66,7 +66,7 @@ readonly class CspPolicySettingsModel
 		}
 		if ($this->scriptSrc !== '') {
 			$val = $this->scriptSrc;
-			if (!str_contains(haystack: $val, needle: "'none'")) {
+			if (!str_contains(haystack: $val, needle: "'none'") && !str_contains(haystack: $val, needle: "'unsafe-inline'")) {
 				$val .= " 'nonce-" . $nonce . "'";
 			}
 			$dataArray[] = 'script-src ' . $val;
