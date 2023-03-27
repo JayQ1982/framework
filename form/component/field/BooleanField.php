@@ -14,22 +14,27 @@ class BooleanField extends CheckboxOptionsField
 	public function __construct(string $name, HtmlText $label, bool $isCheckedByDefault)
 	{
 		$formOptions = new FormOptions();
-		$formOptions->addItem('1', $label);
-
-		parent::__construct($name, $label, $formOptions, $isCheckedByDefault ? ['1'] : [], null, CheckboxOptionsField::LAYOUT_CHECKBOXITEM);
+		$formOptions->addItem(key: '1', htmlText: $label);
+		parent::__construct(
+			name: $name,
+			label: $label,
+			formOptions: $formOptions,
+			initialValues: $isCheckedByDefault ? ['1'] : [],
+			layout: CheckboxOptionsField::LAYOUT_CHECKBOXITEM
+		);
 	}
 
 	public function validate(array $inputData, bool $overwriteValue = true): bool
 	{
 		if ($overwriteValue) {
-			$this->setValue(array_key_exists($this->getName(), $inputData) ? $inputData[$this->getName()] : null);
+			$this->setValue(value: array_key_exists(key: $this->getName(), array: $inputData) ? $inputData[$this->getName()] : null);
 		}
 
-		return parent::validate($inputData, false);
+		return parent::validate(inputData: $inputData, overwriteValue: false);
 	}
 
 	public function getRawValue(bool $returnNullIfEmpty = false): int
 	{
-		return (int)parent::getRawValue($returnNullIfEmpty);
+		return (int)parent::getRawValue(returnNullIfEmpty: $returnNullIfEmpty);
 	}
 }

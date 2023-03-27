@@ -14,84 +14,58 @@ use LogicException;
 
 class SelectOptionsRenderer extends FormRenderer
 {
-	private SelectOptionsField $selectOptionsField;
-	private bool $chosen = false;
-	private bool $multi = false;
+	private bool $acceptMultipleSelections = false;
 
-	public function __construct(SelectOptionsField $selectOptionsField)
-	{
-		$this->selectOptionsField = $selectOptionsField;
-	}
+	public function __construct(private readonly SelectOptionsField $selectOptionsField) { }
 
 	public function prepare(): void
 	{
 		$selectOptionsField = $this->selectOptionsField;
-		$options = $selectOptionsField->getFormOptions()->getData();
-
 		$fieldName = $selectOptionsField->getName();
-		$selectAttributes = [
-			new HtmlTagAttribute('name', $this->multi ? $fieldName . '[]' : $fieldName, true),
-			new HtmlTagAttribute('id', $selectOptionsField->getId(), true),
-		];
-
-		if ($this->chosen) {
-			$selectAttributes[] = new HtmlTagAttribute('class', 'chosen', true);
+		$selectTag = new HtmlTag(name: 'select', selfClosing: false);
+		$selectTag->addHtmlTagAttribute(htmlTagAttribute: new HtmlTagAttribute(
+			name: 'name',
+			value: $this->acceptMultipleSelections ? $fieldName . '[]' : $fieldName,
+			valueIsEncodedForRendering: true
+		));
+		$selectTag->addHtmlTagAttribute(htmlTagAttribute: new HtmlTagAttribute(
+			name: 'id',
+			value: $selectOptionsField->getId(),
+			valueIsEncodedForRendering: true
+		));
+		if (count(value: $selectOptionsField->cssClasses) > 0) {
+			$selectTag->addHtmlTagAttribute(htmlTagAttribute: new HtmlTagAttribute(
+				name: 'class',
+				value: implode(separator: ' ', array: $selectOptionsField->cssClasses),
+				valueIsEncodedForRendering: true
+			));
 		}
-		if ($this->multi) {
-			$selectAttributes[] = new HtmlTagAttribute('multiple', null, true);
+		if ($selectOptionsField->acceptMultipleSelections) {
+			$selectTag->addHtmlTagAttribute(htmlTagAttribute: new HtmlTagAttribute(
+				name: 'multiple',
+				value: null,
+				valueIsEncodedForRendering: true
+			));
 		}
-
-		$selectTag = new HtmlTag('select', false, $selectAttributes);
-
-		if ($selectOptionsField->isRenderEmptyValueOption() && !array_key_exists('', $options)) {
-			$options = ['' => $selectOptionsField->getEmptyValueLabel()] + $options;
+		$mainOptions = $selectOptionsField->getFormOptions()->getData();
+		if ($selectOptionsField->renderEmptyValueOption && !array_key_exists(key: '', array: $mainOptions)) {
+			$mainOptions = ['' => $selectOptionsField->emptyValueLabel] + $mainOptions;
 		}
 		$selectedValue = $selectOptionsField->getRawValue();
-		if ($this->multi && !is_array($selectedValue)) {
-			throw new LogicException('The selected value must be an array if selection of multiple elements is allowed');
+		if ($this->acceptMultipleSelections && !is_array(value: $selectedValue)) {
+			throw new LogicException(message: 'The selected value must be an array if selection of multiple elements is allowed');
 		}
-
-		$this->prepareOptionsDisplay($selectTag, $options, $selectedValue);
-
-		$this->setHtmlTag($selectTag);
-	}
-
-	private function prepareOptionsDisplay(HtmlTag $parentTag, array $options, array|null|int|string $selectedValue): void
-	{
-		foreach ($options as $key => $val) {
-			if (is_array($val)) {
-				$childTag = new HtmlTag('optgroup', false, [new HtmlTagAttribute('label', $key, true)]);
-				$this->prepareOptionsDisplay($childTag, $val, $selectedValue);
-			} else {
-				$attributes = [new HtmlTagAttribute('value', $key, true)];
-				if (($this->multi && in_array($key, $selectedValue)) || (!$this->multi && $key == $selectedValue)) {
-					$attributes[] = new HtmlTagAttribute('selected', null, true);
-				}
-
-				$childTag = new HtmlTag('option', false, $attributes);
-				$childTag->addText($val);
+		foreach ($mainOptions as $key => $htmlText) {
+			$attributes = [new HtmlTagAttribute(name: 'value', value: $key, valueIsEncodedForRendering: true)];
+			if (
+				($this->acceptMultipleSelections && in_array(needle: $key, haystack: $selectedValue))
+				|| (!$this->acceptMultipleSelections && $key === (string)$selectedValue)
+			) {
+				$attributes[] = new HtmlTagAttribute(name: 'selected', value: null, valueIsEncodedForRendering: true);
 			}
-			$parentTag->addTag($childTag);
+			$selectTag->addTag(htmlTag: $optionTag = new HtmlTag(name: 'option', selfClosing: false, htmlTagAttributes: $attributes));
+			$optionTag->addText(htmlText: $htmlText);
 		}
-	}
-
-	/**
-	 * Activate the chosen-option which adds a chosen-class to the select field
-	 *
-	 * @param bool $newValue
-	 */
-	public function setChosen(bool $newValue)
-	{
-		$this->chosen = $newValue;
-	}
-
-	/**
-	 * Activate to allow selection of multiple values
-	 *
-	 * @param bool $newValue
-	 */
-	public function setMulti(bool $newValue)
-	{
-		$this->multi = $newValue;
+		$this->setHtmlTag(htmlTag: $selectTag);
 	}
 }
