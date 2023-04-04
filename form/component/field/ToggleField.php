@@ -24,7 +24,6 @@ class ToggleField extends OptionsField
 	private string $defaultChildFieldRenderer = DefinitionListRenderer::class;
 	private bool $displayLegend;
 	private bool $multiple;
-	private ?HtmlText $listDescription = null;
 
 	public function __construct(string $name, HtmlText $label, FormOptions $formOptions, $initialValue, ?HtmlText $requiredError = null, bool $displayLegend = true, bool $multiple = false)
 	{
@@ -40,11 +39,6 @@ class ToggleField extends OptionsField
 		if (!is_null($requiredError)) {
 			$this->addRule(new RequiredRule($requiredError));
 		}
-	}
-
-	public function setListDescription(?HtmlText $listDescription): void
-	{
-		$this->listDescription = $listDescription;
 	}
 
 	public function setDefaultChildFieldRenderer(string $rendererName): void
@@ -218,11 +212,12 @@ class ToggleField extends OptionsField
 			$legendTag->addTag($labelInfoTag);
 		}
 
-		$fieldsetTag = LegendAndListRenderer::createFieldsetTag($this);
+		$fieldsetTag = LegendAndListRenderer::createFieldsetTag(optionsField: $this);
 		$fieldsetTag->addTag($legendTag);
 
-		if (!is_null($this->listDescription)) {
-			$fieldsetTag->addText(HtmlText::encoded('<div class="fieldset-info">' . $this->listDescription->render() . '</div>'));
+		$listDescription = $this->getListDescription();
+		if (!is_null(value: $listDescription)) {
+			$fieldsetTag->addText(htmlText: HtmlText::encoded(textContent: '<div class="fieldset-info">' . $listDescription->render() . '</div>'));
 		}
 
 		//  the <ul> tag will now be attached

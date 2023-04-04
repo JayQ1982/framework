@@ -13,17 +13,37 @@ use framework\html\HtmlText;
 
 abstract class OptionsField extends FormField
 {
-	private FormOptions $formOptions;
 	private array $listTagClasses = [];
+	private ?HtmlText $listDescription = null;
 
-	public function __construct(string $name, HtmlText $label, FormOptions $formOptions, $initialValue)
-	{
-		$this->formOptions = $formOptions;
-		parent::__construct($name, $label, $initialValue);
+	public function __construct(
+		string              $name,
+		HtmlText            $label,
+		private FormOptions $formOptions,
+		mixed               $initialValue
+	) {
+		parent::__construct(
+			name: $name,
+			label: $label,
+			value: $initialValue
+		);
 		// We set a default error message because in normal circumstance this case cannot happen if the user chooses
 		// available options, so it doesn't make sense to always set an individual error message for this check.
 		// It can only happen by data manipulation, which we don't want to be notified about (by exception).
-		$this->addRule(new ValidateAgainstOptions(HtmlText::encoded('Selected invalid value in field ' . $name), $this->formOptions));
+		$this->addRule(formRule: new ValidateAgainstOptions(
+			errorMessage: HtmlText::encoded(textContent: 'Selected invalid value in field ' . $name),
+			validFormOptions: $this->formOptions
+		));
+	}
+
+	public function setListDescription(?HtmlText $listDescription): void
+	{
+		$this->listDescription = $listDescription;
+	}
+
+	public function getListDescription(): ?HtmlText
+	{
+		return $this->listDescription;
 	}
 
 	public function getFormOptions(): FormOptions
@@ -43,6 +63,6 @@ abstract class OptionsField extends FormField
 
 	public function getListTagClasses(): array
 	{
-		return array_unique($this->listTagClasses);
+		return array_unique(array: $this->listTagClasses);
 	}
 }

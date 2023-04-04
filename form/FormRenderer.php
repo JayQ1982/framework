@@ -22,12 +22,12 @@ abstract class FormRenderer
 	/**
 	 * Method to set the base Tag-Element. It's not allowed to overwrite it, if already set!
 	 *
-	 * @param HtmlTag $htmlTag : The Tag-Element to be set
+	 * @param HtmlTag $htmlTag The Tag-Element to be set
 	 */
 	protected function setHtmlTag(HtmlTag $htmlTag): void
 	{
-		if (!is_null($this->htmlTag)) {
-			throw new LogicException('You cannot overwrite an already defined Tag-Element.');
+		if (!is_null(value: $this->htmlTag)) {
+			throw new LogicException(message: 'You cannot overwrite an already defined Tag-Element.');
 		}
 		$this->htmlTag = $htmlTag;
 	}
@@ -35,21 +35,11 @@ abstract class FormRenderer
 	/**
 	 * Get the current base Tag-Element for this renderer
 	 *
-	 * @return HtmlTag|null : The current base Tag-Element or null, if not set
+	 * @return HtmlTag|null The current base Tag-Element or null, if not set
 	 */
 	public function getHtmlTag(): ?HtmlTag
 	{
 		return $this->htmlTag;
-	}
-
-	/**
-	 * Get the html-code which can be used for output
-	 *
-	 * @return string : The html code (rendered by the base Tag-Element and it's children) - Empty string if base Tag-Element is not set
-	 */
-	public function getHTML(): string
-	{
-		return is_null($this->htmlTag) ? '' : $this->htmlTag->render();
 	}
 
 	public static function addErrorsToParentHtmlTag(FormComponent $formComponentWithErrors, HtmlTag $parentHtmlTag): void
@@ -57,43 +47,48 @@ abstract class FormRenderer
 		if (!$formComponentWithErrors->hasErrors(withChildElements: false)) {
 			return;
 		}
-
-		$divTag = new HtmlTag('div', false, [
-			new HtmlTagAttribute('class', 'form-input-error', true),
-			new HtmlTagAttribute('id', $formComponentWithErrors->getName() . '-error', true),
+		$divTag = new HtmlTag(name: 'div', selfClosing: false, htmlTagAttributes: [
+			new HtmlTagAttribute(name: 'class', value: 'form-input-error', valueIsEncodedForRendering: true),
+			new HtmlTagAttribute(name: 'id', value: $formComponentWithErrors->getName() . '-error', valueIsEncodedForRendering: true),
 		]);
 		$errorsHTML = [];
 		foreach ($formComponentWithErrors->getErrorsAsHtmlTextObjects() as $htmlText) {
 			$errorsHTML[] = $htmlText->render();
 		}
-		$divTag->addText(HtmlText::encoded(implode(separator: '<br>', array: $errorsHTML)));
-		$parentHtmlTag->addTag($divTag);
+		$divTag->addText(htmlText: HtmlText::encoded(textContent: implode(separator: '<br>', array: $errorsHTML)));
+		$parentHtmlTag->addTag(htmlTag: $divTag);
 	}
 
 	public static function addFieldInfoToParentHtmlTag(FormField $formFieldWithFieldInfo, HtmlTag $parentHtmlTag): void
 	{
-		$divTag = new HtmlTag('div', false, [
-			new HtmlTagAttribute('class', 'form-input-info', true),
-			new HtmlTagAttribute('id', $formFieldWithFieldInfo->getName() . '-info', true),
+		$divTag = new HtmlTag(name: 'div', selfClosing: false, htmlTagAttributes: [
+			new HtmlTagAttribute(name: 'class', value: 'form-input-info', valueIsEncodedForRendering: true),
+			new HtmlTagAttribute(name: 'id', value: $formFieldWithFieldInfo->getName() . '-info', valueIsEncodedForRendering: true),
 		]);
-		$divTag->addText($formFieldWithFieldInfo->getFieldInfo());
-		$parentHtmlTag->addTag($divTag);
+		$divTag->addText(htmlText: $formFieldWithFieldInfo->getFieldInfo());
+		$parentHtmlTag->addTag(htmlTag: $divTag);
 	}
 
 	public static function addAriaAttributesToHtmlTag(FormField $formField, HtmlTag $parentHtmlTag): void
 	{
 		$ariaDescribedBy = [];
-
 		if ($formField->hasErrors(withChildElements: false)) {
-			$parentHtmlTag->addHtmlTagAttribute(new HtmlTagAttribute('aria-invalid', 'true', true));
+			$parentHtmlTag->addHtmlTagAttribute(htmlTagAttribute: new HtmlTagAttribute(
+				name: 'aria-invalid',
+				value: 'true',
+				valueIsEncodedForRendering: true
+			));
 			$ariaDescribedBy[] = $formField->getName() . '-error';
 		}
-
-		if (!is_null($formField->getFieldInfo())) {
+		if (!is_null(value: $formField->getFieldInfo())) {
 			$ariaDescribedBy[] = $formField->getName() . '-info';
 		}
-		if (count($ariaDescribedBy) > 0) {
-			$parentHtmlTag->addHtmlTagAttribute(new HtmlTagAttribute('aria-describedby', implode(separator: ' ', array: $ariaDescribedBy), true));
+		if (count(value: $ariaDescribedBy) > 0) {
+			$parentHtmlTag->addHtmlTagAttribute(htmlTagAttribute: new HtmlTagAttribute(
+				name: 'aria-describedby',
+				value: implode(separator: ' ', array: $ariaDescribedBy),
+				valueIsEncodedForRendering: true
+			));
 		}
 	}
 }

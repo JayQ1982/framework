@@ -103,7 +103,7 @@ class HtmlDoc
 			$newNode = new ElementNode();
 
 			// </...> (close only)
-			if (array_key_exists(1, $res) && (int)$res[1][1] !== -1) {
+			if (array_key_exists(key: 1, array: $res) && (int)$res[1][1] !== -1) {
 				if ($this->pendingNode instanceof ElementNode) {
 					$this->pendingNode->close();
 				}

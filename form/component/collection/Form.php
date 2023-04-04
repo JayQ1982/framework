@@ -28,10 +28,14 @@ class Form extends FormCollection
 	private string $sentIndicator;
 	private array $cssClasses = [];
 	private bool $renderRequiredAbbr = true;
-	private string $defaultFormFieldRenderer = DefinitionListRenderer::class;
 
-	public function __construct(string $name, bool $acceptUpload = false, ?HtmlText $globalErrorMessage = null, bool $methodPost = true, ?string $individualSentIndicator = null)
-	{
+	public function __construct(
+		string    $name,
+		bool      $acceptUpload = false,
+		?HtmlText $globalErrorMessage = null,
+		bool      $methodPost = true,
+		?string   $individualSentIndicator = null
+	) {
 		if (in_array($name, Form::$formNameList)) {
 			throw new LogicException('A Form with the name "' . $name . '" has already been defined.');
 		}
@@ -54,14 +58,9 @@ class Form extends FormCollection
 		}
 	}
 
-	public function setDefaultFormFieldRenderer(string $rendererName): void
+	public function getDefaultFormFieldRenderer(FormField $formField): FormRenderer
 	{
-		$this->defaultFormFieldRenderer = $rendererName;
-	}
-
-	public function getDefaultFormFieldRenderer(): string
-	{
-		return $this->defaultFormFieldRenderer;
+		return new DefinitionListRenderer(formField: $formField);
 	}
 
 	public function addCssClass(string $className): void

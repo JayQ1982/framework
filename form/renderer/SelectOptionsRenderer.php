@@ -14,8 +14,6 @@ use LogicException;
 
 class SelectOptionsRenderer extends FormRenderer
 {
-	private bool $acceptMultipleSelections = false;
-
 	public function __construct(private readonly SelectOptionsField $selectOptionsField) { }
 
 	public function prepare(): void
@@ -25,7 +23,7 @@ class SelectOptionsRenderer extends FormRenderer
 		$selectTag = new HtmlTag(name: 'select', selfClosing: false);
 		$selectTag->addHtmlTagAttribute(htmlTagAttribute: new HtmlTagAttribute(
 			name: 'name',
-			value: $this->acceptMultipleSelections ? $fieldName . '[]' : $fieldName,
+			value: $selectOptionsField->acceptMultipleSelections ? $fieldName . '[]' : $fieldName,
 			valueIsEncodedForRendering: true
 		));
 		$selectTag->addHtmlTagAttribute(htmlTagAttribute: new HtmlTagAttribute(
@@ -52,14 +50,14 @@ class SelectOptionsRenderer extends FormRenderer
 			$mainOptions = ['' => $selectOptionsField->emptyValueLabel] + $mainOptions;
 		}
 		$selectedValue = $selectOptionsField->getRawValue();
-		if ($this->acceptMultipleSelections && !is_array(value: $selectedValue)) {
+		if ($selectOptionsField->acceptMultipleSelections && !is_array(value: $selectedValue)) {
 			throw new LogicException(message: 'The selected value must be an array if selection of multiple elements is allowed');
 		}
 		foreach ($mainOptions as $key => $htmlText) {
 			$attributes = [new HtmlTagAttribute(name: 'value', value: $key, valueIsEncodedForRendering: true)];
 			if (
-				($this->acceptMultipleSelections && in_array(needle: $key, haystack: $selectedValue))
-				|| (!$this->acceptMultipleSelections && 'selected_' . $key === 'selected_' . $selectedValue)
+				($selectOptionsField->acceptMultipleSelections && in_array(needle: $key, haystack: $selectedValue))
+				|| (!$selectOptionsField->acceptMultipleSelections && 'selected_' . $key === 'selected_' . $selectedValue)
 			) {
 				$attributes[] = new HtmlTagAttribute(name: 'selected', value: null, valueIsEncodedForRendering: true);
 			}
