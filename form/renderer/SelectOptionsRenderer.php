@@ -57,7 +57,7 @@ class SelectOptionsRenderer extends FormRenderer
 			$attributes = [new HtmlTagAttribute(name: 'value', value: $key, valueIsEncodedForRendering: true)];
 			if (
 				($selectOptionsField->acceptMultipleSelections && in_array(needle: $key, haystack: $selectedValue))
-				|| (!$selectOptionsField->acceptMultipleSelections && $key === (string)$selectedValue)
+				|| (!$selectOptionsField->acceptMultipleSelections && 'selected_' . $key === 'selected_' . $selectedValue)
 			) {
 				$attributes[] = new HtmlTagAttribute(name: 'selected', value: null, valueIsEncodedForRendering: true);
 			}
