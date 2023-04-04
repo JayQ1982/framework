@@ -43,6 +43,9 @@ class SelectOptionsField extends OptionsField
 			$cssClasses[] = 'chosen';
 		}
 		$this->cssClasses = $cssClasses;
+		if ($this->acceptMultipleSelections) {
+			$this->acceptArrayAsValue();
+		}
 	}
 
 	public function getDefaultRenderer(): FormRenderer
