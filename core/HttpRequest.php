@@ -154,7 +154,7 @@ class HttpRequest
 		foreach ($acceptedLanguages as $acceptedLanguageDetails) {
 			$languageAndQuality = explode(separator: ';q=', string: $acceptedLanguageDetails);
 			$languageCode = trim(string: explode(separator: '-', string: $languageAndQuality[0])[0]);
-			$quality = (array_key_exists(key: 1, array: $languageAndQuality) ? round(num: (float)$languageAndQuality[1], precision: 2) : 1.0) * 100;
+			$quality = (int)((array_key_exists(key: 1, array: $languageAndQuality) ? round(num: (float)$languageAndQuality[1], precision: 2) : 1.0) * 100);
 			if (!array_key_exists(key: $quality, array: $listByQuality)) {
 				$listByQuality[$quality] = $languageCode;
 			}

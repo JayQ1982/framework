@@ -12,6 +12,7 @@ use framework\core\HttpRequest;
 use framework\core\Language;
 use LogicException;
 use SessionHandler;
+use Throwable;
 
 abstract class AbstractSessionHandler extends SessionHandler
 {
@@ -185,7 +186,13 @@ abstract class AbstractSessionHandler extends SessionHandler
 	private function initDefaultSessionData(bool $destroyOldSession): void
 	{
 		if ($destroyOldSession) {
-			session_destroy(); // Destroy session data in storage
+			try {
+				session_destroy();
+			} catch (Throwable $throwable) {
+				if (!str_contains(haystack: $throwable->getMessage(), needle: 'Session object destruction failed')) {
+					throw $throwable;
+				}
+			}
 			session_start(); // Cleans current global data ($_SESSION), see http://php.net/manual/de/function.session-destroy.php
 		}
 		$this->setSessionCreated();
