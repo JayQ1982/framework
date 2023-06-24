@@ -26,7 +26,7 @@ class FileFieldRenderer extends FormRenderer
 		$this->fileField = $fileField;
 	}
 
-	public function setEnhanceMultipleField(bool $enhanceMultipleField)
+	public function setEnhanceMultipleField(bool $enhanceMultipleField): void
 	{
 		$this->enhanceMultipleField = $enhanceMultipleField;
 	}

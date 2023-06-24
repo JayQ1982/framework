@@ -129,7 +129,7 @@ class SimpleXMLExtended extends SimpleXMLElement
 	 * @param     $data            : The array to clean
 	 * @param int $instanceCounter : DO NOT USE THAT PARAMETER! Ignore it. It is used for inner recursion only.
 	 */
-	private static function stringifyEmptyInnerArrays(&$data, int $instanceCounter = 1)
+	private static function stringifyEmptyInnerArrays(&$data, int $instanceCounter = 1): void
 	{
 		if (is_array($data)) {
 			if (count($data) == 0 && $instanceCounter != 1) {

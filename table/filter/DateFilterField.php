@@ -6,43 +6,46 @@
 
 namespace framework\table\filter;
 
-use DateTime;
+use DateTimeImmutable;
 use framework\core\HttpRequest;
 use framework\datacheck\Sanitizer;
 use Throwable;
 
 class DateFilterField extends AbstractTableFilterField
 {
-	private string $label;
-	private ?DateTime $value = null;
-	private string $dataTableColumnReference;
-	private bool $mustBeLaterThan;
+	private ?DateTimeImmutable $value = null;
 
-	public function __construct(AbstractTableFilter $parentFilter, string $identifier, string $label, string $dataTableColumnReference, bool $mustBeLaterThan)
-	{
-		parent::__construct(parentFilter: $parentFilter, filterFieldIdentifier: $identifier);
-		$this->label = $label;
-		$this->dataTableColumnReference = $dataTableColumnReference;
-		$this->mustBeLaterThan = $mustBeLaterThan;
+	public function __construct(
+		TableFilter             $parentFilter,
+		string                  $identifier,
+		string                  $label,
+		private readonly string $dataTableColumnReference,
+		private readonly bool   $mustBeLaterThan
+	) {
+		parent::__construct(
+			parentFilter: $parentFilter,
+			filterFieldIdentifier: $identifier,
+			label: $label
+		);
 	}
 
 	public function init(): void
 	{
-		$valueFromSession = $this->getFromSession($this->getIdentifier());
+		$valueFromSession = $this->getFromSession($this->identifier);
 		if (!empty($valueFromSession)) {
-			$this->value = new DateTime(datetime: $valueFromSession);
+			$this->value = new DateTimeImmutable(datetime: $valueFromSession);
 		}
 	}
 
 	public function reset(): void
 	{
 		$this->value = null;
-		$this->saveToSession(index: $this->getIdentifier(), value: '');
+		$this->saveToSession(index: $this->identifier, value: '');
 	}
 
 	public function checkInput(): void
 	{
-		$inputValue = Sanitizer::trimmedString(input: HttpRequest::getInputString(keyName: $this->getIdentifier()));
+		$inputValue = Sanitizer::trimmedString(input: HttpRequest::getInputString(keyName: $this->identifier));
 
 		if ($inputValue === '') {
 			$this->reset();
@@ -55,14 +58,14 @@ class DateFilterField extends AbstractTableFilterField
 			if (!str_contains(haystack: $inputValue, needle: ':')) {
 				$forceTimePart = $this->mustBeLaterThan ? ' 00:00:00' : ' 23:59:59';
 			}
-			$dateTimeObject = new DateTime(datetime: $inputValue . $forceTimePart);
-			if (DateTime::getLastErrors() !== false) {
+			$dateTimeObject = new DateTimeImmutable(datetime: $inputValue . $forceTimePart);
+			if (DateTimeImmutable::getLastErrors() !== false) {
 				$this->reset();
 
 				return;
 			}
 			$this->value = $dateTimeObject;
-			$this->saveToSession(index: $this->getIdentifier(), value: $inputValue);
+			$this->saveToSession(index: $this->identifier, value: $inputValue);
 		} catch (Throwable) {
 			$this->reset();
 		}
@@ -90,10 +93,10 @@ class DateFilterField extends AbstractTableFilterField
 	{
 		$value = is_null(value: $this->value) ? '' : $this->value->format(format: 'd.m.Y H:i:s');
 
-		return $this->label . '<input type="text" class="text" name="' . $this->getIdentifier() . '" id="filter-' . $this->getIdentifier() . '" value="' . $value . '">';
+		return '<input type="text" class="text" name="' . $this->identifier . '" id="filter-' . $this->identifier . '" value="' . $value . '">';
 	}
 
-	protected function highLightLabel(): bool
+	public function isSelected(): bool
 	{
 		return !is_null(value: $this->value);
 	}

@@ -13,7 +13,7 @@ use framework\table\column\CallbackColumn;
 use framework\table\column\DateColumn;
 use framework\table\column\DefaultColumn;
 use framework\table\column\OptionsColumn;
-use framework\table\filter\AbstractTableFilter;
+use framework\table\filter\TableFilter;
 use framework\table\renderer\SortableTableHeadRenderer;
 use framework\table\renderer\TableHeadRenderer;
 use framework\table\renderer\TablePaginationRenderer;
@@ -43,7 +43,7 @@ class TableHelper
 		FrameworkDB                $db,
 		string                     $selectQuery,
 		array                      $params = [],
-		?AbstractTableFilter       $abstractTableFilter = null,
+		?TableFilter               $tableFilter = null,
 		?TablePaginationRenderer   $tablePaginationRenderer = null,
 		?SortableTableHeadRenderer $sortableTableHeadRenderer = null,
 		int                        $itemsPerPage = 25
@@ -52,7 +52,7 @@ class TableHelper
 			identifier: $identifier,
 			db: $db,
 			dbQuery: DbQuery::createFromSqlQuery(query: $selectQuery, parameters: $params),
-			abstractTableFilter: $abstractTableFilter,
+			tableFilter: $tableFilter,
 			tablePaginationRenderer: $tablePaginationRenderer,
 			sortableTableHeadRenderer: $sortableTableHeadRenderer,
 			itemsPerPage: $itemsPerPage

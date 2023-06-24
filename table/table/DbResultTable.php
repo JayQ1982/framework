@@ -6,12 +6,11 @@
 
 namespace framework\table\table;
 
-use framework\common\Pagination;
 use framework\core\HttpRequest;
 use framework\db\DbQuery;
 use framework\db\FrameworkDB;
 use framework\table\column\AbstractTableColumn;
-use framework\table\filter\AbstractTableFilter;
+use framework\table\filter\TableFilter;
 use framework\table\renderer\SortableTableHeadRenderer;
 use framework\table\renderer\TablePaginationRenderer;
 use framework\table\TableHelper;
@@ -37,14 +36,14 @@ class DbResultTable extends SmartTable
 	private array $additionalLinkParameters = [];
 
 	public function __construct(
-		string                                $identifier, // Can be the name of main table, but must be unique per site
-		public readonly FrameworkDB           $db,
-		public readonly DbQuery               $dbQuery,
-		private readonly ?AbstractTableFilter $abstractTableFilter = null,
-		?TablePaginationRenderer              $tablePaginationRenderer = null,
-		?SortableTableHeadRenderer            $sortableTableHeadRenderer = null,
-		private readonly int                  $itemsPerPage = 25, // Max rows in table before pagination starts, if result is not limited to one page
-		private bool                          $limitToOnePage = false // Set to true to disable pagination
+		string                        $identifier, // Can be the name of main table, but must be unique per site
+		public readonly FrameworkDB   $db,
+		public readonly DbQuery       $dbQuery,
+		private readonly ?TableFilter $tableFilter = null,
+		?TablePaginationRenderer      $tablePaginationRenderer = null,
+		?SortableTableHeadRenderer    $sortableTableHeadRenderer = null,
+		private readonly int          $itemsPerPage = 25, // Max rows in table before pagination starts, if result is not limited to one page
+		private bool                  $limitToOnePage = false // Set to true to disable pagination
 	)
 	{
 		if (is_null(value: $sortableTableHeadRenderer)) {
@@ -57,7 +56,7 @@ class DbResultTable extends SmartTable
 		);
 		$this->setNoDataHtml(noDataHtml: DbResultTable::filter . $this->getNoDataHtml());
 		$this->setFullHtml(fullHtml: DbResultTable::filter . SmartTable::totalAmount . DbResultTable::pagination . '<div class="table-global-wrap">' . SmartTable::table . '</div>' . DbResultTable::pagination);
-		$this->tablePaginationRenderer = is_null(value: $tablePaginationRenderer) ? new TablePaginationRenderer(pagination: new Pagination()) : $tablePaginationRenderer;
+		$this->tablePaginationRenderer = is_null(value: $tablePaginationRenderer) ? new TablePaginationRenderer() : $tablePaginationRenderer;
 	}
 
 	public static function getFromSession(string $dataType, string $identifier, string $index): ?string
@@ -110,7 +109,7 @@ class DbResultTable extends SmartTable
 				DbResultTable::pagination,
 			],
 			replace: [
-				is_null($this->abstractTableFilter) ? '' : $this->abstractTableFilter->render(),
+				is_null($this->tableFilter) ? '' : $this->tableFilter->render(),
 				$this->tablePaginationRenderer->render(dbResultTable: $this, entriesPerPage: $this->itemsPerPage),
 			],
 			subject: $html
@@ -123,8 +122,8 @@ class DbResultTable extends SmartTable
 			return;
 		}
 
-		if (!is_null(value: $this->abstractTableFilter)) {
-			$this->abstractTableFilter->validate(dbResultTable: $this);
+		if (!is_null(value: $this->tableFilter)) {
+			$this->tableFilter->validate(dbResultTable: $this);
 		}
 		$this->initSorting();
 		$this->initPaginationPage();

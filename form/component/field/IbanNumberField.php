@@ -6,29 +6,40 @@
 
 namespace framework\form\component\field;
 
+use framework\form\settings\AutoCompleteValue;
 use framework\html\HtmlText;
 
 class IbanNumberField extends TextField
 {
-	private HtmlText $invalidError;
-
-	public function __construct(string $name, HtmlText $label, ?string $value, HtmlText $invalidError, ?HtmlText $requiredError = null)
-	{
-		parent::__construct($name, $label, $value, $requiredError);
-		$this->invalidError = $invalidError;
+	public function __construct(
+		string                    $name,
+		HtmlText                  $label,
+		?string                   $value,
+		private readonly HtmlText $invalidError,
+		?HtmlText                 $requiredError = null,
+		?string                   $placeholder = null,
+		?AutoCompleteValue        $autoComplete = null
+	) {
+		parent::__construct(
+			name: $name,
+			label: $label,
+			value: $value,
+			requiredError: $requiredError,
+			placeholder: $placeholder,
+			autoComplete: $autoComplete
+		);
 	}
 
 	public function validate(array $inputData, bool $overwriteValue = true): bool
 	{
-		if (!parent::validate($inputData, $overwriteValue)) {
+		if (!parent::validate(inputData: $inputData, overwriteValue: $overwriteValue)) {
 			return false;
 		}
-		if($this->isValueEmpty()) {
+		if ($this->isValueEmpty()) {
 			return true;
 		}
-
-		if (!$this->checkIBAN($this->getRawValue())) {
-			$this->addErrorAsHtmlTextObject($this->invalidError);
+		if (!$this->checkIBAN(iban: $this->getRawValue())) {
+			$this->addErrorAsHtmlTextObject(errorMessageObject: $this->invalidError);
 
 			return false;
 		}

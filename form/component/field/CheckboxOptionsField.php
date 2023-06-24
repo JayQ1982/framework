@@ -35,7 +35,8 @@ class CheckboxOptionsField extends OptionsField
 			name: $name,
 			label: $label,
 			formOptions: $formOptions,
-			initialValue: $initialValues
+			initialValue: $initialValues,
+			autoComplete: null
 		);
 		$this->acceptArrayAsValue();
 		if (!is_null(value: $requiredError)) {

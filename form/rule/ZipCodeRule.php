@@ -44,16 +44,13 @@ class ZipCodeRule extends FormRule
 		if (!($formField instanceof ZipCodeField)) {
 			throw new LogicException(message: 'The formField must be an instance of ZipCodeField');
 		}
-
 		if ($formField->isValueEmpty()) {
 			return true;
 		}
-
 		$zip = trim(string: (string)$formField->getRawValue());
 		if (strlen(string: $zip) > 16) {
 			return false;
 		}
-
 		$countryCode = $formField->getCountryCode();
 		if (array_key_exists(key: $countryCode, array: ZipCodeRule::ZIP_CODE_REGULAR_EXPRESSION)) {
 			return (preg_match(

@@ -14,13 +14,12 @@ readonly class CspPolicySettingsModel
 	public const HOST_PLACEHOLDER = '{HOST}';
 
 	// Content Security Policy Reference: https://content-security-policy.com/
-	private string $defaultSrc;
 
 	public function __construct(
-		string         $defaultSrc = "'self' data: " . CspPolicySettingsModel::PROTOCOL_PLACEHOLDER . "://" . CspPolicySettingsModel::HOST_PLACEHOLDER,
+		private string $defaultSrc = "'self' data: " . CspPolicySettingsModel::PROTOCOL_PLACEHOLDER . "://" . CspPolicySettingsModel::HOST_PLACEHOLDER,
 		private string $styleSrc = "'self'",
 		private string $fontSrc = "'self'",
-		private string $imgSrc = "'self'",
+		private string $imgSrc = "'self' data: " . CspPolicySettingsModel::PROTOCOL_PLACEHOLDER . "://" . CspPolicySettingsModel::HOST_PLACEHOLDER,
 		private string $objectSrc = "'none'",
 		private string $scriptSrc = "'strict-dynamic'",
 		private string $connectSrc = "'none'",
@@ -28,17 +27,6 @@ readonly class CspPolicySettingsModel
 		private string $frameSrc = "'none'",
 		private string $frameAncestors = "'none'",
 	) {
-		$this->defaultSrc = str_replace(
-			search: [
-				CspPolicySettingsModel::PROTOCOL_PLACEHOLDER,
-				CspPolicySettingsModel::HOST_PLACEHOLDER,
-			],
-			replace: [
-				HttpRequest::getProtocol(),
-				HttpRequest::getHost(),
-			],
-			subject: $defaultSrc
-		);
 	}
 
 	public function getHttpHeaderDataString(string $nonce): string
@@ -84,6 +72,24 @@ readonly class CspPolicySettingsModel
 			$dataArray[] = 'frame-ancestors ' . $this->frameAncestors;
 		}
 
-		return empty($dataArray) ? '' : implode(separator: '; ', array: $dataArray) . ';';
+		return (count(value: $dataArray) === 0) ? '' : implode(
+				separator: '; ',
+				array: array_map(
+					callback: function($value) {
+						return str_replace(
+							search: [
+								CspPolicySettingsModel::PROTOCOL_PLACEHOLDER,
+								CspPolicySettingsModel::HOST_PLACEHOLDER,
+							],
+							replace: [
+								HttpRequest::getProtocol(),
+								HttpRequest::getHost(),
+							],
+							subject: $value
+						);
+					},
+					array: $dataArray
+				)
+			) . ';';
 	}
 }

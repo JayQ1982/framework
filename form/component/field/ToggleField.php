@@ -13,6 +13,7 @@ use framework\form\FormRenderer;
 use framework\form\renderer\DefinitionListRenderer;
 use framework\form\renderer\LegendAndListRenderer;
 use framework\form\rule\RequiredRule;
+use framework\form\settings\AutoCompleteValue;
 use framework\html\HtmlTag;
 use framework\html\HtmlTagAttribute;
 use framework\html\HtmlText;
@@ -22,22 +23,29 @@ class ToggleField extends OptionsField
 {
 	private array $childrenByMainOption = [];
 	private string $defaultChildFieldRenderer = DefinitionListRenderer::class;
-	private bool $displayLegend;
-	private bool $multiple;
 
-	public function __construct(string $name, HtmlText $label, FormOptions $formOptions, $initialValue, ?HtmlText $requiredError = null, bool $displayLegend = true, bool $multiple = false)
-	{
-		$this->multiple = $multiple;
-
+	public function __construct(
+		string                $name,
+		HtmlText              $label,
+		FormOptions           $formOptions,
+		                      $initialValue,
+		?HtmlText             $requiredError = null,
+		private readonly bool $displayLegend = true,
+		private readonly bool $multiple = false,
+		?AutoCompleteValue    $autoComplete = null
+	) {
 		if ($multiple) {
-			$initialValue = $this->changeValueToArray($initialValue);
+			$initialValue = $this->changeValueToArray(value: $initialValue);
 		}
-		$this->displayLegend = $displayLegend;
-
-		parent::__construct($name, $label, $formOptions, $initialValue);
-
-		if (!is_null($requiredError)) {
-			$this->addRule(new RequiredRule($requiredError));
+		parent::__construct(
+			name: $name,
+			label: $label,
+			formOptions: $formOptions,
+			initialValue: $initialValue,
+			autoComplete: $autoComplete
+		);
+		if (!is_null(value: $requiredError)) {
+			$this->addRule(formRule: new RequiredRule(defaultErrorMessage: $requiredError));
 		}
 	}
 
