@@ -47,7 +47,7 @@ class HtmlTag extends HtmlElement
 	 *
 	 * @param HtmlText $htmlText : The Text-Tag to be added as child
 	 */
-	public function addText(HtmlText $htmlText)
+	public function addText(HtmlText $htmlText): void
 	{
 		$this->addChildElement($htmlText);
 	}
@@ -57,7 +57,7 @@ class HtmlTag extends HtmlElement
 	 *
 	 * @param $childElement : The child-element to be added
 	 */
-	private function addChildElement($childElement)
+	private function addChildElement($childElement): void
 	{
 		if ($this->selfClosing) {
 			throw new LogicException('A self-closing tag cannot have child elements');
@@ -70,7 +70,7 @@ class HtmlTag extends HtmlElement
 		$this->childElements[] = $childElement;
 	}
 
-	public function addHtmlTagAttribute(HtmlTagAttribute $htmlTagAttribute)
+	public function addHtmlTagAttribute(HtmlTagAttribute $htmlTagAttribute): void
 	{
 		$this->htmlTagAttributes[] = $htmlTagAttribute;
 	}

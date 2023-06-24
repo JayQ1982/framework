@@ -32,7 +32,7 @@ class TextAreaField extends FormField
 		}
 	}
 
-	public function addCssClassForRenderer(string $className)
+	public function addCssClassForRenderer(string $className): void
 	{
 		$this->cssClassesForRenderer[] = $className;
 	}
@@ -42,7 +42,7 @@ class TextAreaField extends FormField
 		return $this->cssClassesForRenderer;
 	}
 
-	public function setPlaceholder(string $placeholder)
+	public function setPlaceholder(string $placeholder): void
 	{
 		$this->placeholder = $placeholder;
 	}

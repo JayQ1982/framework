@@ -33,7 +33,8 @@ class RadioOptionsField extends OptionsField
 			name: $name,
 			label: $label,
 			formOptions: $formOptions,
-			initialValue: $initialValue
+			initialValue: $initialValue,
+			autoComplete: null
 		);
 		if (is_null(value: $requiredError)) {
 			// Mandatory rule: In a field with radio options it is always required to choose one of those options

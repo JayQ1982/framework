@@ -13,34 +13,38 @@ use framework\html\HtmlEncoder;
 
 class TextFilterField extends AbstractTableFilterField
 {
-	private string $value = '';
+	protected string $value = '';
 	private array $sqlParams = [];
 
 	public function __construct(
-		AbstractTableFilter     $parentFilter,
+		TableFilter             $parentFilter,
 		string                  $identifier,
-		private readonly string $label,
+		string                  $label,
 		private readonly string $dataTableColumnReference
 	) {
-		parent::__construct(parentFilter: $parentFilter, filterFieldIdentifier: $identifier);
+		parent::__construct(
+			parentFilter: $parentFilter,
+			filterFieldIdentifier: $identifier,
+			label: $label
+		);
 	}
 
 	public function init(): void
 	{
-		$this->value = Sanitizer::trimmedString(input: $this->getFromSession(index: $this->getIdentifier()));
+		$this->value = Sanitizer::trimmedString(input: $this->getFromSession(index: $this->identifier));
 	}
 
 	public function reset(): void
 	{
 		$this->value = '';
-		$this->saveToSession(index: $this->getIdentifier(), value: '');
+		$this->saveToSession(index: $this->identifier, value: '');
 	}
 
 	public function checkInput(): void
 	{
-		$inputValue = HttpRequest::getInputString(keyName: $this->getIdentifier());
+		$inputValue = HttpRequest::getInputString(keyName: $this->identifier);
 		$this->value = Sanitizer::trimmedString($inputValue);
-		$this->saveToSession(index: $this->getIdentifier(), value: $this->value);
+		$this->saveToSession(index: $this->identifier, value: $this->value);
 	}
 
 	public function getWhereConditions(): array
@@ -70,11 +74,16 @@ class TextFilterField extends AbstractTableFilterField
 
 	protected function renderField(): string
 	{
-		return $this->label . '<input type="text" class="text" name="' . $this->getIdentifier() . '" id="filter-' . $this->getIdentifier() . '" value="' . HtmlEncoder::encode(value: $this->value) . '">';
+		return '<input type="text" class="text" name="' . $this->identifier . '" id="filter-' . $this->identifier . '" value="' . HtmlEncoder::encode(value: $this->value) . '">';
 	}
 
-	protected function highLightLabel(): bool
+	public function isSelected(): bool
 	{
 		return !empty($this->value);
+	}
+
+	public function getValue(): string
+	{
+		return $this->value;
 	}
 }

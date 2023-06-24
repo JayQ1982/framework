@@ -55,7 +55,7 @@ class ActionsColumn extends AbstractTableColumn
 
 		$srcArr = [];
 		$rplArr = [];
-		foreach ($tableItemModel->getAllData() as $key => $val) {
+		foreach ($tableItemModel->data as $key => $val) {
 			$srcArr[] = '[' . $key . ']';
 			$rplArr[] = HtmlEncoder::encode(value: $val);
 		}

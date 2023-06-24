@@ -54,7 +54,7 @@ class ElementNode extends HtmlNode
 		$this->attributes[$name] = $htmlTagAttribute;
 	}
 
-	public function addAttribute(HtmlTagAttribute $htmlTagAttribute)
+	public function addAttribute(HtmlTagAttribute $htmlTagAttribute): void
 	{
 		$this->attributes[$htmlTagAttribute->getName()] = $htmlTagAttribute;
 	}

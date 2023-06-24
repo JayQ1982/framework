@@ -1,0 +1,30 @@
+<div class="pagination">
+  <ul>
+    <tst:if compare="previousPageHref" operator="EQ" against="">
+      <li class="backdisabled">&laquo;</li>
+    </tst:if>
+    <tst:else>
+      <li class="back"><a href="{tst:text value='previousPageHref'}">&laquo;</a></li>
+    </tst:else>
+    <tst:for value="pages" var="page">
+      <tst:if compare="page.groupPreviousPages" operator="EQ" against="true">
+        <li><span class="pagination-dots">...</span></li>
+      </tst:if>
+      <tst:if compare="page.isCurrentPage" operator="EQ" against="true">
+        <li class="currentpage"><strong>{tst:text value='page.number'}</strong></li>
+      </tst:if>
+      <tst:else>
+        <li><a href="{tst:text value='page.href'}">{tst:text value='page.number'}</a></li>
+      </tst:else>
+      <tst:if compare="page.groupNextPages" operator="EQ" against="true">
+        <li><span class="pagination-dots">...</span></li>
+      </tst:if>
+    </tst:for>
+    <tst:if compare="nextPageHref" operator="EQ" against="">
+      <li class="nextdisabled">&raquo;</li>
+    </tst:if>
+    <tst:else>
+      <li class="next"><a href="{tst:text value='nextPageHref'}">&raquo;</a></li>
+    </tst:else>
+  </ul>
+</div>

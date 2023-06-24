@@ -10,6 +10,7 @@ use framework\form\FormOptions;
 use framework\form\FormRenderer;
 use framework\form\renderer\SelectOptionsRenderer;
 use framework\form\rule\RequiredRule;
+use framework\form\settings\AutoCompleteValue;
 use framework\html\HtmlText;
 
 class SelectOptionsField extends OptionsField
@@ -18,23 +19,26 @@ class SelectOptionsField extends OptionsField
 	public readonly HtmlText $emptyValueLabel;
 
 	public function __construct(
-		string               $name,
-		HtmlText             $label,
-		FormOptions          $formOptions,
-		null|string|array    $initialValue,
-		?HtmlText            $requiredError = null,
-		?HtmlText            $individualEmptyValueLabel = null,
-		array                $cssClasses = [],
-		bool                 $renderAsChosenEnhancedField = false,
-		public readonly bool $acceptMultipleSelections = false,
-		public readonly bool $renderEmptyValueOption = true
+		string                  $name,
+		HtmlText                $label,
+		FormOptions             $formOptions,
+		null|string|array       $initialValue,
+		?HtmlText               $requiredError = null,
+		?HtmlText               $individualEmptyValueLabel = null,
+		array                   $cssClasses = [],
+		bool                    $renderAsChosenEnhancedField = false,
+		public readonly bool    $acceptMultipleSelections = false,
+		public readonly bool    $renderEmptyValueOption = true,
+		public readonly ?string $placeholder = null,
+		?AutoCompleteValue      $autoComplete = null
 	) {
 		$this->emptyValueLabel = is_null(value: $individualEmptyValueLabel) ? HtmlText::encoded(textContent: '-- Bitte wählen --') : $individualEmptyValueLabel;
 		parent::__construct(
 			name: $name,
 			label: $label,
 			formOptions: $formOptions,
-			initialValue: $initialValue
+			initialValue: $initialValue,
+			autoComplete: $autoComplete
 		);
 		if (!is_null(value: $requiredError)) {
 			$this->addRule(formRule: new RequiredRule(defaultErrorMessage: $requiredError));

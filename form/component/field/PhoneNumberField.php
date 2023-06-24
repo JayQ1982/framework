@@ -9,6 +9,8 @@ namespace framework\form\component\field;
 use framework\datacheck\Sanitizer;
 use framework\form\rule\PhoneNumberRule;
 use framework\form\rule\RequiredRule;
+use framework\form\settings\AutoCompleteValue;
+use framework\form\settings\InputTypeValue;
 use framework\html\HtmlEncoder;
 use framework\html\HtmlText;
 use framework\phone\PhoneNumber;
@@ -17,46 +19,38 @@ use framework\phone\PhoneRenderer;
 
 class PhoneNumberField extends InputField
 {
-	protected string $type = 'tel';
-
-	private string $countryCode = 'CH';
-	private string $countryCodeFieldName = 'countryCode';
-	private bool $renderInternalFormat = false;
+	private string $countryCode;
 
 	public function __construct(
-		string    $name,
-		HtmlText  $label,
-		?string   $value,
-		HtmlText  $invalidErrorMessage,
-		?HtmlText $requiredErrorMessage = null
+		string                 $name,
+		HtmlText               $label,
+		?string                $value,
+		HtmlText               $invalidErrorMessage,
+		?HtmlText              $requiredErrorMessage = null,
+		string                 $countryCode = 'CH',
+		public readonly string $countryCodeFieldName = 'countryCode',
+		public readonly bool   $renderInternalFormat = false,
+		?string                $placeholder = null,
+		?AutoCompleteValue     $autoComplete = null
 	) {
-		parent::__construct(name: $name, label: $label, value: $value);
-
+		parent::__construct(
+			inputType: InputTypeValue::TEL,
+			name: $name,
+			label: $label,
+			value: $value,
+			placeholder: $placeholder,
+			autoComplete: $autoComplete
+		);
+		$this->countryCode = $countryCode;
 		if (!is_null(value: $requiredErrorMessage)) {
 			$this->addRule(formRule: new RequiredRule(defaultErrorMessage: $requiredErrorMessage));
 		}
-
 		$this->addRule(formRule: new PhoneNumberRule(defaultErrorMessage: $invalidErrorMessage));
 	}
 
 	public function getCountryCode(): string
 	{
 		return $this->countryCode;
-	}
-
-	public function setCountryCode(string $countryCode): void
-	{
-		$this->countryCode = $countryCode;
-	}
-
-	public function setCountryCodeFieldName(string $fieldName): void
-	{
-		$this->countryCodeFieldName = $fieldName;
-	}
-
-	public function setRenderInternalFormat(bool $renderInternalFormat): void
-	{
-		$this->renderInternalFormat = $renderInternalFormat;
 	}
 
 	public function validate(array $inputData, bool $overwriteValue = true): bool
@@ -73,15 +67,12 @@ class PhoneNumberField extends InputField
 		if ($this->isValueEmpty()) {
 			return '';
 		}
-
 		$currentValue = $this->getRawValue();
-
 		try {
 			$phoneNumber = PhoneNumber::createFromString(input: $currentValue, defaultCountryCode: $this->countryCode);
 		} catch (PhoneParseException) {
 			return HtmlEncoder::encode(value: $currentValue);
 		}
-
 		if ($this->renderInternalFormat) {
 			return PhoneRenderer::renderInternalFormat(phoneNumber: $phoneNumber);
 		}
@@ -94,7 +85,7 @@ class PhoneNumberField extends InputField
 		$originalValue = Sanitizer::trimmedString(input: $this->getOriginalValue());
 		if ($originalValue !== '') {
 			try {
-				$parsedOriginalValue = PhoneNumber::createFromString(input: $this->getOriginalValue(), defaultCountryCode: $this->getCountryCode());
+				$parsedOriginalValue = PhoneNumber::createFromString(input: $this->getOriginalValue(), defaultCountryCode: $this->countryCode);
 				$originalValue = PhoneRenderer::renderInternalFormat(phoneNumber: $parsedOriginalValue);
 			} catch (PhoneParseException) {
 				$originalValue = '';

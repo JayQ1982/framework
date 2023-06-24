@@ -7,27 +7,30 @@
 namespace framework\form\component\field;
 
 use framework\form\rule\RequiredRule;
+use framework\form\settings\AutoCompleteValue;
+use framework\form\settings\InputTypeValue;
 use framework\html\HtmlText;
 
 class TextField extends InputField
 {
-	protected string $type = 'text';
-
-	/**
-	 * See comment in FormField->__construct() for a further description of the following parameters.
-	 * We overwrite the constructor to add a "RequiredRule" if $requiredError is set (as string).
-	 *
-	 * @param string        $name
-	 * @param HtmlText      $label
-	 * @param null|string   $value
-	 * @param null|HtmlText $requiredError : If not null we add a RequiredRule with the $requiredError as message
-	 */
-	public function __construct(string $name, HtmlText $label, ?string $value = null, ?HtmlText $requiredError = null)
-	{
-		parent::__construct($name, $label, $value);
-
-		if (!is_null($requiredError)) {
-			$this->addRule(new RequiredRule($requiredError));
+	public function __construct(
+		string             $name,
+		HtmlText           $label,
+		?string            $value = null,
+		?HtmlText          $requiredError = null,
+		?string            $placeholder = null,
+		?AutoCompleteValue $autoComplete = null
+	) {
+		parent::__construct(
+			inputType: InputTypeValue::TEXT,
+			name: $name,
+			label: $label,
+			value: $value,
+			placeholder: $placeholder,
+			autoComplete: $autoComplete
+		);
+		if (!is_null(value: $requiredError)) {
+			$this->addRule(formRule: new RequiredRule(defaultErrorMessage: $requiredError));
 		}
 	}
 }

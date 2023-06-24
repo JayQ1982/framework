@@ -19,13 +19,11 @@ class PhoneNumberRule extends FormRule
 	public function validate(FormField $formField): bool
 	{
 		if (!($formField instanceof PhoneNumberField)) {
-			throw new LogicException('The formField must be an instance of PhoneNumberField');
+			throw new LogicException(message: 'The formField must be an instance of PhoneNumberField');
 		}
-
 		if ($formField->isValueEmpty()) {
 			return true;
 		}
-
 		try {
 			$phoneNumber = PhoneNumber::createFromString(input: $formField->getRawValue(), defaultCountryCode: $formField->getCountryCode());
 		} catch (PhoneParseException) {

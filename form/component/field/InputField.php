@@ -9,48 +9,29 @@ namespace framework\form\component\field;
 use framework\form\component\FormField;
 use framework\form\FormRenderer;
 use framework\form\renderer\InputFieldRenderer;
+use framework\form\settings\AutoCompleteValue;
+use framework\form\settings\InputTypeValue;
 use framework\html\HtmlText;
-use LogicException;
 
 abstract class InputField extends FormField
 {
-	protected string $type;
-	private ?string $placeholder = null;
-
-	/**
-	 * See comment in FormField->__construct() for a further description of the following parameters.
-	 * The only reason why we overwrite the constructor here is to check if is a scalar value (or null).
-	 *
-	 * @param string                     $name
-	 * @param HtmlText                   $label
-	 * @param string|float|int|bool|null $value
-	 */
-	public function __construct(string $name, HtmlText $label, $value = null)
-	{
-		if (!is_null($value) && !is_scalar($value)) {
-			throw new LogicException('InputField-class expects $value to be either scalar or null');
-		}
-
-		parent::__construct($name, $label, $value);
-	}
-
-	public function getType(): string
-	{
-		return $this->type;
-	}
-
-	public function setPlaceholder(string $placeholder): void
-	{
-		$this->placeholder = $placeholder;
-	}
-
-	public function getPlaceholder(): ?string
-	{
-		return $this->placeholder;
+	public function __construct(
+		public readonly InputTypeValue     $inputType,
+		string                             $name,
+		HtmlText                           $label,
+		int|float|string|bool|null         $value,
+		public readonly ?string            $placeholder,
+		public readonly ?AutoCompleteValue $autoComplete
+	) {
+		parent::__construct(
+			name: $name,
+			label: $label,
+			value: $value
+		);
 	}
 
 	public function getDefaultRenderer(): FormRenderer
 	{
-		return new InputFieldRenderer($this);
+		return new InputFieldRenderer(formField: $this);
 	}
 }

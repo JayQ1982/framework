@@ -6,32 +6,111 @@
 
 namespace framework\table\filter;
 
+use framework\Core;
+use framework\core\HttpRequest;
+use framework\html\HtmlDataObjectCollection;
+use framework\html\HtmlReplacementCollection;
+use framework\html\HtmlSnippet;
 use framework\security\CsrfToken;
 use framework\table\table\DbResultTable;
+use LogicException;
 
-class TableFilter extends AbstractTableFilter
+class TableFilter
 {
-	/** @var AbstractTableFilterField[] */
-	private array $filterFields = [];
+	private const sessionDataType = 'tableFilter';
+	/** @var TableFilter[] */
+	private static array $instances = [];
 
-	public function addField(AbstractTableFilterField $abstractTableFilterField)
+	private bool $filtersApplied = false;
+	/** @var AbstractTableFilterField[] $allFilterFields */
+	private array $allFilterFields = [];
+	/** @var AbstractTableFilterField[] $primaryFields */
+	private array $primaryFields = [];
+	/** @var AbstractTableFilterField[] $secondaryFields */
+	private array $secondaryFields = [];
+
+	public function __construct(
+		public readonly string   $identifier,
+		private readonly bool    $showLegend = true,
+		private readonly string  $resetParameter = 'reset',
+		private readonly ?string $individualHtmlSnippetPath = null
+	) {
+		if (array_key_exists(key: $identifier, array: TableFilter::$instances)) {
+			throw new LogicException(message: 'There is already a filter with the same identifier ' . $identifier);
+		}
+		TableFilter::$instances[$identifier] = $this;
+	}
+
+	protected function getFromSession(string $index): ?string
+	{
+		return DbResultTable::getFromSession(
+			dataType: TableFilter::sessionDataType,
+			identifier: $this->identifier,
+			index: $index
+		);
+	}
+
+	protected function saveToSession(string $index, string $value): void
+	{
+		DbResultTable::saveToSession(
+			dataType: TableFilter::sessionDataType,
+			identifier: $this->identifier,
+			index: $index,
+			value: $value
+		);
+	}
+
+	public function validate(DbResultTable $dbResultTable): void
+	{
+		if (!is_null(value: HttpRequest::getInputString(keyName: $this->resetParameter))) {
+			$this->reset();
+		}
+		if (!is_null(value: HttpRequest::getInputString(keyName: $this->identifier))) {
+			$this->reset();
+			$this->checkInput();
+		}
+		$this->filtersApplied = $this->applyFilters(dbResultTable: $dbResultTable);
+	}
+
+	public function isFiltersApplied(): bool
+	{
+		return $this->filtersApplied;
+	}
+
+	public function addPrimaryField(AbstractTableFilterField $abstractTableFilterField): void
 	{
 		$abstractTableFilterField->init();
-		$this->filterFields[$abstractTableFilterField->getIdentifier()] = $abstractTableFilterField;
+		$this->primaryFields[] = $abstractTableFilterField;
+		$this->allFilterFields[$abstractTableFilterField->identifier] = $abstractTableFilterField;
+	}
+
+	public function addSecondaryField(AbstractTableFilterField $abstractTableFilterField): void
+	{
+		$abstractTableFilterField->init();
+		$this->secondaryFields[] = $abstractTableFilterField;
+		$this->allFilterFields[$abstractTableFilterField->identifier] = $abstractTableFilterField;
 	}
 
 	protected function reset(): void
 	{
-		foreach ($this->filterFields as $abstractTableFilterField) {
+		foreach ($this->allFilterFields as $abstractTableFilterField) {
 			$abstractTableFilterField->reset();
 		}
 	}
 
-	protected function checkInput(DbResultTable $dbResultTable): void
+	protected function checkInput(): void
 	{
-		foreach ($this->filterFields as $abstractTableFilterField) {
+		foreach ($this->allFilterFields as $abstractTableFilterField) {
 			$abstractTableFilterField->checkInput();
 		}
+	}
+
+	/**
+	 * @return AbstractTableFilterField[]
+	 */
+	protected function getAllFilterFields(): array
+	{
+		return $this->allFilterFields;
 	}
 
 	protected function applyFilters(DbResultTable $dbResultTable): bool
@@ -39,7 +118,7 @@ class TableFilter extends AbstractTableFilter
 		$whereConds = [];
 		$params = [];
 
-		foreach ($this->filterFields as $abstractTableFilterField) {
+		foreach ($this->allFilterFields as $abstractTableFilterField) {
 			foreach ($abstractTableFilterField->getWhereConditions() as $whereCondition) {
 				$whereConds[] = $whereCondition;
 			}
@@ -76,36 +155,36 @@ class TableFilter extends AbstractTableFilter
 
 	public function render(): string
 	{
-		$htmlArr = [
-			'<div class="table-filter-wrapper">',
-			'<div class="table-filter-legend-wrap">',
-			'<a href="#" class="trigger-table-filter-legend">Suchoptionen</a>',
-			'<div class="table-filter-legend">',
-			'<dl><dt>.</dt><dd>Feld ist nicht leer</dd></dl>',
-			'<dl><dt>!term</dt><dd>Feld enthält "term" nicht</dd></dl>',
-			'<dl><dt>_</dt><dd>Feld ist leer</dd></dl>',
-			'<dl><dt>%</dt><dd>Wildcard</dd></dl>',
-			'<dl><dt>*</dt><dd>Wildcard</dd></dl>',
-			'</div>',
-			'</div>',
-			'<form method="post" action="?find=' . $this->getIdentifier() . '" class="form-tablefilter">',
-			CsrfToken::renderAsHiddenPostField(),
-		];
-
-		$htmlArr[] = '<div class="table-filter-primary-wrap">';
-		$htmlArr[] = '<ul class="table-filter table-filter-primary">';
-		foreach ($this->filterFields as $abstractTableFilterField) {
-			$htmlArr[] = $abstractTableFilterField->render();
+		$individualHtmlSnippetPath = $this->individualHtmlSnippetPath;
+		$replacements = new HtmlReplacementCollection();
+		$replacements->addBool(identifier: 'showLegend', booleanValue: $this->showLegend);
+		$replacements->addEncodedText(identifier: 'formAction', content: '?' . $this->identifier);
+		$replacements->addEncodedText(identifier: 'csrfField', content: CsrfToken::renderAsHiddenPostField());
+		$primaryFields = new HtmlDataObjectCollection();
+		foreach ($this->primaryFields as $abstractTableFilterField) {
+			$primaryFields->add(htmlDataObject: $abstractTableFilterField->render());
 		}
-		$htmlArr[] = '</ul>';
-		$htmlArr[] = '</div>';
-		$htmlArr[] = '<div class="filter-submit">';
-		$htmlArr[] = '<button type="submit" value="" class="btn btn-primary">Filter anwenden</button>';
-		$htmlArr[] = '<a class="reset-filter" href="?reset">Filter zurücksetzen</a>';
-		$htmlArr[] = '</div>';
-		$htmlArr[] = '</form>';
-		$htmlArr[] = '</div>';
+		$replacements->addHtmlDataObjectCollection(identifier: 'primaryFields', htmlDataObjectCollection: $primaryFields);
+		if (count(value: $this->secondaryFields) > 0) {
+			$secondaryFields = new HtmlDataObjectCollection();
+			$isSecondaryFilterTriggered = false;
+			foreach ($this->secondaryFields as $abstractTableFilterField) {
+				$secondaryFields->add(htmlDataObject: $abstractTableFilterField->render());
+				if ($abstractTableFilterField->isSelected()) {
+					$isSecondaryFilterTriggered = true;
+				}
+			}
+			$replacements->addBool(identifier: 'hasSecondaryFilters', booleanValue: true);
+			$replacements->addBool(identifier: 'isSecondaryFilterTriggered', booleanValue: $isSecondaryFilterTriggered);
+			$replacements->addHtmlDataObjectCollection(identifier: 'secondaryFields', htmlDataObjectCollection: $secondaryFields);
+		} else {
+			$replacements->addBool(identifier: 'hasSecondaryFilters', booleanValue: false);
+		}
+		$replacements->addEncodedText(identifier: 'resetHref', content: '?' . $this->resetParameter);
 
-		return implode(separator: PHP_EOL, array: $htmlArr);
+		return (new HtmlSnippet(
+			htmlSnippetFilePath: is_null(value: $individualHtmlSnippetPath) ? Core::get()->frameworkDirectory . 'table' . DIRECTORY_SEPARATOR . 'filter' . DIRECTORY_SEPARATOR . 'tableFilter.html' : $individualHtmlSnippetPath,
+			replacements: $replacements,
+		))->render();
 	}
 }

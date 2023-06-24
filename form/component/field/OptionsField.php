@@ -9,6 +9,7 @@ namespace framework\form\component\field;
 use framework\form\component\FormField;
 use framework\form\FormOptions;
 use framework\form\rule\ValidateAgainstOptions;
+use framework\form\settings\AutoCompleteValue;
 use framework\html\HtmlText;
 
 abstract class OptionsField extends FormField
@@ -17,10 +18,11 @@ abstract class OptionsField extends FormField
 	private ?HtmlText $listDescription = null;
 
 	public function __construct(
-		string              $name,
-		HtmlText            $label,
-		private FormOptions $formOptions,
-		mixed               $initialValue
+		string                             $name,
+		HtmlText                           $label,
+		private FormOptions                $formOptions,
+		mixed                              $initialValue,
+		public readonly ?AutoCompleteValue $autoComplete
 	) {
 		parent::__construct(
 			name: $name,

@@ -19,7 +19,7 @@ class DbRuntimeException extends RuntimeException
 	{
 		$realCode = $throwable->getCode();
 		if ($throwable instanceof PDOException) {
-			$realCode = (isset($throwable->errorInfo) && is_array($throwable->errorInfo) && isset($throwable->errorInfo[1])) ? $throwable->errorInfo[1] : 0;
+			$realCode = (property_exists(object_or_class: $throwable, property: 'errorInfo') && is_array($throwable->errorInfo) && isset($throwable->errorInfo[1])) ? $throwable->errorInfo[1] : 0;
 		}
 
 		$message = $throwable->getMessage() . ';' . PHP_EOL;

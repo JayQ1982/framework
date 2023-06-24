@@ -209,7 +209,7 @@ abstract class FormField extends FormComponent
 		$this->rules[] = $formRule;
 	}
 
-	public function addRequiredRule(HtmlText $errorMessage)
+	public function addRequiredRule(HtmlText $errorMessage): void
 	{
 		$this->addRule(new RequiredRule($errorMessage));
 	}

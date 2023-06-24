@@ -1,0 +1,43 @@
+<div class="table-filter-wrapper">
+  <tst:if compare="showLegend" operator="EQ" against="true">
+    <div class="table-filter-legend-wrap">
+      <a href="#" class="trigger-table-filter-legend">Suchoptionen</a>
+      <div class="table-filter-legend">
+        <dl><dt>.</dt><dd>Feld ist nicht leer</dd></dl>
+        <dl><dt>!term</dt><dd>Feld enthält "term" nicht</dd></dl>
+        <dl><dt>+term</dt><dd>Feld muss "term" enthalten</dd></dl>
+        <dl><dt>_</dt><dd>Feld ist leer</dd></dl>
+        <dl><dt>%</dt><dd>Wildcard</dd></dl>
+        <dl><dt>*</dt><dd>Wildcard</dd></dl>
+        <dl><dt>"term1 term2"</dt><dd>Exakte Übereinstimmung</dd></dl>
+      </div>
+    </div>
+  </tst:if>
+  <form method="post" action="{tst:text value='formAction'}" class="form-tablefilter">
+    {tst:text value='csrfField'}
+    <div class="table-filter-primary-wrap">
+      <ul class="table-filter table-filter-primary">
+        <tst:for value="primaryFields" var="field">
+          <li>
+            <tst:if compare="field.highlight" operator="EQ" against="true">
+              <label class="highlight">
+                {tst:text value='field.label'}
+                {tst:text value='field.html'}
+              </label>
+            </tst:if>
+            <tst:else>
+              <label>
+                {tst:text value='field.label'}
+                {tst:text value='field.html'}
+              </label>
+            </tst:else>
+          </li>
+        </tst:for>
+      </ul>
+    </div>
+    <div class="filter-submit">
+      <button type="submit" value="" class="btn btn-primary">Filter anwenden</button>
+      <a class="reset-filter" href="?reset">Filter zurücksetzen</a>
+    </div>
+  </form>
+</div>

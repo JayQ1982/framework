@@ -19,6 +19,10 @@ class SelectOptionsRenderer extends FormRenderer
 	public function prepare(): void
 	{
 		$selectOptionsField = $this->selectOptionsField;
+		$selectedValue = $selectOptionsField->getRawValue();
+		if ($selectOptionsField->acceptMultipleSelections && !is_array(value: $selectedValue)) {
+			throw new LogicException(message: 'The selected value must be an array if selection of multiple elements is allowed');
+		}
 		$fieldName = $selectOptionsField->getName();
 		$selectTag = new HtmlTag(name: 'select', selfClosing: false);
 		$selectTag->addHtmlTagAttribute(htmlTagAttribute: new HtmlTagAttribute(
@@ -45,15 +49,28 @@ class SelectOptionsRenderer extends FormRenderer
 				valueIsEncodedForRendering: true
 			));
 		}
-		$mainOptions = $selectOptionsField->getFormOptions()->getData();
-		if ($selectOptionsField->renderEmptyValueOption && !array_key_exists(key: '', array: $mainOptions)) {
-			$mainOptions = ['' => $selectOptionsField->emptyValueLabel] + $mainOptions;
+		if (!is_null(value: $selectOptionsField->placeholder)) {
+			$selectTag->addHtmlTagAttribute(htmlTagAttribute: new HtmlTagAttribute(
+				name: 'placeholder',
+				value: $selectOptionsField->placeholder,
+				valueIsEncodedForRendering: true
+			));
 		}
-		$selectedValue = $selectOptionsField->getRawValue();
-		if ($selectOptionsField->acceptMultipleSelections && !is_array(value: $selectedValue)) {
-			throw new LogicException(message: 'The selected value must be an array if selection of multiple elements is allowed');
+		if (!is_null(value: $selectOptionsField->autoComplete)) {
+			$selectTag->addHtmlTagAttribute(htmlTagAttribute: new HtmlTagAttribute(
+				name: 'autocomplete',
+				value: $selectOptionsField->autoComplete->value,
+				valueIsEncodedForRendering: true
+			));
 		}
-		foreach ($mainOptions as $key => $htmlText) {
+		$options = $selectOptionsField->getFormOptions()->getData();
+		if (
+			$selectOptionsField->renderEmptyValueOption
+			&& !array_key_exists(key: '', array: $options)
+		) {
+			$options = ['' => $selectOptionsField->emptyValueLabel] + $options;
+		}
+		foreach ($options as $key => $htmlText) {
 			$attributes = [new HtmlTagAttribute(name: 'value', value: $key, valueIsEncodedForRendering: true)];
 			if (
 				($selectOptionsField->acceptMultipleSelections && in_array(needle: $key, haystack: $selectedValue))

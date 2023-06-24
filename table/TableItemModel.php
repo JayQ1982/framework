@@ -9,16 +9,16 @@ namespace framework\table;
 use framework\html\HtmlEncoder;
 use stdClass;
 
-class TableItemModel
+readonly class TableItemModel
 {
-	private array $data;
+	public array $data;
 
 	public function __construct(stdClass $dataObject)
 	{
 		$this->data = get_object_vars(object: $dataObject);
 	}
 
-	public function getRawValue(string $name)
+	public function getRawValue(string $name): mixed
 	{
 		return $this->data[$name];
 	}
@@ -35,10 +35,5 @@ class TableItemModel
 		}
 
 		return HtmlEncoder::encodeKeepQuotes(value: $value);
-	}
-
-	public function getAllData(): array
-	{
-		return $this->data;
 	}
 }

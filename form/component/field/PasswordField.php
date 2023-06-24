@@ -6,14 +6,28 @@
 
 namespace framework\form\component\field;
 
+use framework\form\rule\RequiredRule;
+use framework\form\settings\AutoCompleteValue;
+use framework\form\settings\InputTypeValue;
 use framework\html\HtmlText;
 
-class PasswordField extends TextField
+class PasswordField extends InputField
 {
-	protected string $type = 'password';
-
-	public function __construct(string $name, HtmlText $label, HtmlText $requiredError)
-	{
-		parent::__construct($name, $label, '', $requiredError);
+	public function __construct(
+		string             $name,
+		HtmlText           $label,
+		HtmlText           $requiredError,
+		?string            $placeholder = null,
+		?AutoCompleteValue $autoComplete = null
+	) {
+		parent::__construct(
+			inputType: InputTypeValue::PASSWORD,
+			name: $name,
+			label: $label,
+			value: '',
+			placeholder: $placeholder,
+			autoComplete: $autoComplete
+		);
+		$this->addRule(formRule: new RequiredRule(defaultErrorMessage: $requiredError));
 	}
 }
