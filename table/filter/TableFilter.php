@@ -158,7 +158,10 @@ class TableFilter
 		$individualHtmlSnippetPath = $this->individualHtmlSnippetPath;
 		$replacements = new HtmlReplacementCollection();
 		$replacements->addBool(identifier: 'showLegend', booleanValue: $this->showLegend);
-		$replacements->addEncodedText(identifier: 'formAction', content: '?' . $this->identifier);
+		$replacements->addEncodedText(
+			identifier: 'formAction',
+			content: '?' . $this->identifier . '&' . DbResultTable::PARAM_FIND
+		);
 		$replacements->addEncodedText(identifier: 'csrfField', content: CsrfToken::renderAsHiddenPostField());
 		$primaryFields = new HtmlDataObjectCollection();
 		foreach ($this->primaryFields as $abstractTableFilterField) {

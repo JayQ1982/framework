@@ -22,7 +22,7 @@ class DbResultTable extends SmartTable
 	protected const PARAM_SORT = 'sort';
 	protected const PARAM_RESET = 'reset';
 	protected const PARAM_PAGE = 'page';
-	protected const PARAM_FIND = 'find';
+	public const PARAM_FIND = 'find';
 
 	protected const sessionDataType = 'table';
 	protected const filter = '[filter]';
