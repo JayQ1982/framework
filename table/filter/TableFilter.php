@@ -63,10 +63,10 @@ class TableFilter
 	public function validate(DbResultTable $dbResultTable): void
 	{
 		if (!is_null(value: HttpRequest::getInputString(keyName: $this->resetParameter))) {
-			$this->reset();
+			$this->reset(dbResultTable: $dbResultTable);
 		}
 		if (!is_null(value: HttpRequest::getInputString(keyName: $this->identifier))) {
-			$this->reset();
+			$this->reset(dbResultTable: $dbResultTable);
 			$this->checkInput();
 		}
 		$this->filtersApplied = $this->applyFilters(dbResultTable: $dbResultTable);
@@ -91,11 +91,12 @@ class TableFilter
 		$this->allFilterFields[$abstractTableFilterField->identifier] = $abstractTableFilterField;
 	}
 
-	protected function reset(): void
+	protected function reset(DbResultTable $dbResultTable): void
 	{
 		foreach ($this->allFilterFields as $abstractTableFilterField) {
 			$abstractTableFilterField->reset();
 		}
+		$dbResultTable->setCurrentPaginationPage(page: 1);
 	}
 
 	protected function checkInput(): void
