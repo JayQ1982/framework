@@ -141,6 +141,6 @@ class MailerMimeTypes
 			'mkv'   => 'video/x-matroska',
 		];
 
-		return $mimes[$extension] ?? 'application/octet-stream';
+		return array_key_exists(key: $extension, array: $mimes) ? $mimes[$extension] : 'application/octet-stream';
 	}
 }

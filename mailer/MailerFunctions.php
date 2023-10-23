@@ -61,11 +61,6 @@ class MailerFunctions
 		return $value . MailerConstants::CRLF;
 	}
 
-	public static function headerLine(string $name, string $value): string
-	{
-		return $name . ': ' . $value . MailerConstants::CRLF;
-	}
-
 	public static function encodeString(string $string, string $encoding): string
 	{
 		switch (strtolower($encoding)) {
@@ -108,8 +103,11 @@ class MailerFunctions
 		return MailerFunctions::normalizeBreaks(text: quoted_printable_encode(string: $string));
 	}
 
-	public static function encodeHeaderPhrase(string $string, string $defaultCharSet): string
-	{
+	public static function encodeHeaderPhrase(
+		string $string,
+		int    $maxLineLength,
+		string $defaultCharSet
+	): string {
 		if (!preg_match(pattern: '/[\200-\377]/', subject: $string)) {
 			//Can't use addslashes as we don't know the value of magic_quotes_sybase
 			$encoded = addcslashes(string: $string, characters: "\0..\37\177\\\"");
@@ -125,33 +123,42 @@ class MailerFunctions
 
 		return MailerFunctions::encodeHeader(
 			string: $string,
+			maxLineLength: $maxLineLength,
 			matchCount: preg_match_all(pattern: '/[^\040\041\043-\133\135-\176]/', subject: $string),
 			defaultCharSet: $defaultCharSet,
 			isPhrase: true
 		);
 	}
 
-	public static function encodeHeaderText(string $string, string $defaultCharSet): string
-	{
+	public static function encodeHeaderText(
+		string $string,
+		int    $maxLineLength,
+		string $defaultCharSet
+	): string {
 		return MailerFunctions::encodeHeader(
 			string: $string,
+			maxLineLength: $maxLineLength,
 			matchCount: preg_match_all(pattern: '/[\000-\010\013\014\016-\037\177-\377]/', subject: $string),
 			defaultCharSet: $defaultCharSet,
 			isPhrase: false
 		);
 	}
 
-	private static function encodeHeader(string $string, int $matchCount, string $defaultCharSet, bool $isPhrase): string
-	{
+	private static function encodeHeader(
+		string $string,
+		int    $maxLineLength,
+		int    $matchCount,
+		string $defaultCharSet,
+		bool   $isPhrase
+	): string {
 		if (MailerFunctions::has8bitChars(text: $string)) {
 			$charset = $defaultCharSet;
 		} else {
 			$charset = MailerConstants::CHARSET_ASCII;
 		}
-
 		// Q/B encoding adds 8 chars and the charset ("` =?<charset>?[QB]?<content>?=`").
 		$overhead = 8 + strlen(string: $charset);
-		$maxLength = MailerConstants::MAIL_MAX_LINE_LENGTH - $overhead;
+		$maxLength = $maxLineLength - $overhead;
 
 		// Select the encoding that produces the shortest output and/or prevents corruption.
 		if ($matchCount > strlen(string: $string) / 3) {

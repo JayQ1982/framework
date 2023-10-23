@@ -23,27 +23,19 @@ namespace framework\mailer;
 
 class MailerAddress
 {
-	private const KIND_SENDER = 'Sender';
-	private const KIND_FROM = 'From';
-	private const KIND_CONFIRM_READING_TO = 'ConfirmReadingTo';
-	private const KIND_TO = 'To';
-	private const KIND_CC = 'Cc';
-	private const KIND_BCC = 'Bcc';
-	private const KIND_REPLY_TO = 'Reply-To';
-
 	private string $punyEncodedDomain;
 	private string $emailNamePart;
 	private string $addressName;
 
 	private function __construct(
-		public readonly string $kind,
-		string                 $inputEmail,
-		string                 $inputName
+		public readonly MailerAddressKindEnum $mailerAddressKindEnum,
+		string                                $inputEmail,
+		string                                $inputName
 	) {
 		$inputEmail = mb_strtolower(string: trim(string: $inputEmail));
 		$atPos = strrpos(haystack: $inputEmail, needle: '@');
 		if ($atPos === false) {
-			throw new MailerException(message: 'Missing @-sign (' . $kind . '): ' . $inputEmail);
+			throw new MailerException(message: 'Missing @-sign (' . $mailerAddressKindEnum->value . '): ' . $inputEmail);
 		}
 		$domain = substr(string: $inputEmail, offset: ++$atPos);
 
@@ -51,7 +43,7 @@ class MailerAddress
 		$this->emailNamePart = substr(string: $inputEmail, offset: 0, length: $atPos - 1);
 
 		if (!MailerFunctions::validateAddress(address: $this->getPunyEncodedEmail())) {
-			throw new MailerException(message: 'Invalid address (' . $kind . '): ' . $this->getPunyEncodedEmail());
+			throw new MailerException(message: 'Invalid address (' . $mailerAddressKindEnum->value . '): ' . $this->getPunyEncodedEmail());
 		}
 
 		$this->addressName = trim(string: preg_replace(
@@ -64,7 +56,7 @@ class MailerAddress
 	public static function createSenderAddress(string $inputEmail, string $inputName): MailerAddress
 	{
 		return new MailerAddress(
-			kind: MailerAddress::KIND_SENDER,
+			mailerAddressKindEnum: MailerAddressKindEnum::KIND_SENDER,
 			inputEmail: $inputEmail,
 			inputName: $inputName
 		);
@@ -73,7 +65,7 @@ class MailerAddress
 	public static function createFromAddress(string $inputEmail, string $inputName): MailerAddress
 	{
 		return new MailerAddress(
-			kind: MailerAddress::KIND_FROM,
+			mailerAddressKindEnum: MailerAddressKindEnum::KIND_FROM,
 			inputEmail: $inputEmail,
 			inputName: $inputName
 		);
@@ -82,7 +74,7 @@ class MailerAddress
 	public static function createConfirmReadingToAddress(string $inputEmail, string $inputName): MailerAddress
 	{
 		return new MailerAddress(
-			kind: MailerAddress::KIND_CONFIRM_READING_TO,
+			mailerAddressKindEnum: MailerAddressKindEnum::KIND_CONFIRM_READING_TO,
 			inputEmail: $inputEmail,
 			inputName: $inputName
 		);
@@ -91,7 +83,7 @@ class MailerAddress
 	public static function createToAddress(string $inputEmail, string $inputName): MailerAddress
 	{
 		return new MailerAddress(
-			kind: MailerAddress::KIND_TO,
+			mailerAddressKindEnum: MailerAddressKindEnum::KIND_TO,
 			inputEmail: $inputEmail,
 			inputName: $inputName
 		);
@@ -100,7 +92,7 @@ class MailerAddress
 	public static function createCcAddress(string $inputEmail, string $inputName): MailerAddress
 	{
 		return new MailerAddress(
-			kind: MailerAddress::KIND_CC,
+			mailerAddressKindEnum: MailerAddressKindEnum::KIND_CC,
 			inputEmail: $inputEmail,
 			inputName: $inputName
 		);
@@ -109,7 +101,7 @@ class MailerAddress
 	public static function createBccAddress(string $inputEmail, string $inputName): MailerAddress
 	{
 		return new MailerAddress(
-			kind: MailerAddress::KIND_BCC,
+			mailerAddressKindEnum: MailerAddressKindEnum::KIND_BCC,
 			inputEmail: $inputEmail,
 			inputName: $inputName
 		);
@@ -118,40 +110,10 @@ class MailerAddress
 	public static function createReplyToAddress(string $inputEmail, string $inputName): MailerAddress
 	{
 		return new MailerAddress(
-			kind: MailerAddress::KIND_REPLY_TO,
+			mailerAddressKindEnum: MailerAddressKindEnum::KIND_REPLY_TO,
 			inputEmail: $inputEmail,
 			inputName: $inputName
 		);
-	}
-
-	public function isFromAddress(): bool
-	{
-		return $this->kind === MailerAddress::KIND_FROM;
-	}
-
-	public function isConfirmReadingToAddress(): bool
-	{
-		return $this->kind === MailerAddress::KIND_CONFIRM_READING_TO;
-	}
-
-	public function isToAddress(): bool
-	{
-		return $this->kind === MailerAddress::KIND_TO;
-	}
-
-	public function isCcAddress(): bool
-	{
-		return $this->kind === MailerAddress::KIND_CC;
-	}
-
-	public function isBccAddress(): bool
-	{
-		return $this->kind === MailerAddress::KIND_BCC;
-	}
-
-	public function isReplyToAddress(): bool
-	{
-		return $this->kind === MailerAddress::KIND_REPLY_TO;
 	}
 
 	public function getPunyEncodedEmail(): string
@@ -164,8 +126,10 @@ class MailerAddress
 		return $this->addressName;
 	}
 
-	public function getFormattedAddressForMailer(string $defaultCharSet): string
-	{
+	public function getFormattedAddressForMailer(
+		int    $maxLineLength,
+		string $defaultCharSet
+	): string {
 		$preparedEmailAddress = MailerFunctions::secureHeader(string: $this->getPunyEncodedEmail());
 		if ($this->addressName === '') {
 			return $preparedEmailAddress;
@@ -176,9 +140,10 @@ class MailerAddress
 			array: [
 				MailerFunctions::encodeHeaderPhrase(
 					string: MailerFunctions::secureHeader(string: $this->addressName),
+					maxLineLength: $maxLineLength,
 					defaultCharSet: $defaultCharSet
 				),
-				' <' . $preparedEmailAddress . '>',
+				'<' . $preparedEmailAddress . '>',
 			]
 		);
 	}
