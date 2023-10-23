@@ -95,7 +95,10 @@ class PhoneMatcher
 
 	public function group(int $group): ?string
 	{
-		return $this->groups[$group][0] ?? null;
+		return (
+			array_key_exists(key: $group, array: $this->groups)
+			&& array_key_exists(key: 0, array: $this->groups[$group])
+		) ? $this->groups[$group][0] : null;
 	}
 
 	public function groupCount(): ?int

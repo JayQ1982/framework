@@ -52,11 +52,11 @@ class Logger
 		// Don't use dynamic data ($traceLineArray['args']) from backtrace for hash-able content
 		foreach ($realException->getTrace() as $traceLineArray) {
 			$hashableContent .=
-				($traceLineArray['file'] ?? '') .
-				($traceLineArray['line'] ?? '') .
-				($traceLineArray['class'] ?? '') .
-				($traceLineArray['type'] ?? '') .
-				($traceLineArray['function'] ?? '') .
+				(array_key_exists(key: 'file', array: $traceLineArray) ? $traceLineArray['file'] : '') .
+				(array_key_exists(key: 'line', array: $traceLineArray) ? $traceLineArray['line'] : '') .
+				(array_key_exists(key: 'class', array: $traceLineArray) ? $traceLineArray['class'] : '') .
+				(array_key_exists(key: 'type', array: $traceLineArray) ? $traceLineArray['type'] : '') .
+				(array_key_exists(key: 'function', array: $traceLineArray) ? $traceLineArray['function'] : '') .
 				PHP_EOL;
 		}
 		$hash = hash(algo: 'sha256', data: $hashableContent);
