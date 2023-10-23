@@ -10,6 +10,7 @@ use Exception;
 use framework\core\EnvironmentSettingsModel;
 use framework\core\HttpRequest;
 use framework\core\Language;
+use framework\exception\UnauthorizedException;
 use LogicException;
 use SessionHandler;
 use Throwable;
@@ -64,18 +65,25 @@ abstract class AbstractSessionHandler extends SessionHandler
 		$this->setDefaultSecuritySettings(isSameSiteStrict: $sessionSettingsModel->isSameSiteStrict);
 		$this->setSessionName(individualName: $sessionSettingsModel->individualName);
 		$this->executePreStartActions();
-		session_set_save_handler($this, true); // TODO: Named parameters not working in PHP 8.1
-		if (!session_start()) {
-			throw new Exception(message: 'Could not start session');
+		session_set_save_handler($this, true); // TODO: PHP 8.2 does not know the named parameters
+		try {
+			session_start(options: [
+				'use_strict_mode' => true,
+			]);
+		} catch (Throwable $throwable) {
+			if (str_contains(haystack: $throwable->getMessage(), needle: 'Permission denied')) {
+				throw new UnauthorizedException();
+			}
+			throw $throwable;
 		}
 		if (!$this->isSessionCreated()) {
-			$this->initDefaultSessionData(destroyOldSession: false);
+			$this->initDefaultSessionData(destroyCurrentSessionData: false);
 		} else if ($this->getTrustedRemoteAddress() !== $this->clientRemoteAddress || $this->getTrustedUserAgent() !== $this->clientUserAgent) {
-			$this->initDefaultSessionData(destroyOldSession: true);
+			$this->initDefaultSessionData(destroyCurrentSessionData: true);
 		} else if ($this->isSessionExpired()) {
 			// Real session lifetime and regeneration after maxLifeTime
 			// See: http://stackoverflow.com/questions/520237/how-do-i-expire-a-php-session-after-30-minutes/1270960#1270960
-			$this->initDefaultSessionData(destroyOldSession: true);
+			$this->initDefaultSessionData(destroyCurrentSessionData: true);
 		} else if ($this->isSessionOlderThan30Minutes()) {
 			$this->regenerateID();
 		}
@@ -178,22 +186,38 @@ abstract class AbstractSessionHandler extends SessionHandler
 
 	public function regenerateID(): void
 	{
-		@session_regenerate_id(true);
+		session_regenerate_id();
 		$this->ID = session_id();
 		$this->setSessionCreated();
 	}
 
-	private function initDefaultSessionData(bool $destroyOldSession): void
+	private function initDefaultSessionData(bool $destroyCurrentSessionData): void
 	{
-		if ($destroyOldSession) {
+		if ($destroyCurrentSessionData) {
 			try {
+				if (ini_get(option: 'session.use_cookies')) {
+					$params = session_get_cookie_params();
+					setcookie(
+						session_name(),
+						'',
+						time() - 42000,
+						$params['path'],
+						$params['domain'],
+						$params['secure'],
+						$params['httponly']
+					);
+				}
 				session_destroy();
+				session_start(options: [
+					'use_strict_mode' => true,
+				]);
+				session_regenerate_id();
+				$this->ID = session_id();
 			} catch (Throwable $throwable) {
 				if (!str_contains(haystack: $throwable->getMessage(), needle: 'Session object destruction failed')) {
 					throw $throwable;
 				}
 			}
-			session_start(); // Cleans current global data ($_SESSION), see http://php.net/manual/de/function.session-destroy.php
 		}
 		$this->setSessionCreated();
 		$this->setTrustedRemoteAddress();
@@ -214,7 +238,7 @@ abstract class AbstractSessionHandler extends SessionHandler
 
 	public function get(string $propertyName)
 	{
-		return $_SESSION[$propertyName] ?? null;
+		return array_key_exists(key: $propertyName, array: $_SESSION) ? $_SESSION[$propertyName] : null;
 	}
 
 	private function setSessionCreated(): void
@@ -282,7 +306,7 @@ abstract class AbstractSessionHandler extends SessionHandler
 
 	public function getPreferredLanguageCode(): ?string
 	{
-		return $_SESSION[AbstractSessionHandler::PREFERRED_LANGUAGE_INDICATOR] ?? null;
+		return array_key_exists(key: AbstractSessionHandler::PREFERRED_LANGUAGE_INDICATOR, array: $_SESSION) ? $_SESSION[AbstractSessionHandler::PREFERRED_LANGUAGE_INDICATOR] : null;
 	}
 
 	public function changeCookieSameSiteToLax(): void
