@@ -32,7 +32,7 @@ class PhoneRegionCountryCodeMap
 
 	public static function getRegionCodeForCountryCode(int $countryCallingCode): string
 	{
-		$regionCodes = PhoneRegionCountryCodeMap::COUNTRY_CODE_TO_REGION_CODE_MAP[$countryCallingCode] ?? null;
+		$regionCodes = array_key_exists(key: $countryCallingCode, array: PhoneRegionCountryCodeMap::COUNTRY_CODE_TO_REGION_CODE_MAP) ? PhoneRegionCountryCodeMap::COUNTRY_CODE_TO_REGION_CODE_MAP[$countryCallingCode] : null;
 
 		return is_null(value: $regionCodes) ? 'ZZ' : $regionCodes[0];
 	}

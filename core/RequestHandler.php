@@ -156,7 +156,7 @@ class RequestHandler
 			}
 			foreach ($matches1[1] as $nr => $variableName) {
 				$nr = $nr + 1;
-				$val = $matches2[$nr] ?? '';
+				$val = array_key_exists(key: $nr, array: $matches2) ? $matches2[$nr] : '';
 				if ($variableName === 'fileName') {
 					$this->fileName = $val;
 				} else if ($variableName === 'fileGroup') {

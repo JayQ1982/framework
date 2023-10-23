@@ -59,7 +59,7 @@ class HttpRequest
 	{
 		$inputData = HttpRequest::getInputData();
 
-		return $inputData[$keyName] ?? null;
+		return array_key_exists(key: $keyName, array: $inputData) ? $inputData[$keyName] : null;
 	}
 
 	public static function getCookies(): array
@@ -133,7 +133,7 @@ class HttpRequest
 
 	public static function getUserAgent(): string
 	{
-		return $_SERVER['HTTP_USER_AGENT'] ?? '';
+		return array_key_exists(key: 'HTTP_USER_AGENT', array: $_SERVER) ? $_SERVER['HTTP_USER_AGENT'] : '';
 	}
 
 	/**
@@ -169,7 +169,7 @@ class HttpRequest
 
 	public static function getRemoteAddress(): string
 	{
-		return $_SERVER['REMOTE_ADDR'] ?? '';
+		return array_key_exists(key: 'REMOTE_ADDR', array: $_SERVER) ? $_SERVER['REMOTE_ADDR'] : '';
 	}
 
 	private static function getInputData(): array
@@ -183,7 +183,7 @@ class HttpRequest
 
 	public static function getReferrer(): string
 	{
-		return $_SERVER['HTTP_REFERER'] ?? '';
+		return array_key_exists(key: 'HTTP_REFERER', array: $_SERVER) ? $_SERVER['HTTP_REFERER'] : '';
 	}
 
 	public static function getURL(?string $protocol = null): string
@@ -204,7 +204,7 @@ class HttpRequest
 	 */
 	public static function getFile(string $name): ?array
 	{
-		return $_FILES[$name] ?? null;
+		return array_key_exists(key: $name, array: $_FILES) ? $_FILES[$name] : null;
 	}
 
 	/**
