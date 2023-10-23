@@ -27,7 +27,6 @@ class DbResultTable extends SmartTable
 	protected const sessionDataType = 'table';
 	protected const filter = '[filter]';
 	protected const pagination = '[pagination]';
-
 	private bool $filledDataBySelectQuery = false;
 	private ?AbstractTableColumn $defaultSortColumn = null;
 	private TablePaginationRenderer $tablePaginationRenderer;
@@ -65,7 +64,7 @@ class DbResultTable extends SmartTable
 			$_SESSION[$dataType][$identifier] = [];
 		}
 
-		return $_SESSION[$dataType][$identifier][$index] ?? null;
+		return array_key_exists(key: $index, array: $_SESSION[$dataType][$identifier]) ? $_SESSION[$dataType][$identifier][$index] : null;
 	}
 
 	public static function saveToSession(string $dataType, string $identifier, string $index, string $value): void
@@ -209,9 +208,9 @@ class DbResultTable extends SmartTable
 	{
 		$inputPageArr = explode(separator: '|', string: trim(string: (string)HttpRequest::getInputString(keyName: DbResultTable::PARAM_PAGE)));
 		$inputPage = (int)$inputPageArr[0];
-		$inputTable = trim(string: $inputPageArr[1] ?? '');
+		$inputTable = trim(string: array_key_exists(key: 1, array: $inputPageArr) ? $inputPageArr[1] : '');
 		if ($inputTable === $this->identifier && $inputPage > 0) {
-			DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->identifier, index: 'pagination_page', value: $inputPage);
+			$this->setCurrentPaginationPage(page: $inputPage);
 		}
 
 		if (
@@ -219,8 +218,18 @@ class DbResultTable extends SmartTable
 			|| !is_null(value: HttpRequest::getInputString(keyName: DbResultTable::PARAM_FIND))
 			|| !is_null(value: HttpRequest::getInputString(keyName: DbResultTable::PARAM_RESET))
 		) {
-			DbResultTable::saveToSession(dataType: DbResultTable::sessionDataType, identifier: $this->identifier, index: 'pagination_page', value: 1);
+			$this->setCurrentPaginationPage(page: 1);
 		}
+	}
+
+	public function setCurrentPaginationPage(int $page): void
+	{
+		DbResultTable::saveToSession(
+			dataType: DbResultTable::sessionDataType,
+			identifier: $this->identifier,
+			index: 'pagination_page',
+			value: $page
+		);
 	}
 
 	public function getTotalAmount(): int
