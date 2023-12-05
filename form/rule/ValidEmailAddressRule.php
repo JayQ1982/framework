@@ -7,22 +7,18 @@
 namespace framework\form\rule;
 
 use framework\common\ValidatedEmailAddress;
-use framework\datacheck\Sanitizer;
 use framework\form\component\FormField;
 use framework\form\FormRule;
 use framework\html\HtmlText;
 
 class ValidEmailAddressRule extends FormRule
 {
-	private bool $dnsCheck;
-	private bool $trueOnDnsError;
-
-	function __construct(HtmlText $errorMessage, bool $dnsCheck = true, bool $trueOnDnsError = true)
-	{
-		$this->dnsCheck = $dnsCheck;
-		$this->trueOnDnsError = $trueOnDnsError;
-
-		parent::__construct($errorMessage);
+	function __construct(
+		HtmlText              $errorMessage,
+		private readonly bool $dnsCheck = true,
+		private readonly bool $trueOnDnsError = true
+	) {
+		parent::__construct(defaultErrorMessage: $errorMessage);
 	}
 
 	public function validate(FormField $formField): bool
@@ -30,22 +26,16 @@ class ValidEmailAddressRule extends FormRule
 		if ($formField->isValueEmpty()) {
 			return true;
 		}
-
-		$fieldValue = Sanitizer::trimmedString($formField->getRawValue());
-
-		$validatedEmailAddress = new ValidatedEmailAddress($fieldValue);
-		if (!$validatedEmailAddress->isValidSyntax()) {
+		$fieldValue = (string)$formField->getRawValue();
+		$validatedEmailAddress = new ValidatedEmailAddress(emailAddress: $fieldValue);
+		if (!$validatedEmailAddress->isValidSyntax) {
 			return false;
 		}
-
-		$emailParts = explode('@', $fieldValue);
-		$domain = idn_to_ascii(domain: $emailParts[1]);
-		$formField->setValue($emailParts[0] . '@' . $domain);
-
+		$formField->setValue(value: $validatedEmailAddress->validatedValue);
 		if (!$this->dnsCheck) {
 			return true;
 		}
 
-		return $validatedEmailAddress->isResolvable($this->trueOnDnsError);
+		return $validatedEmailAddress->isResolvable(returnTrueOnDnsGetRecordFailure: $this->trueOnDnsError);
 	}
 }
