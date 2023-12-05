@@ -19,8 +19,10 @@ class SMTPMailer extends AbstractMailer
 		private readonly string $hostName,
 		private readonly string $smtpUserName,
 		private readonly string $smtpPassword,
-		private readonly int    $port = 587
-	) {}
+		private readonly int    $port = 587,
+		private readonly bool   $useTls = true
+	) {
+	}
 
 	public function headerHasTo(): bool
 	{
@@ -58,7 +60,22 @@ class SMTPMailer extends AbstractMailer
 			command: 'EHLO ' . $serverName,
 			expectedCode: 250
 		);
-		if($this->smtpUserName !== '') {
+		if($this->useTls) {
+			$this->sendCommand(
+				command: 'STARTTLS',
+				expectedCode: 220
+			);
+			stream_socket_enable_crypto(
+				stream: $this->stream,
+				enable: true,
+				crypto_method: STREAM_CRYPTO_METHOD_TLS_CLIENT
+			);
+			$this->sendCommand(
+				command: 'EHLO ' . $serverName,
+				expectedCode: 250
+			);
+		}
+		if ($this->smtpUserName !== '') {
 			$this->sendCommand(
 				command: 'AUTH LOGIN',
 				expectedCode: 334
