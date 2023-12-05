@@ -126,6 +126,9 @@ class ContentHandler
 			$phpClassNameParts[] = $request->getFileGroup();
 		}
 		$phpClassNameParts[] = $request->fileTitle;
+		if (!file_exists(filename: $core->documentRoot . implode(separator: DIRECTORY_SEPARATOR, array: $phpClassNameParts) . '.php')) {
+			return null;
+		}
 		$phpClassName = implode(separator: '\\', array: $phpClassNameParts);
 		if (!class_exists(class: $phpClassName)) {
 			return null;
