@@ -54,11 +54,6 @@ class CheckboxOptionsField extends OptionsField
 		}
 	}
 
-	public function getType(): string
-	{
-		return 'checkbox';
-	}
-
 	public function getDefaultRenderer(): FormRenderer
 	{
 		return new CheckboxOptionsRenderer(checkboxOptionsField: $this);

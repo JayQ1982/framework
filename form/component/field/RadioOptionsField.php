@@ -6,6 +6,7 @@
 
 namespace framework\form\component\field;
 
+use framework\form\component\layout\RadioOptionsLayout;
 use framework\form\FormOptions;
 use framework\form\FormRenderer;
 use framework\form\renderer\DefinitionListRenderer;
@@ -13,21 +14,16 @@ use framework\form\renderer\LegendAndListRenderer;
 use framework\form\renderer\RadioOptionsRenderer;
 use framework\form\rule\RequiredRule;
 use framework\html\HtmlText;
-use LogicException;
 
 class RadioOptionsField extends OptionsField
 {
-	public const LAYOUT_NONE = 0;
-	public const LAYOUT_DEFINITIONLIST = 1;
-	public const LAYOUT_LEGENDANDLIST = 2;
-
 	public function __construct(
-		string      $name,
-		HtmlText    $label,
-		FormOptions $formOptions,
-		?string     $initialValue,
-		?HtmlText   $requiredError = null,
-		int         $layout = RadioOptionsField::LAYOUT_LEGENDANDLIST
+		string             $name,
+		HtmlText           $label,
+		FormOptions        $formOptions,
+		?string            $initialValue,
+		?HtmlText          $requiredError = null,
+		RadioOptionsLayout $layout = RadioOptionsLayout::LEGEND_AND_LIST
 	) {
 		parent::__construct(
 			name: $name,
@@ -41,18 +37,16 @@ class RadioOptionsField extends OptionsField
 			$requiredError = HtmlText::encoded(textContent: 'Bitte wählen Sie eine der Optionen aus.');
 		}
 		$this->addRule(formRule: new RequiredRule(defaultErrorMessage: $requiredError));
-		if ($layout !== RadioOptionsField::LAYOUT_NONE) {
-			switch ($layout) {
-				case RadioOptionsField::LAYOUT_DEFINITIONLIST:
-					$this->setRenderer(renderer: new DefinitionListRenderer(formField: $this));
-					break;
+		switch ($layout) {
+			case RadioOptionsLayout::DEFINITION_LIST:
+				$this->setRenderer(renderer: new DefinitionListRenderer(formField: $this));
+				break;
 
-				case RadioOptionsField::LAYOUT_LEGENDANDLIST:
-					$this->setRenderer(renderer: new LegendAndListRenderer(optionsField: $this));
-					break;
-				default:
-					throw new LogicException(message: 'Invalid layout');
-			}
+			case RadioOptionsLayout::LEGEND_AND_LIST:
+				$this->setRenderer(renderer: new LegendAndListRenderer(optionsField: $this));
+				break;
+			case RadioOptionsLayout::NONE:
+				break;
 		}
 	}
 
