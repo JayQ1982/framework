@@ -6,13 +6,18 @@
 
 namespace framework\form\component\field;
 
+use framework\form\component\layout\CheckboxOptionsLayout;
 use framework\form\FormOptions;
 use framework\html\HtmlText;
 
 class BooleanField extends CheckboxOptionsField
 {
-	public function __construct(string $name, HtmlText $label, bool $isCheckedByDefault)
-	{
+	public function __construct(
+		string                $name,
+		HtmlText              $label,
+		bool                  $isCheckedByDefault,
+		CheckboxOptionsLayout $layout = CheckboxOptionsLayout::CHECKBOX_ITEM
+	) {
 		$formOptions = new FormOptions();
 		$formOptions->addItem(key: '1', htmlText: $label);
 		parent::__construct(
@@ -20,7 +25,7 @@ class BooleanField extends CheckboxOptionsField
 			label: $label,
 			formOptions: $formOptions,
 			initialValues: $isCheckedByDefault ? ['1'] : [],
-			layout: CheckboxOptionsField::LAYOUT_CHECKBOXITEM
+			layout: $layout
 		);
 	}
 
