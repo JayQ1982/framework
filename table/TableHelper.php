@@ -59,9 +59,13 @@ class TableHelper
 		);
 	}
 
-	public static function createActionsColumn(string $label = '', string $cellCssClass = 'action'): ActionsColumn
+	public static function createActionsColumn(string $identifier, string $label = '', string $cellCssClass = 'action'): ActionsColumn
 	{
-		return new ActionsColumn(label: $label, cellCssClass: $cellCssClass);
+		return new ActionsColumn(
+			identifier: $identifier,
+			label: $label,
+			cellCssClass: $cellCssClass
+		);
 	}
 
 	public static function createDateColumn(string $identifier, string $label, bool $isSortable = false, bool $sortAscendingByDefault = true): DateColumn

@@ -15,9 +15,12 @@ class ActionsColumn extends AbstractTableColumn
 	private ?string $hideDeleteLinkField = null;
 	private ?string $hideDeleteLinkValue = null;
 
-	public function __construct(string $label = '', string $cellCssClass = 'action')
-	{
-		parent::__construct(identifier: 'actions', label: $label);
+	public function __construct(
+		string $identifier = 'actions',
+		string $label = '',
+		string $cellCssClass = 'action'
+	) {
+		parent::__construct(identifier: $identifier, label: $label);
 		$this->addCellCssClass(className: $cellCssClass);
 	}
 
