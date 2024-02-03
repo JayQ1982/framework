@@ -18,8 +18,6 @@ use framework\html\HtmlText;
 
 class FileField extends FormField
 {
-	public const FIELD_PREFIX = 'form_fileField';
-
 	public const VALUE_NAME = 'name';
 	public const VALUE_TMP_NAME = 'tmp_name';
 	public const VALUE_TYPE = 'type';
@@ -57,7 +55,7 @@ class FileField extends FormField
 		if ($this->maxFileUploadCount < 1) {
 			$this->maxFileUploadCount = 1; // Silent correction
 		}
-		$this->uniqueSessFileStorePointer = $this->sanitizeUniqueID(uid: uniqid(prefix: date(format: 'ymdHis') . '__', more_entropy: true));
+		$this->uniqueSessFileStorePointer = $this->sanitizeUniqueID(uid: uniqid(prefix: $name . '__', more_entropy: true));
 		$this->tooManyFilesErrMsg = is_null(value: $tooManyFilesErrMsg) ? HtmlText::encoded(textContent: 'Nur [max] Datei(en) möglich.') : $tooManyFilesErrMsg;
 		$this->alreadyExistsErrorMessage = is_null(value: $alreadyExistsErrorMessage) ? HtmlText::encoded(textContent: 'Es wurde bereits eine Datei mit dem Dateinamen "[fileName]" hochgeladen.') : $alreadyExistsErrorMessage;
 		// To always handle value internally as array we force an empty array on initialization
@@ -77,7 +75,7 @@ class FileField extends FormField
 		// We do not allow dangerous characters in the pointer, as it will become part of a filesystem path;
 		// And we want to easily detect these later in the external input:
 		return preg_replace(
-			pattern: '/[^a-z\d_]/',
+			pattern: '/[^a-zA-Z\d_]/',
 			replacement: '',
 			subject: $uid
 		);
@@ -100,8 +98,8 @@ class FileField extends FormField
 			// Remove all temporary files older than 2 days
 			$this->removeOldFiles();
 			// The following two checks must be done before parent::validate() to have the required data available
-			if (array_key_exists(key: FileField::FIELD_PREFIX, array: $inputData) && is_scalar(value: $inputData[FileField::FIELD_PREFIX])) {
-				$receivedUid = Sanitizer::trimmedString(input: $inputData[FileField::FIELD_PREFIX]);
+			if (array_key_exists(key: $this->getName() . '_UID', array: $inputData) && is_scalar(value: $inputData[$this->getName() . '_UID'])) {
+				$receivedUid = Sanitizer::trimmedString(input: $inputData[$this->getName() . '_UID']);
 				// If that value is tampered by a "black hat hacker", he should just grab securely into an "empty bowl".
 				// Therefore, we look for only allowed characters given in sanitizeUniqueID():
 				$cleanedUid = $this->sanitizeUniqueID(uid: $receivedUid);
@@ -110,9 +108,9 @@ class FileField extends FormField
 					$this->uniqueSessFileStorePointer = $cleanedUid;
 				}
 			}
-			if (array_key_exists(key: FileField::FIELD_PREFIX . '_removeAttachment', array: $inputData) && is_scalar(value: $inputData[FileField::FIELD_PREFIX . '_removeAttachment'])) {
+			if (array_key_exists(key: $this->getName() . '_removeAttachment', array: $inputData) && is_scalar(value: $inputData[$this->getName() . '_removeAttachment'])) {
 				// Referenced usage at FileFieldRenderer::prepare()
-				$this->deleteFileHash = Sanitizer::trimmedString(input: $inputData[FileField::FIELD_PREFIX . '_removeAttachment']);
+				$this->deleteFileHash = Sanitizer::trimmedString(input: $inputData[$this->getName() . '_removeAttachment']);
 			}
 		}
 
@@ -281,7 +279,7 @@ class FileField extends FormField
 	 */
 	private function getTempRootDirectory(): string
 	{
-		$rootDirectory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . FileField::FIELD_PREFIX . '__' . $_SERVER['SERVER_NAME'];
+		$rootDirectory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $_SERVER['SERVER_NAME'];
 		if (!is_dir(filename: $rootDirectory)) {
 			mkdir(directory: $rootDirectory);
 		}
