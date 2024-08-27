@@ -118,7 +118,7 @@ class SimpleXMLExtended extends SimpleXMLElement
 		}
 		// actual conversion
 		$arr = JsonUtils::decodeJsonString(jsonString: JsonUtils::convertToJsonString((array)$tmp), returnAssociativeArray: true);
-		SimpleXMLExtended::stringifyEmptyInnerArrays($arr);
+		SimpleXMLExtended::stringifyEmptyInnerArrays(data: $arr);
 
 		return $arr;
 	}

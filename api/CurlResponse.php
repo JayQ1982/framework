@@ -90,7 +90,7 @@ class CurlResponse
 		return ($this->errorCode !== CURLE_OK);
 	}
 
-	public function getJsonResponse(): stdClass
+	public function getJsonResponse(): stdClass|array
 	{
 		return JsonUtils::decodeJsonString(jsonString: $this->rawResponseBody, returnAssociativeArray: false);
 	}
