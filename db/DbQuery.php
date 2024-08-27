@@ -110,6 +110,19 @@ class DbQuery
 	 */
 	public function selectFromDb(FrameworkDB $db, int $offset, int $rowCount): array
 	{
+		$dbQueryData = $this->getDbQueryData(
+			offset: $offset,
+			rowCount: $rowCount
+		);
+
+		return $db->select(
+			sql: $dbQueryData->query,
+			parameters: $dbQueryData->params
+		);
+	}
+
+	public function getDbQueryData(int $offset, int $rowCount): DbQueryData
+	{
 		$queryParts = ['SELECT'];
 		foreach ($this->selectParts as $part) {
 			$queryParts[] = $part;
@@ -133,9 +146,9 @@ class DbQuery
 		$parameters[] = $offset;
 		$parameters[] = $rowCount;
 
-		return $db->select(
-			sql: str_replace(search: ' (', replace: '(', subject: implode(separator: ' ', array: $queryParts)),
-			parameters: $parameters
+		return new DbQueryData(
+			query: str_replace(search: ' (', replace: '(', subject: implode(separator: ' ', array: $queryParts)),
+			params: $parameters
 		);
 	}
 
