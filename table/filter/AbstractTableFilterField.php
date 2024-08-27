@@ -6,7 +6,9 @@
 
 namespace framework\table\filter;
 
+use framework\db\DbQueryData;
 use framework\html\HtmlDataObject;
+use framework\html\HtmlText;
 use framework\table\table\DbResultTable;
 use LogicException;
 
@@ -19,9 +21,10 @@ abstract class AbstractTableFilterField
 	public readonly string $identifier;
 
 	protected function __construct(
-		TableFilter             $parentFilter,
-		string                  $filterFieldIdentifier,
-		private readonly string $label
+		TableFilter               $parentFilter,
+		string                    $filterFieldIdentifier,
+		private readonly HtmlText $label,
+		protected readonly bool   $highlightFieldIfSelected
 	) {
 		$uniqueIdentifier = $parentFilter->identifier . '_' . $filterFieldIdentifier;
 		if (array_key_exists(key: $uniqueIdentifier, array: AbstractTableFilterField::$instances)) {
@@ -44,8 +47,9 @@ abstract class AbstractTableFilterField
 	public function render(): HtmlDataObject
 	{
 		$field = new HtmlDataObject();
-		$field->addBooleanValue(propertyName: 'highlight', booleanValue: $this->isSelected());
-		$field->addTextElement(propertyName: 'label', content: $this->label, isEncodedForRendering: true);
+		$field->addTextElement(propertyName: 'identifier', content: $this->identifier, isEncodedForRendering: true);
+		$field->addBooleanValue(propertyName: 'highlight', booleanValue: $this->isSelected() && !$this->highlightFieldIfSelected);
+		$field->addTextElement(propertyName: 'label', content: $this->label->render(), isEncodedForRendering: true);
 		$field->addTextElement(propertyName: 'html', content: $this->renderField(), isEncodedForRendering: true);
 
 		return $field;
@@ -61,7 +65,5 @@ abstract class AbstractTableFilterField
 
 	abstract public function checkInput(): void;
 
-	abstract public function getWhereConditions(): array;
-
-	abstract public function getSqlParameters(): array;
+	abstract public function getWhereCondition(): DbQueryData;
 }

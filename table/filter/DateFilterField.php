@@ -8,7 +8,8 @@ namespace framework\table\filter;
 
 use DateTimeImmutable;
 use framework\core\HttpRequest;
-use framework\datacheck\Sanitizer;
+use framework\db\DbQueryData;
+use framework\html\HtmlText;
 use Throwable;
 
 class DateFilterField extends AbstractTableFilterField
@@ -17,22 +18,25 @@ class DateFilterField extends AbstractTableFilterField
 
 	public function __construct(
 		TableFilter             $parentFilter,
-		string                  $identifier,
-		string                  $label,
+		string                  $filterFieldIdentifier,
+		HtmlText                $label,
 		private readonly string $dataTableColumnReference,
-		private readonly bool   $mustBeLaterThan
+		private readonly bool   $dateMustBeSameOrLater,
+		private readonly string $renderFormat = 'd.m.Y H:i:s',
+		bool                    $highlightFieldIfSelected = false
 	) {
 		parent::__construct(
 			parentFilter: $parentFilter,
-			filterFieldIdentifier: $identifier,
-			label: $label
+			filterFieldIdentifier: $filterFieldIdentifier,
+			label: $label,
+			highlightFieldIfSelected: $highlightFieldIfSelected
 		);
 	}
 
 	public function init(): void
 	{
-		$valueFromSession = $this->getFromSession($this->identifier);
-		if (!empty($valueFromSession)) {
+		$valueFromSession = (string)$this->getFromSession(index: $this->identifier);
+		if ($valueFromSession !== '') {
 			$this->value = new DateTimeImmutable(datetime: $valueFromSession);
 		}
 	}
@@ -45,18 +49,16 @@ class DateFilterField extends AbstractTableFilterField
 
 	public function checkInput(): void
 	{
-		$inputValue = Sanitizer::trimmedString(input: HttpRequest::getInputString(keyName: $this->identifier));
-
+		$inputValue = (string)HttpRequest::getInputString(keyName: $this->identifier);
 		if ($inputValue === '') {
 			$this->reset();
 
 			return;
 		}
-
 		try {
 			$forceTimePart = '';
 			if (!str_contains(haystack: $inputValue, needle: ':')) {
-				$forceTimePart = $this->mustBeLaterThan ? ' 00:00:00' : ' 23:59:59';
+				$forceTimePart = $this->dateMustBeSameOrLater ? ' 00:00:00' : ' 23:59:59';
 			}
 			$dateTimeObject = new DateTimeImmutable(datetime: $inputValue . $forceTimePart);
 			if (DateTimeImmutable::getLastErrors() !== false) {
@@ -65,35 +67,31 @@ class DateFilterField extends AbstractTableFilterField
 				return;
 			}
 			$this->value = $dateTimeObject;
-			$this->saveToSession(index: $this->identifier, value: $inputValue);
+			$this->saveToSession(index: $this->identifier, value: $dateTimeObject->format(format: 'Y-m-d H:i:s'));
 		} catch (Throwable) {
 			$this->reset();
 		}
 	}
 
-	public function getWhereConditions(): array
+	public function getWhereCondition(): DbQueryData
 	{
-		if (is_null(value: $this->value)) {
-			return [];
-		}
-
-		if ($this->mustBeLaterThan) {
-			return [$this->dataTableColumnReference . '>=?'];
-		}
-
-		return [$this->dataTableColumnReference . '<=?'];
-	}
-
-	public function getSqlParameters(): array
-	{
-		return is_null(value: $this->value) ? [] : [$this->value->format(format: 'Y-m-d H:i:s')];
+		return new DbQueryData(
+			query: $this->dataTableColumnReference . ($this->dateMustBeSameOrLater ? '>=' : '<=') . '?',
+			params: [$this->value->format(format: 'Y-m-d H:i:s')]
+		);
 	}
 
 	protected function renderField(): string
 	{
-		$value = is_null(value: $this->value) ? '' : $this->value->format(format: 'd.m.Y H:i:s');
+		$classes = ['text'];
+		if (
+			$this->highlightFieldIfSelected
+			&& $this->isSelected()
+		) {
+			$classes[] = 'highlight';
+		}
 
-		return '<input type="text" class="text" name="' . $this->identifier . '" id="filter-' . $this->identifier . '" value="' . $value . '">';
+		return '<input type="text" class="' . implode(separator: ' ', array: $classes) . '" name="' . $this->identifier . '" id="filter-' . $this->identifier . '" value="' . (is_null(value: $this->value) ? '' : $this->value->format(format: $this->renderFormat)) . '">';
 	}
 
 	public function isSelected(): bool

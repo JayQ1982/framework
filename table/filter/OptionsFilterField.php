@@ -7,41 +7,44 @@
 namespace framework\table\filter;
 
 use framework\core\HttpRequest;
-use framework\datacheck\Sanitizer;
+use framework\db\DbQueryData;
+use framework\html\HtmlText;
 use LogicException;
 
 class OptionsFilterField extends AbstractTableFilterField
 {
 	/** @var FilterOption[] */
-	private readonly array $options;
+	private readonly array $filterOptions;
 	private string $selectedValue = '';
 
 	public function __construct(
-		TableFilter           $parentFilter,
-		string                $identifier,
-		string                $label,
-		array                 $options,
+		TableFilter             $parentFilter,
+		string                  $filterFieldIdentifier,
+		HtmlText                $label,
+		array                   $filterOptions,
 		private readonly string $defaultValue = '',
-		private readonly bool $chosenEnhancedDropDown = false
+		private readonly bool   $chosenEnhancedDropDown = false,
+		bool                    $highlightFieldIfSelected = false
 	) {
 		parent::__construct(
 			parentFilter: $parentFilter,
-			filterFieldIdentifier: $identifier,
-			label: $label
+			filterFieldIdentifier: $filterFieldIdentifier,
+			label: $label,
+			highlightFieldIfSelected: $highlightFieldIfSelected
 		);
 		$finalOptions = [];
-		foreach ($options as $option) {
-			if (!($option instanceof FilterOption)) {
+		foreach ($filterOptions as $filterOption) {
+			if (!($filterOption instanceof FilterOption)) {
 				throw new LogicException(message: 'Option must be an instance of FilterOption');
 			}
-			$finalOptions[$option->identifier] = $option;
+			$finalOptions[$filterOption->identifier] = $filterOption;
 		}
-		$this->options = $finalOptions;
+		$this->filterOptions = $finalOptions;
 	}
 
 	public function init(): void
 	{
-		$this->selectedValue = Sanitizer::trimmedString(input: $this->getFromSession(index: $this->identifier));
+		$this->selectedValue = (string)$this->getFromSession(index: $this->identifier);
 	}
 
 	public function reset(): void
@@ -57,52 +60,43 @@ class OptionsFilterField extends AbstractTableFilterField
 
 	public function checkInput(): void
 	{
-		$inputValue = Sanitizer::trimmedString(input: HttpRequest::getInputString(keyName: $this->identifier));
-		if (array_key_exists($inputValue, $this->options)) {
+		$inputValue = (string)HttpRequest::getInputString(keyName: $this->identifier);
+		if (array_key_exists(key: $inputValue, array: $this->filterOptions)) {
 			$this->setSelectedValue(selectedValue: $inputValue);
 		}
 	}
 
-	public function getWhereConditions(): array
+	public function getWhereCondition(): DbQueryData
 	{
-		return empty($this->selectedValue) ? [] : [$this->options[$this->selectedValue]->sqlCondition];
-	}
-
-	public function getSqlParameters(): array
-	{
-		return empty($this->selectedValue) ? [] : $this->options[$this->selectedValue]->sqlParams;
+		return $this->filterOptions[$this->selectedValue]->whereCondition;
 	}
 
 	protected function renderField(): string
 	{
 		$filterName = $this->identifier;
-		$filterId = 'filter-' . $filterName;
-
-		$html = '';
+		$htmlArr = [];
+		$classes = [];
+		if (
+			$this->highlightFieldIfSelected
+			&& $this->isSelected()
+		) {
+			$classes[] = 'highlight';
+		}
 		if ($this->chosenEnhancedDropDown) {
-			$html .= '<select name="' . $filterName . '" id="' . $filterId . '" class="chosen">';
-		} else {
-			$html .= '<select name="' . $filterName . '" id="' . $filterId . '">';
+			$classes[] = 'chosen';
 		}
-		foreach ($this->options as $filterOption) {
-			$attributes = [
-				'option',
-				'value="' . $filterOption->identifier . '"',
-			];
-			if ($filterOption->identifier === $this->selectedValue) {
-				$attributes[] = 'selected';
-			}
-
-			$html .= '<' . implode(separator: ' ', array: $attributes) . '>' . $filterOption->label . '</option>';
+		$htmlArr[] = '<select name="' . $filterName . '" id="filter-' . $filterName . '" class="' . implode(separator: ' ', array: $classes) . '">';
+		foreach ($this->filterOptions as $filterOption) {
+			$htmlArr[] = $filterOption->render(selectedValue: $this->selectedValue);
 		}
-		$html .= '</select>';
+		$htmlArr[] = '</select>';
 
-		return $html;
+		return implode(separator: PHP_EOL, array: $htmlArr);
 	}
 
 	public function isSelected(): bool
 	{
-		return !empty($this->selectedValue);
+		return ($this->selectedValue !== '');
 	}
 
 	public function getSelectedValue(): string

@@ -514,6 +514,9 @@ class SearchHelper
 				$whereConditions[] = '(' . implode(separator: ' OR ', array: $tmpArr) . ')';
 			}
 		}
+		if (count(value: $whereConditions) === 0) {
+			$whereConditions[] = '1=1';
+		}
 
 		return new DbQueryData(query: implode(separator: ' AND ', array: $whereConditions), params: $sqlParams);
 	}
