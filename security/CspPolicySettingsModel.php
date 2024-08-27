@@ -21,6 +21,7 @@ readonly class CspPolicySettingsModel
 		private string $fontSrc = "'self'",
 		private string $imgSrc = "'self' data: " . CspPolicySettingsModel::PROTOCOL_PLACEHOLDER . "://" . CspPolicySettingsModel::HOST_PLACEHOLDER,
 		private string $objectSrc = "'none'",
+		private string $mediaSrc = '',
 		private string $scriptSrc = "'strict-dynamic'",
 		private string $connectSrc = "'none'",
 		private string $baseUri = "'self'",
@@ -51,6 +52,9 @@ readonly class CspPolicySettingsModel
 		}
 		if ($this->objectSrc !== '') {
 			$dataArray[] = 'object-src ' . $this->objectSrc;
+		}
+		if ($this->mediaSrc !== '') {
+			$dataArray[] = 'media-src ' . $this->mediaSrc;
 		}
 		if ($this->scriptSrc !== '') {
 			$val = $this->scriptSrc;
