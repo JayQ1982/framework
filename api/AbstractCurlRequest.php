@@ -158,6 +158,12 @@ abstract class AbstractCurlRequest
 		$this->curlOptions[CURLOPT_USERPWD] = $authUserNamePassword;
 	}
 
+	public function useTokenAuthentication(string $token): void
+	{
+		$this->curlOptions[CURLOPT_HTTPAUTH] = CURLAUTH_BEARER;
+		$this->curlOptions[CURLOPT_XOAUTH2_BEARER] = $token;
+	}
+
 	public function execute(): CurlResponse
 	{
 		if ($this->isExecuted) {
