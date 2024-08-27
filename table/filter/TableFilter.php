@@ -33,7 +33,9 @@ class TableFilter
 		public readonly string   $identifier,
 		private readonly bool    $showLegend = true,
 		private readonly string  $resetParameter = 'reset',
-		private readonly ?string $individualHtmlSnippetPath = null
+		private readonly ?string $individualHtmlSnippetPath = null,
+		private readonly string  $submitButtonLabel = 'Filter anwenden',
+		private readonly string  $resetLinkLabel = 'Filter zurücksetzen'
 	) {
 		if (array_key_exists(key: $identifier, array: TableFilter::$instances)) {
 			throw new LogicException(message: 'There is already a filter with the same identifier ' . $identifier);
@@ -116,27 +118,26 @@ class TableFilter
 
 	protected function applyFilters(DbResultTable $dbResultTable): bool
 	{
-		$whereConds = [];
-		$params = [];
-
+		$whereConditions = [];
+		$parameters = [];
 		foreach ($this->allFilterFields as $abstractTableFilterField) {
-			foreach ($abstractTableFilterField->getWhereConditions() as $whereCondition) {
-				$whereConds[] = $whereCondition;
+			if(!$abstractTableFilterField->isSelected()) {
+				continue;
 			}
-
-			foreach ($abstractTableFilterField->getSqlParameters() as $sqlParameter) {
-				$params[] = $sqlParameter;
+			$dbQueryData = $abstractTableFilterField->getWhereCondition();
+			$whereConditions[] = $dbQueryData->query;
+			foreach ($dbQueryData->params as $sqlParameter) {
+				$parameters[] = $sqlParameter;
 			}
 		}
-
-		if (count($whereConds) === 0) {
+		if (count(value: $whereConditions) === 0) {
 			return false;
 		}
 
 		$this->addWhereConditionsToSelectQuery(
 			dbResultTable: $dbResultTable,
-			whereConds: $whereConds,
-			params: $params
+			whereConds: $whereConditions,
+			params: $parameters
 		);
 
 		return true;
@@ -156,7 +157,6 @@ class TableFilter
 
 	public function render(): string
 	{
-		$individualHtmlSnippetPath = $this->individualHtmlSnippetPath;
 		$replacements = new HtmlReplacementCollection();
 		$replacements->addBool(identifier: 'showLegend', booleanValue: $this->showLegend);
 		$replacements->addEncodedText(
@@ -185,6 +185,10 @@ class TableFilter
 			$replacements->addBool(identifier: 'hasSecondaryFilters', booleanValue: false);
 		}
 		$replacements->addEncodedText(identifier: 'resetHref', content: '?' . $this->resetParameter);
+		$replacements->addEncodedText(identifier: 'submitButtonLabel', content: $this->submitButtonLabel);
+		$replacements->addEncodedText(identifier: 'resetLinkLabel', content: $this->resetLinkLabel);
+
+		$individualHtmlSnippetPath = $this->individualHtmlSnippetPath;
 
 		return (new HtmlSnippet(
 			htmlSnippetFilePath: is_null(value: $individualHtmlSnippetPath) ? Core::get()->frameworkDirectory . 'table' . DIRECTORY_SEPARATOR . 'filter' . DIRECTORY_SEPARATOR . 'tableFilter.html' : $individualHtmlSnippetPath,
