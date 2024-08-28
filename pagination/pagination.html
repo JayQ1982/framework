@@ -1,30 +1,62 @@
 <div class="pagination">
   <ul>
     <tst:if compare="previousPageHref" operator="EQ" against="">
-      <li class="backdisabled">&laquo;</li>
+      <li class="backdisabled">
+        <span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img"><title>{tst:text value='previousTitle'}</title><path fill="none" d="M0 0h24v24H0z"/><path d="M10.828 12l4.95 4.95-1.414 1.414L8 12l6.364-6.364 1.414 1.414z"/></svg>
+        </span>
+      </li>
     </tst:if>
     <tst:else>
-      <li class="back"><a href="{tst:text value='previousPageHref'}">&laquo;</a></li>
+      <li class="back">
+        <a href="{tst:text value='previousPageHref'}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
+            <title>{tst:text value='previousTitle'}</title>
+            <path fill="none" d="M0 0h24v24H0z"/>
+            <path d="M10.828 12l4.95 4.95-1.414 1.414L8 12l6.364-6.364 1.414 1.414z"/>
+          </svg>
+        </a>
+      </li>
     </tst:else>
     <tst:for value="pages" var="page">
       <tst:if compare="page.groupPreviousPages" operator="EQ" against="true">
-        <li><span class="pagination-dots">...</span></li>
+        <li>
+          <span class="pagination-dots">...</span>
+        </li>
       </tst:if>
       <tst:if compare="page.isCurrentPage" operator="EQ" against="true">
-        <li class="currentpage"><strong>{tst:text value='page.number'}</strong></li>
+        <li>
+          <strong>{tst:text value='page.number'}</strong>
+        </li>
       </tst:if>
       <tst:else>
-        <li><a href="{tst:text value='page.href'}">{tst:text value='page.number'}</a></li>
+        <li>
+          <a href="{tst:text value='page.href'}">{tst:text value='page.number'}</a>
+        </li>
       </tst:else>
       <tst:if compare="page.groupNextPages" operator="EQ" against="true">
-        <li><span class="pagination-dots">...</span></li>
+        <li>
+          <span class="pagination-dots">...</span>
+        </li>
       </tst:if>
     </tst:for>
     <tst:if compare="nextPageHref" operator="EQ" against="">
-      <li class="nextdisabled">&raquo;</li>
+      <li class="nextdisabled">
+        <span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img"><title>{tst:text value='nextTitle'}</title><path fill="none" d="M0 0h24v24H0z"/><path d="M13.172 12l-4.95-4.95 1.414-1.414L16 12l-6.364 6.364-1.414-1.414z"/></svg>
+        </span>
+      </li>
     </tst:if>
     <tst:else>
-      <li class="next"><a href="{tst:text value='nextPageHref'}">&raquo;</a></li>
+      <li class="next">
+        <a href="{tst:text value='nextPageHref'}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
+            <title>{tst:text value='nextTitle'}</title>
+            <path fill="none" d="M0 0h24v24H0z"/>
+            <path d="M13.172 12l-4.95-4.95 1.414-1.414L16 12l-6.364 6.364-1.414-1.414z"/>
+          </svg>
+        </a>
+      </li>
     </tst:else>
   </ul>
 </div>

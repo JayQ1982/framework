@@ -54,7 +54,7 @@ class FileFieldRenderer extends FormRenderer
 			]);
 			$htmlContent = '';
 			foreach ($alreadyUploadedFiles as $hash => $fileDataModel) {
-				$htmlContent .= '<li><b>' . HtmlEncoder::encode(value: $fileDataModel->getName()) . '</b> <button type="submit" name="' .$this->fileField->getName() . '_removeAttachment" value="' . HtmlEncoder::encode(value: $hash) . '">löschen</button>';
+				$htmlContent .= '<li><b>' . HtmlEncoder::encode(value: $fileDataModel->getName()) . '</b> <button type="submit" name="' . $this->fileField->getName() . '_removeAttachment" value="' . HtmlEncoder::encode(value: $hash) . '">löschen</button>';
 			}
 			$fileListBox->addText(HtmlText::encoded($htmlContent));
 			$wrapper->addTag($fileListBox);
@@ -73,7 +73,7 @@ class FileFieldRenderer extends FormRenderer
 		// Add the fileStore-Pointer-ID for the SESSION as hidden field
 		$wrapper->addTag(new HtmlTag('input', true, [
 			new HtmlTagAttribute('type', 'hidden', true),
-			new HtmlTagAttribute('name', $this->fileField->getName().'_UID', true),
+			new HtmlTagAttribute('name', $this->fileField->getName() . '_UID', true),
 			new HtmlTagAttribute('value', $fileField->getUniqueSessFileStorePointer(), true),
 		]));
 

@@ -4,7 +4,7 @@
  * @copyright Actra AG, Rümlang, Switzerland
  */
 
-namespace metanet\common;
+namespace framework\common;
 
 use framework\Core;
 use Throwable;
@@ -32,7 +32,7 @@ class LogFile
 
 	public function write(string $line): void
 	{
-		if(!is_resource(value: $this->stream)) {
+		if (!is_resource(value: $this->stream)) {
 			return;
 		}
 		$mtimeParts = explode(separator: ' ', string: (string)microtime());
