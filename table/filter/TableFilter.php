@@ -121,7 +121,7 @@ class TableFilter
 		$whereConditions = [];
 		$parameters = [];
 		foreach ($this->allFilterFields as $abstractTableFilterField) {
-			if(!$abstractTableFilterField->isSelected()) {
+			if (!$abstractTableFilterField->isSelected()) {
 				continue;
 			}
 			$dbQueryData = $abstractTableFilterField->getWhereCondition();

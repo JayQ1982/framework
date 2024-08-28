@@ -18,8 +18,6 @@ use framework\html\HtmlText;
 
 class CheckboxOptionsField extends OptionsField
 {
-	public const LAYOUT_CHECKBOXITEM = 3;
-
 	public function __construct(
 		string                $name,
 		HtmlText              $label,

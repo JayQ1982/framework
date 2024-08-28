@@ -60,7 +60,7 @@ class SMTPMailer extends AbstractMailer
 			command: 'EHLO ' . $serverName,
 			expectedCode: 250
 		);
-		if($this->useTls) {
+		if ($this->useTls) {
 			$this->sendCommand(
 				command: 'STARTTLS',
 				expectedCode: 220

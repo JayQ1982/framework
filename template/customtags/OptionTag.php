@@ -40,7 +40,7 @@ class OptionTag extends TemplateTag implements TagNode
 		$elementNode->namespace = null;
 		$elementNode->tagName = 'input';
 		if ($sels !== null) {
-			$elementNode->tagExtension = ' <?php echo in_array('.$value.', $this->getData(\''.$sels.'\'))?\' checked="checked"\':null; ?>';
+			$elementNode->tagExtension = ' <?php echo in_array(' . $value . ', $this->getData(\'' . $sels . '\'))?\' checked="checked"\':null; ?>';
 		}
 		$elementNode->addAttribute(new HtmlTagAttribute('type', $type, true));
 	}
