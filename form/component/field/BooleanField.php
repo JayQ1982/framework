@@ -16,6 +16,7 @@ class BooleanField extends CheckboxOptionsField
 		string                $name,
 		HtmlText              $label,
 		bool                  $isCheckedByDefault,
+		?HtmlText             $requiredError = null,
 		CheckboxOptionsLayout $layout = CheckboxOptionsLayout::CHECKBOX_ITEM
 	) {
 		$formOptions = new FormOptions();
@@ -25,6 +26,7 @@ class BooleanField extends CheckboxOptionsField
 			label: $label,
 			formOptions: $formOptions,
 			initialValues: $isCheckedByDefault ? ['1'] : [],
+			requiredError: $requiredError,
 			layout: $layout
 		);
 	}
