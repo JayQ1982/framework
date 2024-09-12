@@ -39,11 +39,11 @@ abstract class FormField extends FormComponent
 	private bool $autoFocus = false;
 
 	/**
-	 * @param string    $name          : The internal name for this formField which is also used by the renderer (name="")
-	 * @param HtmlText  $label         : The field label to be used by the renderer
-	 * @param mixed     $value         : The original value for this formField. Depending on the specific field it can be a string, float, integer and even an
-	 *                                 array (as in NameserverField). By default it is null.
-	 * @param ?HtmlText $labelInfoText : Additional text padded to the displayed label-name (see FileField max-Info for example)
+	 * @param string    $name          The internal name for this formField which is also used by the renderer (name="")
+	 * @param HtmlText  $label         The field label to be used by the renderer
+	 * @param mixed     $value         The original value for this formField. Depending on the specific field it can be a string, float, integer and even an
+	 *                                 array. By default it is null.
+	 * @param ?HtmlText $labelInfoText Additional text padded to the displayed label-name (see FileField max-Info for example)
 	 */
 	public function __construct(string $name, HtmlText $label, mixed $value = null, ?HtmlText $labelInfoText = null)
 	{
