@@ -31,6 +31,9 @@ class ImageResizer
 			return ImageResizerResult::MISSING_SOURCE_IMAGE;
 		}
 		$originalImageSize = getimagesize(filename: $destinationPath);
+		if ($originalImageSize === false) {
+			return ImageResizerResult::INVALID_SOURCE_IMAGE;
+		}
 		$originalWidth = (int)$originalImageSize[0];
 		$originalHeight = (int)$originalImageSize[1];
 
